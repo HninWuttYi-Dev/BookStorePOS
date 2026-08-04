@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="BookStorePOS.Database/BookStorePOS.Database.csproj" />
+  <Project Path="BookStorePOS.Domain/BookStorePOS.Domain.csproj" />
 </Solution>
