@@ -11,6 +11,6 @@ public class UserCreateRequestModel
 public class UserCreateResponseModel
 {
     public bool isSuccess { get; set; }
-    public string? Message { get; set; }
-    public int? Data { get; set; }
+    public string Message { get; set; } = null!;
+    public UserModel Data { get; set; } = null!;
 }

@@ -9,8 +9,8 @@ public class UserListRequestModel
 public class UserListResponseModel
 {
     public bool isSuccess { get; set; }
-    public string? Message { get; set; }
-    public List<UserModel>? Data { get; set; }
+    public string Message { get; set; } = null!;
+    public List<UserModel> Data { get; set; } = null!;
 }
 
 public class UserModel

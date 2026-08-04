@@ -12,6 +12,6 @@ public class UserPatchRequestModel
 public class UserPatchResponseModel
 {
     public bool isSuccess { get; set; }
-    public string? Message { get; set; }
-    public object? Data { get; set; }
+    public string Message { get; set; } = null!;
+    public UserModel Data { get; set; } = null!;
 }

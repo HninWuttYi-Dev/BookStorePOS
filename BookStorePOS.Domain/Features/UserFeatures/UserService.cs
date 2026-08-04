@@ -105,7 +105,13 @@ public class UserService
             {
                 isSuccess = true,
                 Message = "Created new user successfully",
-                Data = user.UserId
+                Data = new UserModel
+                {
+                    UserId = user.UserId,
+                    Name = user.Name,
+                    Email = user.Email,
+                    Role = user.Role
+                }
             };
         }
         catch (Exception ex)
@@ -153,7 +159,14 @@ public class UserService
             return new UserPatchResponseModel
             {
                 isSuccess = true,
-                Message = "Updated user successfully"
+                Message = "Updated user successfully",
+                Data = new UserModel
+                {
+                    UserId = item.UserId,
+                    Name = item.Name,
+                    Email = item.Email,
+                    Role = item.Role
+                }
             };
         }
         catch (Exception ex)
@@ -185,7 +198,14 @@ public class UserService
             return new UserDeleteResponseModel
             {
                 isSuccess = true,
-                Message = "User is deleted successfully"
+                Message = "User is deleted successfully",
+                Data = new UserModel
+                {
+                    UserId = item.UserId,
+                    Name = item.Name,
+                    Email = item.Email,
+                    Role = item.Role
+                }
             };
         }
         catch (Exception ex)
