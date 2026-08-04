@@ -37,7 +37,7 @@ public class UserService
             {
                 isSuccess = true,
                 Message = "Users fetched successfully",
-                Users = users
+                Data = users
             };
         }
         catch (Exception ex)
@@ -67,10 +67,13 @@ public class UserService
             {
                 isSuccess = true,
                 Message = "User fetched successfully",
-                UserId = item.UserId,
-                Name = item.Name,
-                Email = item.Email,
-                Role = item.Role
+                Data = new UserModel
+                {
+                    UserId = item.UserId,
+                    Name = item.Name,
+                    Email = item.Email,
+                    Role = item.Role
+                }
             };
         }
         catch (Exception ex)
@@ -102,7 +105,7 @@ public class UserService
             {
                 isSuccess = true,
                 Message = "Created new user successfully",
-                UserId = user.UserId
+                Data = user.UserId
             };
         }
         catch (Exception ex)

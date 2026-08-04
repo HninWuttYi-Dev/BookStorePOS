@@ -10,7 +10,7 @@ public class UserListResponseModel
 {
     public bool isSuccess { get; set; }
     public string? Message { get; set; }
-    public List<UserModel>? Users { get; set; }
+    public List<UserModel>? Data { get; set; }
 }
 
 public class UserModel
