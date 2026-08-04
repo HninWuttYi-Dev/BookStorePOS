@@ -28,6 +28,28 @@ A web-based Point of Sale (POS) system for a bookstore that enables customers to
 * **Soft Delete:** Mark outdated books as soft-deleted (IsDeleted = 1) to preserve historical sales records without showing them in the active catalog.
 * **Sales Dashboard:** Review order history and daily sales totals.
 
+## 🔌 API Endpoints
+The following REST API endpoints are exposed by the `BookStorePOS.WebApi` project via Swagger:
+
+### User Controller (`/api/user`)
+* `GET api/user` - List all users
+* `GET api/user/{id}` - Get a specific user
+* `POST api/user` - Create a new user
+* `PATCH api/user/{id}` - Update a user's details
+* `DELETE api/user/{id}` - Delete a user
+
+### Book Controller (`/api/book`)
+* `GET api/book` - List all books
+* `GET api/book/{id}` - Get a specific book
+* `POST api/book` - Add a new book to inventory
+* `PATCH api/book/{id}` - Update a book's details or stock
+* `DELETE api/book/{id}` - Remove a book (Soft delete)
+
+### Order Controller (`/api/order`)
+* `GET api/order` - View order history 
+* `GET api/order/{id}` - View a specific order (returns the order and its items)
+* `POST api/order` - **Checkout!** Send the User ID and a list of items. Calculates prices and saves securely.
+
 ## 🗄️ MSSQL Setup Script
 Run the following script directly in your existing database:
 
