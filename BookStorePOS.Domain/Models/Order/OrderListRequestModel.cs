@@ -21,4 +21,15 @@ public class OrderModel
     public int UserId { get; set; }
     public DateTime? OrderDate { get; set; }
     public decimal TotalPrice { get; set; }
+    public List<OrderItemModel> Items { get; set; } = new List<OrderItemModel>();
+}
+
+public class OrderItemModel
+{
+    public int OrderItemId { get; set; }
+    public int OrderId { get; set; }
+    public int BookId { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal? Subtotal { get; set; }
 }

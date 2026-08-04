@@ -32,10 +32,4 @@ public class OrderController : ControllerBase
     {
        return Ok(_orderService.CreateOrder(requestModel));
     }
-
-    [HttpDelete("{id}")]
-    public IActionResult DeleteOrder(int id)
-    {
-        return Ok(_orderService.DeleteOrder(new OrderDeleteRequestModel{OrderId = id}));
-    }
 }

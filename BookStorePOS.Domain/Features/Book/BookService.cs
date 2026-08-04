@@ -19,14 +19,7 @@ public class BookService
     {
         try
         {
-            var query = _db.Books.Where(b => !b.IsDeleted);
-
-            if (!string.IsNullOrEmpty(requestModel.SearchTerm))
-            {
-                query = query.Where(b => b.Title.Contains(requestModel.SearchTerm) || b.Author.Contains(requestModel.SearchTerm) || b.Genre.Contains(requestModel.SearchTerm));
-            }
-
-            var lst = query.ToList();
+            var lst = _db.Books.Where(b => !b.IsDeleted).ToList();
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
             {

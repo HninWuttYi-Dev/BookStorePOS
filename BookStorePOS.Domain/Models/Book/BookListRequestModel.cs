@@ -4,7 +4,6 @@ namespace BookStorePOS.Domain.Models.Book;
 
 public class BookListRequestModel
 {
-    public string? SearchTerm { get; set; }
 }
 
 public class BookListResponseModel
