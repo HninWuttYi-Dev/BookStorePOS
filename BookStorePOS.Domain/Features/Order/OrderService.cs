@@ -55,6 +55,7 @@ public class OrderService
         {
             var item = _db.Orders
                 .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Book)
                 .FirstOrDefault(x => x.OrderId == requestModel.OrderId);
                 
             if (item is null)
@@ -80,9 +81,10 @@ public class OrderService
                     OrderItemId = oi.OrderItemId,
                     OrderId = oi.OrderId,
                     BookId = oi.BookId,
+                    BookTitle = oi.Book.Title,
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
-                    Subtotal = oi.Subtotal
+                    Subtotal = oi.Subtotal ?? 0
                 });
             }
 
@@ -155,6 +157,7 @@ public class OrderService
                 orderModelItems.Add(new OrderItemModel
                 {
                     BookId = item.BookId,
+                    BookTitle = book.Title,
                     Quantity = item.Quantity,
                     UnitPrice = book.Price,
                     Subtotal = subtotal
