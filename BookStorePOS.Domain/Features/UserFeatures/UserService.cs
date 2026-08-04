@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
-using BookStorePOS.Domain.Features.UserFeatures.Models;
+using BookStorePOS.Domain.Models;
 
 namespace BookStorePOS.Domain.Features.UserFeatures;
 

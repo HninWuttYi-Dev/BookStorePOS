@@ -1,4 +1,4 @@
-namespace BookStorePOS.Domain.Features.UserFeatures.Models;
+namespace BookStorePOS.Domain.Models;
 
 public class UserCreateRequestModel
 {
