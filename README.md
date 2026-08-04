@@ -107,3 +107,9 @@ INSERT INTO OrderItems (OrderId, BookId, Quantity, UnitPrice) VALUES
 (2, 3, 1, 18.99); -- Bob bought 1 Dune
 GO
 ```
+
+### EF Core Scaffold Command
+To regenerate the EF Core models from the database, run the following command in your terminal:
+```bash
+dotnet ef dbcontext scaffold "Server=.;Database=BookStore;User ID=sa;Password=sasa@123;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -o AppDbContextModels -c AppDbContext -f
+```
