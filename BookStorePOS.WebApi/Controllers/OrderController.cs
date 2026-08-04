@@ -18,18 +18,24 @@ public class OrderController : ControllerBase
     [HttpGet]
     public IActionResult GetOrders([FromQuery] OrderListRequestModel requestModel)
     {
-       return Ok(_orderService.GetOrders(requestModel));
+        var response = _orderService.GetOrders(requestModel);
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 
     [HttpGet("{id}")]
     public IActionResult GetOrder(int id)
     {
-        return Ok(_orderService.GetOrder(new OrderEditRequestModel{OrderId = id}));
+        var response = _orderService.GetOrder(new OrderEditRequestModel{OrderId = id});
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 
     [HttpPost]
     public IActionResult CreateOrder([FromBody] OrderCreateRequestModel requestModel)
     {
-       return Ok(_orderService.CreateOrder(requestModel));
+        var response = _orderService.CreateOrder(requestModel);
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 }

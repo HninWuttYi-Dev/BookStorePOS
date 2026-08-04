@@ -18,31 +18,41 @@ public class UserController : ControllerBase
     [HttpGet]
     public IActionResult GetUsers()
     {
-       return Ok(_userService.GetUsers(new UserListRequestModel()));
+        var response = _userService.GetUsers(new UserListRequestModel());
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 
     [HttpGet("{id}")]
     public IActionResult GetUser(int id)
     {
-        return Ok(_userService.GetUser(new UserEditRequestModel{UserId = id}));
+        var response = _userService.GetUser(new UserEditRequestModel{UserId = id});
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 
     [HttpPost]
     public IActionResult CreateUser([FromBody] UserCreateRequestModel requestModel)
     {
-       return Ok(_userService.CreateUser(requestModel));
+        var response = _userService.CreateUser(requestModel);
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 
     [HttpPatch("{id}")]
     public IActionResult UpdateUser(int id, [FromBody] UserPatchRequestModel requestModel)
     {
         requestModel.UserId = id;
-        return Ok(_userService.UpdateUser(requestModel));
+        var response = _userService.UpdateUser(requestModel);
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 
     [HttpDelete("{UserId}")]
     public IActionResult DeleteUser([FromRoute] UserDeleteRequestModel requestModel)
     {
-        return Ok(_userService.DeleteUser(requestModel));
+        var response = _userService.DeleteUser(requestModel);
+        if (!response.isSuccess) return BadRequest(response);
+        return Ok(response);
     }
 }
