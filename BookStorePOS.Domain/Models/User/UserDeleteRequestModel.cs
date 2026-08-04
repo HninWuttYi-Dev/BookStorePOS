@@ -1,4 +1,4 @@
-namespace BookStorePOS.Domain.Models;
+namespace BookStorePOS.Domain.Models.User;
 
 public class UserDeleteRequestModel
 {

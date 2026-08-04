@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
-using BookStorePOS.Domain.Models;
+using BookStorePOS.Domain.Models.User;
 
-namespace BookStorePOS.Domain.Features.UserFeatures;
+namespace BookStorePOS.Domain.Features.User;
 
 public class UserService
 {
@@ -90,7 +90,7 @@ public class UserService
     {
         try
         {
-            User user = new User
+            var user = new Database.AppDbContextModels.User
             {
                 Name = requestModel.Name,
                 Email = requestModel.Email,

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BookStorePOS.Domain.Models;
+namespace BookStorePOS.Domain.Models.User;
 
 public class UserListRequestModel
 {
