@@ -1,7 +1,7 @@
 # Book Store POS System (MSSQL)
 A web-based Point of Sale (POS) system for a bookstore that enables customers to browse and buy books easily while providing staff with tools to track inventory, process orders, and view sales metrics.
 
-## 🛠️ Tech Stack & Database Architecture
+## Tech Stack & Database Architecture
 **Database Engine:** Microsoft SQL Server (MSSQL)
 **Architecture:** Relational Database with Soft Delete support for inventory tracking.
 
@@ -12,14 +12,14 @@ A web-based Point of Sale (POS) system for a bookstore that enables customers to
 | **Orders** | Records individual sales transactions. | OrderId, TotalPrice, OrderDate |
 | **OrderItems** | Junction table linking books to specific orders. | OrderItemId, OrderId, BookId, Quantity, UnitPrice |
 
-## 🚀 Key Features
-### 🛒 Customer / Cashier Side
+## Key Features
+### Customer / Cashier Side
 * **Find Books:** Search inventory by Title, Author, or Genre.
 * **View Book Details:** See description, price, and stock status.
 * **Shopping Cart:** Add, update, or remove books.
 * **Checkout:** Display total prices and complete sales.
 
-### 🛡️ Admin / Staff Side
+### Admin / Staff Side
 * **Management:**
   * Add new books (price, initial stock).
   * View current stock levels.
@@ -27,7 +27,7 @@ A web-based Point of Sale (POS) system for a bookstore that enables customers to
 * **Soft Delete:** Mark outdated books as soft-deleted (IsDeleted = 1) to preserve historical sales records without showing them in the active catalog.
 * **Sales Dashboard:** Review order history and daily sales totals.
 
-## 🔌 API Endpoints
+## API Endpoints
 The following REST API endpoints are exposed by the `BookStorePOS.WebApi` project via Swagger:
 
 ### Book Controller (`/api/book`)
@@ -42,7 +42,7 @@ The following REST API endpoints are exposed by the `BookStorePOS.WebApi` projec
 * `GET api/order/{id}` - View a specific order (returns the order and its items)
 * `POST api/order` - **Checkout!** Send a list of items. Calculates prices and saves securely.
 
-## 🗄️ MSSQL Setup Script
+## MSSQL Setup Script
 Run the following script directly in your existing database:
 
 ```sql
