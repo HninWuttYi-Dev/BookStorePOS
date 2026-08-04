@@ -9,8 +9,8 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        // Change the port if your WebApi runs on a different one (e.g. 5015 or 7226)
-        string baseUrl = "http://localhost:5015/api"; 
+        // Change the port if your WebApi runs on a different one (e.g. 5201)
+        string baseUrl = "http://localhost:5201/api"; 
         
         using HttpClient client = new HttpClient();
         
