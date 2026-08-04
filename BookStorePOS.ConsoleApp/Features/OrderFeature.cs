@@ -64,7 +64,7 @@ public class OrderFeature
             {
                 foreach (var order in result.Data)
                 {
-                    Console.WriteLine($"Order #{order.OrderId} | {order.OrderDate} | Total: ${order.TotalPrice}");
+                    Console.WriteLine($"Order #{order.OrderId} | {order.OrderDate?.ToString("dd/MM/yyyy hh:mm:ss tt")} | Total: ${order.TotalPrice}");
                 }
             }
         }
@@ -87,7 +87,7 @@ public class OrderFeature
             {
                 var order = result.Data;
                 Console.WriteLine($"\n=== Order #{order.OrderId} ===");
-                Console.WriteLine($"Date: {order.OrderDate}");
+                Console.WriteLine($"Date: {order.OrderDate?.ToString("dd/MM/yyyy hh:mm:ss tt")}");
                 Console.WriteLine($"Total Price: ${order.TotalPrice}");
                 Console.WriteLine("Items:");
                 foreach(var item in order.Items)
