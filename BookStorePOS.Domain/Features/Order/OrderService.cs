@@ -20,9 +20,7 @@ public class OrderService
     {
         try
         {
-            var query = _db.Orders.AsQueryable();
-
-            var lst = query.ToList();
+            var lst = _db.Orders.ToList();
             List<OrderModel> orders = new List<OrderModel>();
             foreach (var item in lst)
             {
