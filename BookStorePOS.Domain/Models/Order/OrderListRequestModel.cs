@@ -5,7 +5,6 @@ namespace BookStorePOS.Domain.Models.Order;
 
 public class OrderListRequestModel
 {
-    public int? UserId { get; set; }
 }
 
 public class OrderListResponseModel
@@ -18,7 +17,6 @@ public class OrderListResponseModel
 public class OrderModel
 {
     public int OrderId { get; set; }
-    public int UserId { get; set; }
     public DateTime? OrderDate { get; set; }
     public decimal TotalPrice { get; set; }
     public List<OrderItemModel> Items { get; set; } = new List<OrderItemModel>();

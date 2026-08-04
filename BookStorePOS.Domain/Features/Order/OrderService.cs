@@ -22,11 +22,6 @@ public class OrderService
         {
             var query = _db.Orders.AsQueryable();
 
-            if (requestModel.UserId.HasValue)
-            {
-                query = query.Where(o => o.UserId == requestModel.UserId.Value);
-            }
-
             var lst = query.ToList();
             List<OrderModel> orders = new List<OrderModel>();
             foreach (var item in lst)
@@ -34,7 +29,6 @@ public class OrderService
                 orders.Add(new OrderModel
                 {
                     OrderId = item.OrderId,
-                    UserId = item.UserId,
                     OrderDate = item.OrderDate,
                     TotalPrice = item.TotalPrice
                 });
@@ -77,7 +71,6 @@ public class OrderService
             var orderModel = new OrderModel
             {
                 OrderId = item.OrderId,
-                UserId = item.UserId,
                 OrderDate = item.OrderDate,
                 TotalPrice = item.TotalPrice
             };
@@ -119,7 +112,6 @@ public class OrderService
         {
             var order = new Database.AppDbContextModels.Order
             {
-                UserId = requestModel.UserId,
                 OrderDate = DateTime.Now,
                 TotalPrice = 0 
             };
@@ -186,7 +178,6 @@ public class OrderService
                 Data = new OrderModel
                 {
                     OrderId = order.OrderId,
-                    UserId = order.UserId,
                     OrderDate = order.OrderDate,
                     TotalPrice = order.TotalPrice,
                     Items = orderModelItems

@@ -4,7 +4,6 @@ namespace BookStorePOS.Domain.Models.Order;
 
 public class OrderCreateRequestModel
 {
-    public int UserId { get; set; }
     public List<CheckoutItemModel> Items { get; set; } = new List<CheckoutItemModel>();
 }
 
