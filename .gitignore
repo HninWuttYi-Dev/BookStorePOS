@@ -1,0 +1,10 @@
+# Ignore C# build folders
+bin/
+obj/
+
+# Ignore personal VS Code settings 
+.vscode/
+
+# Ignore Mac/Windows system files
+.DS_Store
+Thumbs.db
