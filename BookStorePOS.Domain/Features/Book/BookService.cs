@@ -97,6 +97,15 @@ public class BookService
     {
         try
         {
+            if (requestModel.Price <= 0)
+            {
+                return new BookCreateResponseModel
+                {
+                    isSuccess = false,
+                    Message = "Price must be greater than 0."
+                };
+            }
+
             var book = new Database.AppDbContextModels.Book
             {
                 Title = requestModel.Title,
