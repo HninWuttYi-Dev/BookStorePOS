@@ -10,9 +10,9 @@ public class BookService
 {
     private readonly AppDbContext _db;
 
-    public BookService()
+    public BookService(AppDbContext db)
     {
-        _db = new AppDbContext();
+        _db = db;
     }
 
     public BookListResponseModel GetBooks(BookListRequestModel requestModel)

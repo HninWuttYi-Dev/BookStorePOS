@@ -11,9 +11,9 @@ public class OrderService
 {
     private readonly AppDbContext _db;
 
-    public OrderService()
+    public OrderService(AppDbContext db)
     {
-        _db = new AppDbContext();
+        _db = db;
     }
 
     public OrderListResponseModel GetOrders(OrderListRequestModel requestModel)
