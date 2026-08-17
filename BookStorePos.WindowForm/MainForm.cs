@@ -10,13 +10,11 @@ public partial class MainForm : Form
 {
     private readonly BookService _bookService;
 
-    public MainForm()
+    public MainForm(BookService bookService)
     {
         InitializeComponent();
-        _bookService = new BookService();
-        LoadBooks();
+        _bookService = bookService;
     }
-
     private void LoadBooks()
     {
         var response = _bookService.GetBooks(new BookListRequestModel());
