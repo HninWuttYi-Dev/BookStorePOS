@@ -10,9 +10,10 @@ namespace BookStorePOS.WebApi.Controllers;
 public class OrderController : ControllerBase
 {
     private readonly OrderService _orderService;
-    public OrderController()
+
+    public OrderController(OrderService orderService)
     {
-        _orderService = new OrderService();
+        _orderService = orderService;
     }
 
     [HttpGet]

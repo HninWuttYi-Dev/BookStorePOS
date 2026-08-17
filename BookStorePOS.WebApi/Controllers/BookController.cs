@@ -10,10 +10,12 @@ namespace BookStorePOS.WebApi.Controllers;
 public class BookController : ControllerBase
 {
     private readonly BookService _bookService;
-    public BookController()
+
+    public BookController(BookService bookService)
     {
-        _bookService = new BookService();
+        _bookService = bookService;
     }
+
 
     [HttpGet]
     public IActionResult GetBooks([FromQuery] BookListRequestModel requestModel)
