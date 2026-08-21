@@ -92,7 +92,7 @@ public class OrderFeature
                 Console.WriteLine("Items:");
                 foreach(var item in order.Items)
                 {
-                    Console.WriteLine($"  - {item.BookTitle} x{item.Quantity} (@ ${item.UnitPrice}) = ${item.Subtotal}");
+                    Console.WriteLine($"  - {item.BookTitle} x{item.Quantity} (${item.UnitPrice}) = ${item.Subtotal}");
                 }
             }
         }

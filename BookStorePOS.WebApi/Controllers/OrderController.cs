@@ -27,7 +27,7 @@ public class OrderController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult GetOrder(int id)
     {
-        var response = _orderService.GetOrder(new OrderEditRequestModel{OrderId = id});
+        var response = _orderService.GetOrder(new OrderGetByIdRequestModel{OrderId = id});
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }

@@ -49,7 +49,7 @@ public class OrderService
         }
     }
 
-    public OrderEditResponseModel GetOrder(OrderEditRequestModel requestModel)
+    public OrderGetByIdResponseModel GetOrder(OrderGetByIdRequestModel requestModel)
     {
         try
         {
@@ -60,7 +60,7 @@ public class OrderService
                 
             if (item is null)
             {
-                return new OrderEditResponseModel
+                return new OrderGetByIdResponseModel
                 {
                     isSuccess = false,
                     Message = "Order is not found"
@@ -88,7 +88,7 @@ public class OrderService
                 });
             }
 
-            return new OrderEditResponseModel
+            return new OrderGetByIdResponseModel
             {
                 isSuccess = true,
                 Message = "Order fetched successfully",
@@ -97,7 +97,7 @@ public class OrderService
         }
         catch (Exception ex)
         {
-            return new OrderEditResponseModel
+            return new OrderGetByIdResponseModel
             {
                 isSuccess = false,
                 Message = "Failed to fetch order: " + ex.Message
