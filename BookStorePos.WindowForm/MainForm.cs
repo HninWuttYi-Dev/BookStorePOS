@@ -15,9 +15,9 @@ public partial class MainForm : Form
         InitializeComponent();
         _bookService = bookService;
     }
-    private void LoadBooks()
+    private async void LoadBooks()
     {
-        var response = _bookService.GetBooks(new BookListRequestModel());
+        var response = await _bookService.GetBooksAsync(new BookListRequestModel());
         if (response.isSuccess)
         {
             dataGridViewBooks.DataSource = response.Data;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Models.Book;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookStorePOS.Domain.Features.Book;
 
@@ -15,11 +16,11 @@ public class BookService
         _db = db;
     }
 
-    public BookListResponseModel GetBooks(BookListRequestModel requestModel)
+    public async Task<BookListResponseModel> GetBooksAsync(BookListRequestModel requestModel)
     {
         try
         {
-            var lst = _db.Books.Where(b => !b.IsDeleted).ToList();
+            var lst = await _db.TblBooks.Where(b => !b.IsDeleted).ToListAsync();
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
             {
@@ -53,11 +54,15 @@ public class BookService
         }
     }
 
-    public BookEditResponseModel GetBook(BookEditRequestModel requestModel)
+    public async Task<BookEditResponseModel> GetBookAsync(BookEditRequestModel requestModel)
     {
         try
         {
-            var item = _db.Books.FirstOrDefault(x => x.BookId == requestModel.BookId && !x.IsDeleted);
+            var item = await _db.TblBooks.FirstOrDefaultAsync
+                        (x =>
+                        x.BookId == requestModel.BookId
+                        &&
+                        !x.IsDeleted);
             if (item is null)
             {
                 return new BookEditResponseModel
@@ -106,7 +111,7 @@ public class BookService
                 };
             }
 
-            var book = new Database.AppDbContextModels.Book
+            TblBook book = new TblBook
             {
                 Title = requestModel.Title,
                 Author = requestModel.Author,
@@ -118,7 +123,7 @@ public class BookService
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now
             };
-            _db.Books.Add(book);
+            _db.TblBooks.Add(book);
             _db.SaveChanges();
 
             return new BookCreateResponseModel
@@ -152,7 +157,7 @@ public class BookService
     {
         try
         {
-            var item = _db.Books.FirstOrDefault(x => x.BookId == requestModel.BookId && !x.IsDeleted);
+            var item = _db.TblBooks.FirstOrDefault(x => x.BookId == requestModel.BookId && !x.IsDeleted);
             if (item is null)
             {
                 return new BookPatchResponseModel
@@ -203,7 +208,7 @@ public class BookService
     {
         try
         {
-            var item = _db.Books.FirstOrDefault(x => x.BookId == requestModel.BookId);
+            var item = _db.TblBooks.FirstOrDefault(x => x.BookId == requestModel.BookId);
             if (item is null)
             {
                 return new BookDeleteResponseModel

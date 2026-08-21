@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,17 +15,25 @@ public partial class AppDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Book> Books { get; set; }
+    public virtual DbSet<TblBook> TblBooks { get; set; }
 
-    public virtual DbSet<Order> Orders { get; set; }
+    public virtual DbSet<TblOrder> TblOrders { get; set; }
 
-    public virtual DbSet<OrderItem> OrderItems { get; set; }
+    public virtual DbSet<TblOrderItem> TblOrderItems { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=.;Database=BookStore;User ID=sa;Password=sasa@123;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Book>(entity =>
+        modelBuilder.Entity<TblBook>(entity =>
         {
             entity.HasKey(e => e.BookId).HasName("PK__Books__3DE0C20715F9DAFD");
+
+            entity.ToTable("TblBook");
 
             entity.Property(e => e.Author).HasMaxLength(150);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
@@ -35,31 +43,50 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
         });
 
-        modelBuilder.Entity<Order>(entity =>
+        modelBuilder.Entity<TblOrder>(entity =>
         {
             entity.HasKey(e => e.OrderId).HasName("PK__Orders__C3905BCFB21F22B1");
+
+            entity.ToTable("TblOrder");
 
             entity.Property(e => e.OrderDate).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
         });
 
-        modelBuilder.Entity<OrderItem>(entity =>
+        modelBuilder.Entity<TblOrderItem>(entity =>
         {
             entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__57ED0681C2F930B0");
+
+            entity.ToTable("TblOrderItem");
 
             entity.Property(e => e.Subtotal)
                 .HasComputedColumnSql("([Quantity]*[UnitPrice])", true)
                 .HasColumnType("decimal(21, 2)");
             entity.Property(e => e.UnitPrice).HasColumnType("decimal(10, 2)");
 
-            entity.HasOne(d => d.Book).WithMany(p => p.OrderItems)
+            entity.HasOne(d => d.Book).WithMany(p => p.TblOrderItems)
                 .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderItems_Books");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.OrderItems)
+            entity.HasOne(d => d.Order).WithMany(p => p.TblOrderItems)
                 .HasForeignKey(d => d.OrderId)
                 .HasConstraintName("FK_OrderItems_Orders");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C064359A4");
+
+            entity.HasIndex(e => e.Email, "UQ__Users__A9D10534A954F867").IsUnique();
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.Email).HasMaxLength(100);
+            entity.Property(e => e.Name).HasMaxLength(100);
+            entity.Property(e => e.PasswordHash).HasMaxLength(255);
+            entity.Property(e => e.Role)
+                .HasMaxLength(20)
+                .HasDefaultValue("Customer");
         });
 
         OnModelCreatingPartial(modelBuilder);

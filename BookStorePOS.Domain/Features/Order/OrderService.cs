@@ -20,7 +20,7 @@ public class OrderService
     {
         try
         {
-            var lst = _db.Orders.ToList();
+            var lst = _db.TblOrders.ToList();
             List<OrderModel> orders = new List<OrderModel>();
             foreach (var item in lst)
             {
@@ -53,8 +53,8 @@ public class OrderService
     {
         try
         {
-            var item = _db.Orders
-                .Include(o => o.OrderItems)
+            var item = _db.TblOrders
+                .Include(o => o.TblOrderItems)
                 .ThenInclude(oi => oi.Book)
                 .FirstOrDefault(x => x.OrderId == requestModel.OrderId);
                 
@@ -74,7 +74,7 @@ public class OrderService
                 TotalPrice = item.TotalPrice
             };
 
-            foreach(var oi in item.OrderItems)
+            foreach(var oi in item.TblOrderItems)
             {
                 orderModel.Items.Add(new OrderItemModel
                 {
@@ -109,14 +109,14 @@ public class OrderService
     {
         try
         {
-            var order = new Database.AppDbContextModels.Order
+            TblOrder order = new TblOrder
             {
                 OrderDate = DateTime.Now,
                 TotalPrice = 0 
             };
             
             // 1. Save the order FIRST to generate the OrderId
-            _db.Orders.Add(order);
+            _db.TblOrders.Add(order);
             _db.SaveChanges();
 
             decimal orderTotal = 0;
@@ -124,7 +124,7 @@ public class OrderService
 
             foreach (var item in requestModel.Items)
             {
-                var book = _db.Books.FirstOrDefault(b => b.BookId == item.BookId && !b.IsDeleted);
+                var book = _db.TblBooks.FirstOrDefault(b => b.BookId == item.BookId && !b.IsDeleted);
                 if (book == null)
                 {
                     throw new Exception($"Book with ID {item.BookId} not found or is deleted.");
@@ -142,7 +142,7 @@ public class OrderService
                 orderTotal += subtotal;
 
                 // Create OrderItem using the generated OrderId
-                var orderItem = new Database.AppDbContextModels.OrderItem
+                TblOrderItem orderItem = new TblOrderItem
                 {
                     OrderId = order.OrderId,
                     BookId = item.BookId,
@@ -152,7 +152,7 @@ public class OrderService
                 };
                 
                 // 2. Add directly to _db exactly as you learned
-                _db.OrderItems.Add(orderItem);
+                _db.TblOrderItems.Add(orderItem);
 
                 orderModelItems.Add(new OrderItemModel
                 {
@@ -172,7 +172,7 @@ public class OrderService
             int i = 0;
             foreach (var modelItem in orderModelItems)
             {
-                var dbItem = _db.OrderItems.FirstOrDefault(oi => oi.OrderId == order.OrderId && oi.BookId == modelItem.BookId);
+                var dbItem = _db.TblOrderItems.FirstOrDefault(oi => oi.OrderId == order.OrderId && oi.BookId == modelItem.BookId);
                 if (dbItem != null)
                 {
                     modelItem.OrderItemId = dbItem.OrderItemId;

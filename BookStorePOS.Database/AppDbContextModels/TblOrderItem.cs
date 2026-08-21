@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BookStorePOS.Database.AppDbContextModels;
 
-public partial class OrderItem
+public partial class TblOrderItem
 {
     public int OrderItemId { get; set; }
 
@@ -17,7 +17,7 @@ public partial class OrderItem
 
     public decimal? Subtotal { get; set; }
 
-    public virtual Book Book { get; set; } = null!;
+    public virtual TblBook Book { get; set; } = null!;
 
-    public virtual Order Order { get; set; } = null!;
+    public virtual TblOrder Order { get; set; } = null!;
 }

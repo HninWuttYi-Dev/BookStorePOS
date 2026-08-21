@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BookStorePOS.Database.AppDbContextModels;
 
-public partial class Book
+public partial class TblBook
 {
     public int BookId { get; set; }
 
@@ -25,5 +25,5 @@ public partial class Book
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();
 }

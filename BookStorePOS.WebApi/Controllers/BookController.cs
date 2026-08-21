@@ -18,17 +18,17 @@ public class BookController : ControllerBase
 
 
     [HttpGet]
-    public IActionResult GetBooks([FromQuery] BookListRequestModel requestModel)
+    public async Task<IActionResult> GetBooksAsync([FromQuery] BookListRequestModel requestModel)
     {
-        var response = _bookService.GetBooks(requestModel);
+        var response =await _bookService.GetBooksAsync(requestModel);
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetBook(int id)
+    public async Task<IActionResult> GetBookByIdAsync(int id)
     {
-        var response = _bookService.GetBook(new BookEditRequestModel{BookId = id});
+        var response =await _bookService.GetBookAsync(new BookEditRequestModel{BookId = id});
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
