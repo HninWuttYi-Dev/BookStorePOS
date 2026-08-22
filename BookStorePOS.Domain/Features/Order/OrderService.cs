@@ -16,11 +16,11 @@ public class OrderService
         _db = db;
     }
 
-    public OrderListResponseModel GetOrders(OrderListRequestModel requestModel)
+    public async Task<OrderListResponseModel> GetOrdersAsync(OrderListRequestModel requestModel)
     {
         try
         {
-            var lst = _db.TblOrders.ToList();
+            var lst = await _db.TblOrders.ToListAsync();
             List<OrderModel> orders = new List<OrderModel>();
             foreach (var item in lst)
             {
@@ -49,15 +49,15 @@ public class OrderService
         }
     }
 
-    public OrderGetByIdResponseModel GetOrder(OrderGetByIdRequestModel requestModel)
+    public async Task<OrderGetByIdResponseModel> GetOrder(OrderGetByIdRequestModel requestModel)
     {
         try
         {
-            var item = _db.TblOrders
+            var item = await _db.TblOrders
                 .Include(o => o.TblOrderItems)
                 .ThenInclude(oi => oi.Book)
-                .FirstOrDefault(x => x.OrderId == requestModel.OrderId);
-                
+                .FirstOrDefaultAsync(x => x.OrderId == requestModel.OrderId);
+
             if (item is null)
             {
                 return new OrderGetByIdResponseModel
@@ -74,7 +74,7 @@ public class OrderService
                 TotalPrice = item.TotalPrice
             };
 
-            foreach(var oi in item.TblOrderItems)
+            foreach (var oi in item.TblOrderItems)
             {
                 orderModel.Items.Add(new OrderItemModel
                 {
@@ -105,19 +105,19 @@ public class OrderService
         }
     }
 
-    public OrderCreateResponseModel CreateOrder(OrderCreateRequestModel requestModel)
+    public async Task<OrderCreateResponseModel> CreateOrder(OrderCreateRequestModel requestModel)
     {
         try
         {
             TblOrder order = new TblOrder
             {
                 OrderDate = DateTime.Now,
-                TotalPrice = 0 
+                TotalPrice = 0
             };
-            
+
             // 1. Save the order FIRST to generate the OrderId
             _db.TblOrders.Add(order);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             decimal orderTotal = 0;
             var orderModelItems = new List<OrderItemModel>();
@@ -150,7 +150,7 @@ public class OrderService
                     UnitPrice = book.Price,
                     Subtotal = subtotal
                 };
-                
+
                 // 2. Add directly to _db exactly as you learned
                 _db.TblOrderItems.Add(orderItem);
 
@@ -166,13 +166,16 @@ public class OrderService
 
             // 3. Update the total price and save everything else
             order.TotalPrice = orderTotal;
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             // Populate the OrderItemId for the response
             int i = 0;
             foreach (var modelItem in orderModelItems)
             {
-                var dbItem = _db.TblOrderItems.FirstOrDefault(oi => oi.OrderId == order.OrderId && oi.BookId == modelItem.BookId);
+                var dbItem = await _db.TblOrderItems
+                            .FirstOrDefaultAsync(oi =>
+                             oi.OrderId == order.OrderId
+                             && oi.BookId == modelItem.BookId);
                 if (dbItem != null)
                 {
                     modelItem.OrderItemId = dbItem.OrderItemId;

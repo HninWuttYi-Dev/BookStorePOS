@@ -17,25 +17,25 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetOrders([FromQuery] OrderListRequestModel requestModel)
+    public async Task<IActionResult> GetOrdersAsync([FromQuery] OrderListRequestModel requestModel)
     {
-        var response = _orderService.GetOrders(requestModel);
+        var response =await _orderService.GetOrdersAsync(requestModel);
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
 
     [HttpGet("{id}")]
-    public IActionResult GetOrder(int id)
+    public async Task<IActionResult> GetOrderAsync(int id)
     {
-        var response = _orderService.GetOrder(new OrderGetByIdRequestModel{OrderId = id});
+        var response =await _orderService.GetOrder(new OrderGetByIdRequestModel{OrderId = id});
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
 
     [HttpPost]
-    public IActionResult CreateOrder([FromBody] OrderCreateRequestModel requestModel)
+    public async Task<IActionResult> CreateOrderAsync([FromBody] OrderCreateRequestModel requestModel)
     {
-        var response = _orderService.CreateOrder(requestModel);
+        var response =await _orderService.CreateOrder(requestModel);
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
