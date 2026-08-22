@@ -20,7 +20,9 @@ public class OrderService
     {
         try
         {
-            var lst = await _db.TblOrders.ToListAsync();
+            var lst = await _db.TblOrders
+                    .AsNoTracking()
+                    .ToListAsync();
             List<OrderModel> orders = new List<OrderModel>();
             foreach (var item in lst)
             {
@@ -54,6 +56,7 @@ public class OrderService
         try
         {
             var item = await _db.TblOrders
+                .AsNoTracking()
                 .Include(o => o.TblOrderItems)
                 .ThenInclude(oi => oi.Book)
                 .FirstOrDefaultAsync(x => x.OrderId == requestModel.OrderId);

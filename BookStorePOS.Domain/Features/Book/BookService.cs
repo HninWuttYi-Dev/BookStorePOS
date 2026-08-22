@@ -20,7 +20,10 @@ public class BookService
     {
         try
         {
-            var lst = await _db.TblBooks.Where(b => !b.IsDeleted).ToListAsync();
+            var lst = await _db.TblBooks
+                    .AsNoTracking()
+                    .Where(b => !b.IsDeleted)
+                    .ToListAsync();
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
             {
@@ -54,24 +57,26 @@ public class BookService
         }
     }
 
-    public async Task<BookEditResponseModel> GetBookAsync(BookEditRequestModel requestModel)
+    public async Task<BookByIdResponseModel> GetBookAsync(BookByIdRequestModel requestModel)
     {
         try
         {
-            var item = await _db.TblBooks.FirstOrDefaultAsync
+            var item = await _db.TblBooks
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync
                         (x =>
                         x.BookId == requestModel.BookId
                         &&
                         !x.IsDeleted);
             if (item is null)
             {
-                return new BookEditResponseModel
+                return new BookByIdResponseModel
                 {
                     isSuccess = false,
                     Message = "Book is not found"
                 };
             }
-            return new BookEditResponseModel
+            return new BookByIdResponseModel
             {
                 isSuccess = true,
                 Message = "Book fetched successfully",
@@ -90,7 +95,7 @@ public class BookService
         }
         catch (Exception ex)
         {
-            return new BookEditResponseModel
+            return new BookByIdResponseModel
             {
                 isSuccess = false,
                 Message = "Failed to fetch book: " + ex.Message
@@ -157,6 +162,7 @@ public class BookService
         try
         {
             var item = await _db.TblBooks
+                        .AsNoTracking()
                         .FirstOrDefaultAsync(x =>
                         x.BookId == requestModel.BookId
                         &&
@@ -179,6 +185,7 @@ public class BookService
             if (requestModel.StockQuantity.HasValue) item.StockQuantity = requestModel.StockQuantity.Value;
 
             item.UpdatedAt = DateTime.Now;
+            _db.Entry(item).State = EntityState.Modified;
             await _db.SaveChangesAsync();
 
             return new BookPatchResponseModel
@@ -213,6 +220,7 @@ public class BookService
         try
         {
             var item = await _db.TblBooks
+                    .AsNoTracking()
                     .FirstOrDefaultAsync(x =>
                     x.BookId == requestModel.BookId);
             if (item is null)
@@ -227,6 +235,7 @@ public class BookService
             // Soft delete
             item.IsDeleted = true;
             item.UpdatedAt = DateTime.Now;
+            _db.Entry(item).State = EntityState.Modified;
             await _db.SaveChangesAsync();
 
             return new BookDeleteResponseModel
