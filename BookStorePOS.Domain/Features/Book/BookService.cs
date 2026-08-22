@@ -98,7 +98,7 @@ public class BookService
         }
     }
 
-    public BookCreateResponseModel CreateBook(BookCreateRequestModel requestModel)
+    public async Task<BookCreateResponseModel> CreateBookAsync(BookCreateRequestModel requestModel)
     {
         try
         {
@@ -120,11 +120,10 @@ public class BookService
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
                 IsDeleted = false,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                CreatedAt = DateTime.Now
             };
             _db.TblBooks.Add(book);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             return new BookCreateResponseModel
             {
@@ -153,13 +152,18 @@ public class BookService
         }
     }
 
-    public BookPatchResponseModel UpdateBook(BookPatchRequestModel requestModel)
+    public async Task<BookPatchResponseModel> UpdateBookAsync(BookPatchRequestModel requestModel)
     {
         try
         {
-            var item = _db.TblBooks.FirstOrDefault(x => x.BookId == requestModel.BookId && !x.IsDeleted);
+            var item = await _db.TblBooks
+                        .FirstOrDefaultAsync(x =>
+                        x.BookId == requestModel.BookId
+                        &&
+                        !x.IsDeleted);
             if (item is null)
             {
+
                 return new BookPatchResponseModel
                 {
                     isSuccess = false,
@@ -175,7 +179,7 @@ public class BookService
             if (requestModel.StockQuantity.HasValue) item.StockQuantity = requestModel.StockQuantity.Value;
 
             item.UpdatedAt = DateTime.Now;
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             return new BookPatchResponseModel
             {
@@ -204,11 +208,13 @@ public class BookService
         }
     }
 
-    public BookDeleteResponseModel DeleteBook(BookDeleteRequestModel requestModel)
+    public async Task<BookDeleteResponseModel> DeleteBookAsync(BookDeleteRequestModel requestModel)
     {
         try
         {
-            var item = _db.TblBooks.FirstOrDefault(x => x.BookId == requestModel.BookId);
+            var item = await _db.TblBooks
+                    .FirstOrDefaultAsync(x =>
+                    x.BookId == requestModel.BookId);
             if (item is null)
             {
                 return new BookDeleteResponseModel
@@ -221,7 +227,7 @@ public class BookService
             // Soft delete
             item.IsDeleted = true;
             item.UpdatedAt = DateTime.Now;
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             return new BookDeleteResponseModel
             {

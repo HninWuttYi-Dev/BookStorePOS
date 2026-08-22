@@ -28,7 +28,7 @@ public partial class MainForm : Form
         }
     }
 
-    private void btnCreate_Click(object sender, EventArgs e)
+    private async void btnCreate_Click(object sender, EventArgs e)
     {
         if (decimal.TryParse(txtPrice.Text, out decimal price) && int.TryParse(txtStock.Text, out int stock))
         {
@@ -41,7 +41,7 @@ public partial class MainForm : Form
                 Price = price,
                 StockQuantity = stock
             };
-            var res = _bookService.CreateBook(req);
+            var res = await _bookService.CreateBookAsync(req);
             if (res.isSuccess)
             {
                 MessageBox.Show("Book created successfully", "Success");
@@ -59,7 +59,7 @@ public partial class MainForm : Form
         }
     }
 
-    private void btnUpdate_Click(object sender, EventArgs e)
+    private async void btnUpdate_Click(object sender, EventArgs e)
     {
         if (dataGridViewBooks.SelectedRows.Count > 0)
         {
@@ -78,7 +78,7 @@ public partial class MainForm : Form
                 StockQuantity = stock > 0 ? stock : null
             };
 
-            var res = _bookService.UpdateBook(req);
+            var res =await _bookService.UpdateBookAsync(req);
             if (res.isSuccess)
             {
                 MessageBox.Show("Book updated successfully", "Success");
@@ -91,13 +91,13 @@ public partial class MainForm : Form
         }
     }
 
-    private void btnDelete_Click(object sender, EventArgs e)
+    private async void btnDelete_Click(object sender, EventArgs e)
     {
         if (dataGridViewBooks.SelectedRows.Count > 0)
         {
             var bookId = (int)dataGridViewBooks.SelectedRows[0].Cells["BookId"].Value;
             var req = new BookDeleteRequestModel { BookId = bookId };
-            var res = _bookService.DeleteBook(req);
+            var res =await _bookService.DeleteBookAsync(req);
             
             if (res.isSuccess)
             {

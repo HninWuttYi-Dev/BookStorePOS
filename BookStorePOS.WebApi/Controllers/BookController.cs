@@ -20,7 +20,7 @@ public class BookController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetBooksAsync([FromQuery] BookListRequestModel requestModel)
     {
-        var response =await _bookService.GetBooksAsync(requestModel);
+        var response = await _bookService.GetBooksAsync(requestModel);
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
@@ -28,32 +28,33 @@ public class BookController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetBookByIdAsync(int id)
     {
-        var response =await _bookService.GetBookAsync(new BookEditRequestModel{BookId = id});
+        var response = await _bookService.GetBookAsync(new BookEditRequestModel { BookId = id });
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
 
     [HttpPost]
-    public IActionResult CreateBook([FromBody] BookCreateRequestModel requestModel)
+    public async Task<IActionResult> CreateBookAsync([FromBody] BookCreateRequestModel requestModel)
     {
-        var response = _bookService.CreateBook(requestModel);
+        var response = await _bookService.CreateBookAsync(requestModel);
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
 
     [HttpPatch("{id}")]
-    public IActionResult UpdateBook(int id, [FromBody] BookPatchRequestModel requestModel)
+    public async Task<IActionResult> UpdateBookAsync(int id, [FromBody] BookPatchRequestModel requestModel)
     {
         requestModel.BookId = id;
-        var response = _bookService.UpdateBook(requestModel);
+        var response = await _bookService.UpdateBookAsync(requestModel);
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
 
     [HttpDelete("{id}")]
-    public IActionResult DeleteBook(int id)
+    public async Task<IActionResult> DeleteBookAsync(int id)
     {
-        var response = _bookService.DeleteBook(new BookDeleteRequestModel{BookId = id});
+        var response = await _bookService.DeleteBookAsync(
+            new BookDeleteRequestModel { BookId = id });
         if (!response.isSuccess) return BadRequest(response);
         return Ok(response);
     }
