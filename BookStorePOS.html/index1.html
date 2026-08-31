@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookStorePOS</title>
+    <meta name="description" content="BookStorePOS — A modern point of sale system for book stores.">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══ ICON SIDEBAR ═══ -->
+<aside class="icon-sidebar">
+    <div class="sidebar-brand">📖</div>
+    <nav class="sidebar-nav">
+        <button class="sidebar-icon-btn active tab-switch" id="nav-books" data-tab="books">
+            📚
+            <span class="tooltip">Books</span>
+        </button>
+        <button class="sidebar-icon-btn tab-switch" id="nav-orders" data-tab="orders">
+            🧾
+            <span class="tooltip">Orders</span>
+        </button>
+    </nav>
+</aside>
+
+<!-- ═══ APP SHELL ═══ -->
+<div class="app-shell">
+    <!-- ── Main Column ── -->
+    <div class="main-col">
+
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="Search book name, author, genre…">
+            </div>
+            <div class="topbar-spacer"></div>
+            <button class="notif-btn" title="Notifications">🔔</button>
+            <div class="topbar-user">
+                <div class="user-avatar">P</div>
+                <span class="user-name">POS Admin</span>
+            </div>
+        </header>
+
+        <!-- ══════ BOOKS PAGE ══════ -->
+        <div class="main-scroll page-view active" id="page-books">
+
+            <!-- Hero -->
+            <div class="hero-banner">
+                <div class="hero-text">
+                    <h1>Welcome back,<br><span>BookStore POS</span></h1>
+                    <p>Manage your catalogue, track stock levels, and process sales — all from one place.</p>
+                    <button class="hero-btn open-book-modal">＋ &nbsp;Add New Book &nbsp;↗</button>
+                </div>
+            </div>
+
+            <!-- Books Grid -->
+            <div class="section-row">
+                <div class="section-title">Books Catalogue <span id="books-count-label"></span></div>
+                <div class="see-more">
+                    <button title="Grid View">⊞</button>
+                </div>
+            </div>
+
+            <div class="books-grid" id="books-grid">
+                <!-- JS populated -->
+            </div>
+
+            <!-- Low Stock Row -->
+            <div id="low-stock-section" style="margin-top:8px;">
+                <div class="section-row">
+                    <div class="section-title">Low Stock Alert <span id="low-stock-count-label"></span></div>
+                </div>
+                <div id="low-stock-list"></div>
+            </div>
+
+        </div><!-- /page-books -->
+
+        <!-- ══════ ORDERS PAGE ══════ -->
+        <div class="main-scroll page-view" id="page-orders">
+
+            <!-- Hero -->
+            <div class="hero-banner">
+                <div class="hero-text">
+                    <h1>Sales &amp; <span>Orders</span></h1>
+                    <p>View your order history, track revenue, and create new sales transactions.</p>
+                    <button class="hero-btn open-order-modal">＋ &nbsp;Create New Order &nbsp;↗</button>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div class="section-row">
+                <div class="section-title">Order History <span id="orders-count-label"></span></div>
+            </div>
+
+            <div id="orders-list"></div>
+
+            <!-- Order Detail Inline -->
+            <div class="order-detail-inline" id="order-detail-panel">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+                    <div>
+                        <div class="section-title" id="od-title">Order Details</div>
+                        <div style="font-size:12px; color:var(--ink-light); margin-top:4px;" id="od-meta"></div>
+                    </div>
+                    <button class="modal-close close-order-detail">×</button>
+                </div>
+                <div id="od-items-list"></div>
+                <div class="cart-total-strip" style="margin-top:12px;">
+                    <span class="cart-total-label">Total Amount</span>
+                    <span class="cart-total-amt" id="od-total"></span>
+                </div>
+            </div>
+
+        </div><!-- /page-orders -->
+
+    </div><!-- /main-col -->
+
+    <!-- ── Right Panel ── -->
+    <aside class="right-panel" id="right-panel-books">
+
+        <!-- Stats -->
+        <div class="rp-section">
+            <div class="rp-title">Quick Stats</div>
+
+            <div class="stat-mini">
+                <div class="stat-mini-icon icon-red">📚</div>
+                <div>
+                    <div class="stat-mini-val" id="rp-total-books">0</div>
+                    <div class="stat-mini-label">Total Titles</div>
+                </div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-icon icon-green">📦</div>
+                <div>
+                    <div class="stat-mini-val" id="rp-total-stock">0</div>
+                    <div class="stat-mini-label">Units in Stock</div>
+                </div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-icon icon-orange">⚠️</div>
+                <div>
+                    <div class="stat-mini-val" id="rp-low-stock">0</div>
+                    <div class="stat-mini-label">Low / Out of Stock</div>
+                </div>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-icon icon-red">🧾</div>
+                <div>
+                    <div class="stat-mini-val" id="rp-total-orders">0</div>
+                    <div class="stat-mini-label">Total Orders</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Detail -->
+        <div class="rp-section" id="rp-book-detail-section" style="display:none;">
+            <div class="rp-title">Book Details</div>
+            <div class="detail-card" id="rp-book-detail"></div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="rp-section">
+            <div class="rp-title">Quick Actions</div>
+            <div class="quick-actions">
+                <button class="quick-action-btn open-book-modal">
+                    <span class="qa-icon">➕</span> Add New Book
+                </button>
+                <button class="quick-action-btn open-order-modal">
+                    <span class="qa-icon">🧾</span> Create New Order
+                </button>
+                <button class="quick-action-btn tab-switch" data-tab="orders">
+                    <span class="qa-icon">📊</span> View Orders
+                </button>
+            </div>
+        </div>
+
+    </aside>
+</div><!-- /app-shell -->
+
+<!-- ═══════════════════════════════════
+     BOOK FORM MODAL
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="book-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 class="modal-title" id="book-modal-title">Add New Book</h2>
+            <button class="modal-close close-book-modal">×</button>
+        </div>
+        <input type="hidden" id="bookId">
+        <div class="form-grid">
+            <div class="field">
+                <label>Title *</label>
+                <input type="text" id="b-title" placeholder="e.g. The Great Gatsby">
+            </div>
+            <div class="field">
+                <label>Author *</label>
+                <input type="text" id="b-author" placeholder="e.g. F. Scott Fitzgerald">
+            </div>
+            <div class="field">
+                <label>Genre *</label>
+                <input type="text" id="b-genre" placeholder="e.g. Classic Fiction">
+            </div>
+            <div class="field">
+                <label>Price (MMK) *</label>
+                <input type="number" step="1" id="b-price" placeholder="0">
+            </div>
+            <div class="field">
+                <label>Stock Quantity *</label>
+                <input type="number" id="b-stock" placeholder="0">
+            </div>
+            <div class="field">
+                <label>Description</label>
+                <textarea id="b-desc" placeholder="Brief description…"></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn-cancel close-book-modal">Cancel</button>
+                <button class="btn-save" id="btnSaveBook">Save Book</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     ORDER FORM MODAL
+═══════════════════════════════════ -->
+<div class="modal-overlay" id="order-modal">
+    <div class="modal-box order-modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Create New Order</h2>
+            <button class="modal-close close-order-modal">×</button>
+        </div>
+        <div class="order-modal-body">
+            <!-- Left: select -->
+            <div class="order-select-col">
+                <div style="font-family:'DM Serif Display',serif; font-size:16px; margin-bottom:16px; color:var(--ink);">Select Book</div>
+                <div class="field" style="margin-bottom:14px;">
+                    <label>Book</label>
+                    <select id="o-book-select">
+                        <option value="">— Choose —</option>
+                    </select>
+                </div>
+                <div class="field" style="margin-bottom:18px;">
+                    <label>Quantity</label>
+                    <input type="number" id="o-qty" value="1" min="1">
+                </div>
+                <button class="btn-save" id="btn-add-to-cart" style="width:100%; border-radius:10px; padding:11px;">
+                    ＋ Add to Cart
+                </button>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <!-- Right: cart -->
+            <div class="order-cart-col">
+                <div style="font-family:'DM Serif Display',serif; font-size:16px; margin-bottom:16px; color:var(--ink);">Shopping Cart</div>
+                <div id="cart-items" style="min-height:120px; max-height:240px; overflow-y:auto;">
+                    <div style="text-align:center; padding:32px; color:var(--ink-light); font-style:italic; font-size:13px;">Cart is empty.</div>
+                </div>
+                <div class="cart-total-strip">
+                    <span class="cart-total-label">Grand Total</span>
+                    <span class="cart-total-amt" id="cart-total">0 MMK</span>
+                </div>
+                <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+                    <button class="btn-save" id="btn-submit-order" style="padding:11px 30px; font-size:13px;">
+                        ✓ &nbsp; Save Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery -->
+<script src="./js/jquery-4.0.0.min.js"></script>
+<script src="js/dbService.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
