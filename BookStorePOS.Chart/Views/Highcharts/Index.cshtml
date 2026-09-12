@@ -1,0 +1,65 @@
+@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "Highcharts - Revenue Analytics";
+    List<decimal> series = ViewData["Series"] as List<decimal> ?? new List<decimal>();
+    List<string> labels = ViewData["Labels"] as List<string> ?? new List<string>();
+}
+
+<div class="chart-card">
+    <h3 class="chart-title">Order Revenue (Highcharts)</h3>
+    <div id="highChart" style="height: 400px; width: 100%;"></div>
+</div>
+
+@section Scripts {
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-3d.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            Highcharts.chart('highChart', {
+                chart: { 
+                    type: 'column',
+                    backgroundColor: 'transparent',
+                    style: { fontFamily: 'DM Sans, sans-serif' },
+                    options3d: {
+                        enabled: true,
+                        alpha: 15,
+                        beta: 15,
+                        depth: 50,
+                        viewDistance: 25
+                    }
+                },
+                title: { text: '' },
+                xAxis: { 
+                    categories: @Html.Raw(JsonConvert.SerializeObject(labels)),
+                    lineColor: '#EDE8DC',
+                    labels: { style: { color: '#A8A29E' }, skew3d: true }
+                },
+                yAxis: { 
+                    title: { text: '' },
+                    gridLineColor: '#EDE8DC',
+                    labels: { style: { color: '#A8A29E' } }
+                },
+                tooltip: {
+                    backgroundColor: '#FFFFFF',
+                    borderColor: '#EDE8DC',
+                    borderRadius: 10,
+                    style: { color: '#1C1917', fontSize: '13px' },
+                    valueSuffix: ' MMK'
+                },
+                plotOptions: {
+                    column: {
+                        depth: 25,
+                        color: '#C0392B',
+                        borderColor: '#922B21'
+                    }
+                },
+                series: [{ 
+                    name: 'Revenue', 
+                    data: @Html.Raw(JsonConvert.SerializeObject(series))
+                }],
+                credits: { enabled: false },
+                legend: { enabled: false }
+            });
+        });
+    </script>
+}

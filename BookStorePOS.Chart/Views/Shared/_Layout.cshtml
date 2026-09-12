@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - BookStorePOS.Chart</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    
+    <!-- Sidebar -->
+    <aside class="icon-sidebar">
+        <div class="sidebar-brand">
+            BookStore POS
+        </div>
+        <nav class="sidebar-nav">
+            <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "ApexCharts" ? "active" : "")" 
+               asp-controller="ApexCharts" asp-action="Index">
+               📊 ApexCharts
+            </a>
+            <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "CanvasJs" ? "active" : "")" 
+               asp-controller="CanvasJs" asp-action="Index">
+               📈 CanvasJS
+            </a>
+            <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Chartjs" ? "active" : "")" 
+               asp-controller="Chartjs" asp-action="Index">
+               📉 Chart.js
+            </a>
+            <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Highcharts" ? "active" : "")" 
+               asp-controller="Highcharts" asp-action="Index">
+               📈 Highcharts
+            </a>
+        </nav>
+    </aside>
+
+    <!-- App Shell -->
+    <div class="app-shell">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <h1 class="topbar-title">@ViewData["Title"]</h1>
+            <div style="display:flex; align-items:center; gap: 10px;">
+                <div class="user-avatar">P</div>
+                <span style="font-weight: 500; font-size: 14px;">POS Admin</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

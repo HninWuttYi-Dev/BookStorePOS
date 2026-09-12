@@ -4,4 +4,5 @@
   <Project Path="BookStorePOS.WebApi/BookStorePOS.WebApi.csproj" />
   <Project Path="BookStorePos.WindowForm/BookStorePos.WindowForm.csproj" />
   <Project Path="BookStorePOS.ConsoleApp/BookStorePOS.ConsoleApp.csproj" />
+  <Project Path="BookStorePOS.Chart/BookStorePOS.Chart.csproj" />
 </Solution>

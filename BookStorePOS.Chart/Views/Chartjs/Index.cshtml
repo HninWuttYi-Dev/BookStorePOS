@@ -1,0 +1,67 @@
+@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "Chart.js - Revenue Analytics";
+    List<decimal> series = ViewData["Series"] as List<decimal> ?? new List<decimal>();
+    List<string> labels = ViewData["Labels"] as List<string> ?? new List<string>();
+}
+
+<div class="chart-card">
+    <h3 class="chart-title">Order Revenue (Chart.js)</h3>
+    <div style="height: 400px; width: 100%;">
+        <canvas id="chartJs"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var ctx = document.getElementById('chartJs').getContext('2d');
+            
+            var chartJs = new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: @Html.Raw(JsonConvert.SerializeObject(labels)),
+                    datasets: [{
+                        label: 'Total Revenue',
+                        data: @Html.Raw(JsonConvert.SerializeObject(series)),
+                        backgroundColor: [
+                            'rgba(192, 57, 43, 0.7)',
+                            'rgba(217, 119, 6, 0.7)',
+                            'rgba(22, 163, 74, 0.7)',
+                            'rgba(28, 25, 23, 0.7)',
+                            'rgba(87, 83, 78, 0.7)'
+                        ],
+                        borderColor: '#FDFAF4',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { font: { family: 'DM Sans' } } },
+                        tooltip: {
+                            backgroundColor: '#1C1917',
+                            titleFont: { family: 'DM Sans', size: 14 },
+                            bodyFont: { family: 'DM Sans', size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': ' + context.parsed.r + ' MMK';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            ticks: { display: false },
+                            grid: { color: '#EDE8DC' }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

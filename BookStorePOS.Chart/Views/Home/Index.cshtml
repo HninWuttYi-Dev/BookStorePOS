@@ -1,0 +1,231 @@
+@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "Overall Dashboard";
+    
+    var totalSales = ViewData["TotalSales"] as string;
+    var totalOrders = ViewData["TotalOrders"] as string;
+    var totalStock = ViewData["TotalStock"] as string;
+
+    var salesHistory = ViewData["SalesHistory"];
+    var ordersHistory = ViewData["OrdersHistory"];
+    var stockHistory = ViewData["StockHistory"];
+
+    var topBookLabels = ViewData["TopBookLabels"];
+    var topBookStock = ViewData["TopBookStock"];
+}
+
+<style>
+    .metric-card {
+        background: #FFFFFF;
+        border-radius: 6px;
+        padding: 20px 20px 0 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #F3F4F6;
+        margin-bottom: 24px;
+        height: 140px;
+        position: relative;
+        overflow: hidden;
+    }
+    .metric-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        color: #9CA3AF;
+        margin-bottom: 4px;
+    }
+    .metric-value {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 28px;
+        color: #111827;
+        font-weight: 700;
+    }
+    .sparkline-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    .main-card {
+        background: #FFFFFF;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #F3F4F6;
+        margin-bottom: 24px;
+        height: 100%;
+    }
+    .main-card-title {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 20px;
+    }
+    .breadcrumb-item a {
+        color: #3B82F6 !important;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0" style="background: transparent; padding: 0;">
+            <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Home</a></li>
+            <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">JavaScript Demos</a></li>
+            <li class="breadcrumb-item"><a href="#" style="text-decoration: none;">Dashboards</a></li>
+            <li class="breadcrumb-item active" aria-current="page" style="color: #6B7280; font-family: 'DM Sans';">Dashboard Concept - Modern</li>
+        </ol>
+    </nav>
+    <button class="btn btn-outline-primary" style="border-color: #3B82F6; color: #3B82F6; font-family: 'DM Sans'; font-size: 14px; border-radius: 4px;">
+        <i class="bi bi-code-slash"></i> View Code & Data
+    </button>
+</div>
+
+<!-- Metrics Row -->
+<div class="row">
+    <!-- Sales -->
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-value">$@totalSales</div>
+            <div class="metric-title">Total Revenue</div>
+            <div class="sparkline-container" id="spark1"></div>
+        </div>
+    </div>
+    <!-- Orders -->
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-value">@totalOrders</div>
+            <div class="metric-title">Total Orders</div>
+            <div class="sparkline-container" id="spark2"></div>
+        </div>
+    </div>
+    <!-- Stock -->
+    <div class="col-md-4">
+        <div class="metric-card">
+            <div class="metric-value">@totalStock</div>
+            <div class="metric-title">Total Books in Stock</div>
+            <div class="sparkline-container" id="spark3"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Charts Row -->
+<div class="row">
+    <!-- Column Chart -->
+    <div class="col-md-7">
+        <div class="main-card">
+            <div class="main-card-title">Product Quantity Sales</div>
+            <div id="columnChart"></div>
+        </div>
+    </div>
+    <!-- Donut Chart -->
+    <div class="col-md-5">
+        <div class="main-card">
+            <div class="main-card-title">Department Share by Product</div>
+            <div id="donutChart"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // Sparkline options factory
+            function getSparklineOptions(data, color, type) {
+                return {
+                    series: [{ data: data }],
+                    chart: { type: type, width: '100%', height: 60, sparkline: { enabled: true } },
+                    stroke: { curve: 'smooth', width: 2 },
+                    colors: [color],
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0, stops: [0, 100]
+                        }
+                    },
+                    tooltip: {
+                        fixed: { enabled: false },
+                        x: { show: false },
+                        y: { title: { formatter: function (seriesName) { return '' } } },
+                        marker: { show: false }
+                    }
+                };
+            }
+
+            // Render Sparklines
+            var spark1 = new ApexCharts(document.querySelector("#spark1"), 
+                getSparklineOptions(@Html.Raw(JsonConvert.SerializeObject(salesHistory)), '#6B7280', 'area'));
+            spark1.render();
+
+            var spark2 = new ApexCharts(document.querySelector("#spark2"), 
+                getSparklineOptions(@Html.Raw(JsonConvert.SerializeObject(ordersHistory)), '#9CA3AF', 'line'));
+            spark2.render();
+
+            var spark3 = new ApexCharts(document.querySelector("#spark3"), 
+                getSparklineOptions(@Html.Raw(JsonConvert.SerializeObject(stockHistory)), '#3B82F6', 'line'));
+            spark3.render();
+
+            // Column Chart
+            var columnOptions = {
+                series: [{
+                    name: 'Sales',
+                    data: @Html.Raw(JsonConvert.SerializeObject(topBookStock))
+                }],
+                chart: { type: 'bar', height: 350, toolbar: { show: false } },
+                plotOptions: {
+                    bar: { borderRadius: 4, columnWidth: '40%', dataLabels: { position: 'center' } }
+                },
+                dataLabels: {
+                    enabled: true,
+                    style: { colors: ['#fff'], fontFamily: 'DM Sans', fontSize: '12px' }
+                },
+                xaxis: {
+                    categories: @Html.Raw(JsonConvert.SerializeObject(topBookLabels)),
+                    labels: { style: { colors: '#6B7280', fontFamily: 'DM Sans' } },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false }
+                },
+                yaxis: {
+                    labels: { style: { colors: '#6B7280', fontFamily: 'DM Sans' } }
+                },
+                grid: {
+                    borderColor: '#F3F4F6',
+                    strokeDashArray: 4,
+                    yaxis: { lines: { show: true } }
+                },
+                colors: ['#3B82F6']
+            };
+            var columnChart = new ApexCharts(document.querySelector("#columnChart"), columnOptions);
+            columnChart.render();
+
+            // Donut Chart
+            var donutOptions = {
+                series: @Html.Raw(JsonConvert.SerializeObject(topBookStock)),
+                chart: { type: 'donut', height: 350 },
+                labels: @Html.Raw(JsonConvert.SerializeObject(topBookLabels)),
+                dataLabels: {
+                    enabled: true,
+                    formatter: function (val) {
+                        return val.toFixed(1) + "%"
+                    },
+                    style: { fontFamily: 'DM Sans', fontSize: '11px' }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: { size: '65%' },
+                        expandOnClick: false
+                    }
+                },
+                colors: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'],
+                legend: {
+                    position: 'left',
+                    fontFamily: 'DM Sans',
+                    labels: { colors: '#4B5563' },
+                    markers: { radius: 12 }
+                }
+            };
+            var donutChart = new ApexCharts(document.querySelector("#donutChart"), donutOptions);
+            donutChart.render();
+        });
+    </script>
+}

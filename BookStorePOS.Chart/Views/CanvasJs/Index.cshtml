@@ -1,0 +1,44 @@
+@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "CanvasJS - Price Analytics";
+    var dataPoints = ViewData["DataPoints"];
+}
+
+<div class="chart-card">
+    <h3 class="chart-title">Book Prices</h3>
+    <div id="canvasChart" style="height: 400px; width: 100%;"></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            CanvasJS.addColorSet("customColorSet", ["#C0392B", "#D97706", "#16A34A", "#1C1917", "#57534E", "#A8A29E"]);
+            
+            var chart = new CanvasJS.Chart("canvasChart", {
+                animationEnabled: true,
+                colorSet: "customColorSet",
+                backgroundColor: "transparent",
+                title: { text: "" },
+                toolTip: {
+                    cornerRadius: 8,
+                    fontFamily: "DM Sans",
+                    backgroundColor: "rgba(255,255,255,0.95)",
+                    borderColor: "#EDE8DC"
+                },
+                data: [{
+                    type: "funnel",
+                    indexLabel: "{label} - ${y}",
+                    indexLabelFontFamily: "DM Sans",
+                    indexLabelFontColor: "#57534E",
+                    toolTipContent: "<b>{label}</b>: ${y}",
+                    neckWidth: 20,
+                    neckHeight: 0,
+                    valueRepresents: "area",
+                    dataPoints: @Html.Raw(JsonConvert.SerializeObject(dataPoints))
+                }]
+            });
+            chart.render();
+        });
+    </script>
+}

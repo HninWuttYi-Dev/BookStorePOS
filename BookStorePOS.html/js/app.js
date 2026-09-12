@@ -67,7 +67,8 @@ function renderBooksGrid(books) {
     let html = '';
     books.forEach((b, i) => {
         let pill = '', pillCls = '';
-        if (b.stockQuantity === 0)      { pill = 'Out'; pillCls = 'pill-zero'; }
+        if (b.stockQuantity === 0)  { 
+        pill = 'Out'; pillCls = 'pill-zero'; }
         else if (b.stockQuantity <= 5)  { pill = b.stockQuantity + ' left'; pillCls = 'pill-low'; }
         else                            { pill = b.stockQuantity; pillCls = 'pill-ok'; }
 

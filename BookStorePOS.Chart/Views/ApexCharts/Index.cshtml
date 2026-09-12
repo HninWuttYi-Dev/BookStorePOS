@@ -1,0 +1,52 @@
+@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "ApexCharts - Stock Analytics";
+    List<int> series = ViewData["Series"] as List<int> ?? new List<int>();
+    List<string> labels = ViewData["Labels"] as List<string> ?? new List<string>();
+}
+
+<div class="chart-card">
+    <h3 class="chart-title">Book Stock Quantities</h3>
+    <div id="apexChart"></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var options = {
+                series: [{ 
+                    name: 'Stock', 
+                    data: @Html.Raw(JsonConvert.SerializeObject(series)) 
+                }],
+                chart: { 
+                    type: 'radar', 
+                    height: 450,
+                    toolbar: { show: false },
+                    fontFamily: 'DM Sans, sans-serif'
+                },
+                stroke: { width: 3, colors: ['#C0392B'] },
+                fill: { opacity: 0.2, colors: ['#C0392B'] },
+                markers: { size: 5, hover: { size: 8 } },
+                xaxis: {
+                    categories: @Html.Raw(JsonConvert.SerializeObject(labels)),
+                    labels: {
+                        style: { colors: '#A8A29E', fontSize: '13px', fontFamily: 'DM Sans' }
+                    }
+                },
+                yaxis: { show: false },
+                plotOptions: {
+                    radar: {
+                        polygons: {
+                            strokeColors: '#EDE8DC',
+                            connectorColors: '#EDE8DC'
+                        }
+                    }
+                },
+                tooltip: { theme: 'light' }
+            };
+            var chart = new ApexCharts(document.querySelector("#apexChart"), options);
+            chart.render();
+        });
+    </script>
+}
