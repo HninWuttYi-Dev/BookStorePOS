@@ -7,6 +7,8 @@ public partial class TblBook
 {
     public int BookId { get; set; }
 
+    public string? Isbn { get; set; }
+
     public string Title { get; set; } = null!;
 
     public string Author { get; set; } = null!;
@@ -18,6 +20,8 @@ public partial class TblBook
     public decimal Price { get; set; }
 
     public int StockQuantity { get; set; }
+
+    public int ReorderLevel { get; set; }
 
     public bool IsDeleted { get; set; }
 

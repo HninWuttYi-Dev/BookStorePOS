@@ -1,4 +1,5 @@
 using System;
+using System.ClientModel.Primitives;
 using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookStorePOS.Domain.Features.Book;
 
-public class BookService
+public class BookService : IBookService
 {
     private readonly AppDbContext _db;
 
@@ -30,12 +31,14 @@ public class BookService
                 books.Add(new BookModel
                 {
                     BookId = item.BookId,
+                    Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
                     Genre = item.Genre,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
+                    ReorderLevel = item.ReorderLevel,
                     IsDeleted = item.IsDeleted
                 });
             }
@@ -83,12 +86,14 @@ public class BookService
                 Data = new BookModel
                 {
                     BookId = item.BookId,
+                    Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
                     Genre = item.Genre,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
+                    ReorderLevel = item.ReorderLevel,
                     IsDeleted = item.IsDeleted
                 }
             };
@@ -119,11 +124,13 @@ public class BookService
             TblBook book = new TblBook
             {
                 Title = requestModel.Title,
+                Isbn = requestModel.Isbn,
                 Author = requestModel.Author,
                 Genre = requestModel.Genre,
                 Description = requestModel.Description,
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
+                ReorderLevel = requestModel.ReorderLevel,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
             };
@@ -137,12 +144,14 @@ public class BookService
                 Data = new BookModel
                 {
                     BookId = book.BookId,
+                    Isbn = book.Isbn,
                     Title = book.Title,
                     Author = book.Author,
                     Genre = book.Genre,
                     Description = book.Description,
                     Price = book.Price,
                     StockQuantity = book.StockQuantity,
+                    ReorderLevel = requestModel.ReorderLevel,
                     IsDeleted = book.IsDeleted
                 }
             };
@@ -176,12 +185,13 @@ public class BookService
                     Message = "Book doesn't exist"
                 };
             }
-
+            if (!string.IsNullOrEmpty(requestModel.Isbn)) item.Isbn = requestModel.Isbn;
             if (!string.IsNullOrEmpty(requestModel.Title)) item.Title = requestModel.Title;
             if (!string.IsNullOrEmpty(requestModel.Author)) item.Author = requestModel.Author;
             if (!string.IsNullOrEmpty(requestModel.Genre)) item.Genre = requestModel.Genre;
             if (requestModel.Description != null) item.Description = requestModel.Description;
             if (requestModel.Price.HasValue) item.Price = requestModel.Price.Value;
+            if (requestModel.ReorderLevel.HasValue) item.ReorderLevel = requestModel.ReorderLevel.Value;
             if (requestModel.StockQuantity.HasValue) item.StockQuantity = requestModel.StockQuantity.Value;
 
             item.UpdatedAt = DateTime.Now;
@@ -195,12 +205,14 @@ public class BookService
                 Data = new BookModel
                 {
                     BookId = item.BookId,
+                    Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
                     Genre = item.Genre,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
+                    ReorderLevel = item.ReorderLevel,
                     IsDeleted = item.IsDeleted
                 }
             };
@@ -245,12 +257,14 @@ public class BookService
                 Data = new BookModel
                 {
                     BookId = item.BookId,
+                    Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
                     Genre = item.Genre,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
+                    ReorderLevel = item.ReorderLevel,
                     IsDeleted = item.IsDeleted
                 }
             };

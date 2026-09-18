@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookStorePOS.Domain.Features.Order;
 
-public class OrderService
+public class OrderService : IOrderService
 {
     private readonly AppDbContext _db;
 
