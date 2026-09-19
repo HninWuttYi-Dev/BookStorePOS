@@ -21,10 +21,37 @@ public class BookService : IBookService
     {
         try
         {
-            var lst = await _db.TblBooks
+            var query = _db.TblBooks
                     .AsNoTracking()
-                    .Where(b => !b.IsDeleted)
-                    .ToListAsync();
+                    .Where(b => !b.IsDeleted);
+
+            //apply filters if the user sent a value
+            if (!string.IsNullOrWhiteSpace(requestModel.Title))
+            {
+                query = query.Where(b => b.Title.Contains(requestModel.Title));
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestModel.Author))
+            {
+                query = query.Where(b => b.Author.Contains(requestModel.Author));
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestModel.Genre))
+            {
+                query = query.Where(b => b.Genre.Contains(requestModel.Genre));
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+            {
+                query = query.Where(b => b.Isbn != null && b.Isbn.Contains(requestModel.Isbn));
+            }
+
+            if (requestModel.OnlyLowStock == true)
+            {
+                query = query.Where(b => b.StockQuantity <= b.ReorderLevel);
+            }
+
+            var lst = await query.ToListAsync();
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
             {

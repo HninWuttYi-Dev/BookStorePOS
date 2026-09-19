@@ -4,6 +4,11 @@ namespace BookStorePOS.Domain.Models.Book;
 
 public class BookListRequestModel
 {
+    public string? Isbn {get; set;}
+    public string? Title {get; set;}
+    public string? Author { get; set; }
+    public string? Genre {get; set;}
+    public bool? OnlyLowStock {get; set;}
 }
 
 public class BookListResponseModel
