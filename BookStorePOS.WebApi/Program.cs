@@ -15,8 +15,8 @@ builder.Services.AddDbContext<AppDbContext>(opts =>
 {
     opts.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
 });
-builder.Services.AddScoped<BookService>();
-builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -9,9 +9,9 @@ namespace BookStorePOS.WebApi.Controllers;
 [Route("api/[controller]")]
 public class BookController : ControllerBase
 {
-    private readonly BookService _bookService;
+    private readonly IBookService _bookService;
 
-    public BookController(BookService bookService)
+    public BookController(IBookService bookService)
     {
         _bookService = bookService;
     }
