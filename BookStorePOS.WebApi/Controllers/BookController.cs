@@ -34,6 +34,20 @@ public class BookController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("low-stock")]
+    public async Task<IActionResult> GetLowStockBooksAsync()
+    {
+        _logger.LogInformation("Get Low Stock Books Async => Fetching low stock books");
+        var response = await _bookService.GetLowStockBooksAsync();
+        if (!response.isSuccess)
+        {
+            _logger.LogWarning("Get Low Stock Books Async => Failed to fetch low stock books {Message}", response.Message);
+            return BadRequest(response);
+        }
+        _logger.LogInformation("Get Low Stock Books Async => Low stock books fetched successfully");
+        return Ok(response);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetBookByIdAsync(int id)
     {

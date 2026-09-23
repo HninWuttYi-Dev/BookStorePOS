@@ -8,5 +8,6 @@ public interface IBookService
     Task<BookDeleteResponseModel> DeleteBookAsync(BookDeleteRequestModel requestModel);
     Task<BookByIdResponseModel> GetBookAsync(BookByIdRequestModel requestModel);
     Task<BookListResponseModel> GetBooksAsync(BookListRequestModel requestModel);
+    Task<BookListResponseModel> GetLowStockBooksAsync();
     Task<BookPatchResponseModel> UpdateBookAsync(BookPatchRequestModel requestModel);
 }

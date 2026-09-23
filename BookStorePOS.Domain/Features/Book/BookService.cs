@@ -50,11 +50,6 @@ public class BookService : IBookService
                 query = query.Where(b => b.Isbn != null && b.Isbn.Contains(requestModel.Isbn));
             }
 
-            if (requestModel.OnlyLowStock == true)
-            {
-                query = query.Where(b => b.StockQuantity <= b.ReorderLevel);
-            }
-
             var lst = await query.ToListAsync();
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
@@ -439,6 +434,53 @@ public class BookService : IBookService
             {
                 isSuccess = false,
                 Message = "Failed to delete book: " + ex.Message
+            };
+        }
+    }
+
+    public async Task<BookListResponseModel> GetLowStockBooksAsync()
+    {
+        _logger.LogInformation("Get Low Stock Books Async => Fetching low stock books");
+        try
+        {
+            var query = _db.TblBooks
+                .AsNoTracking()
+                .Where(b => !b.IsDeleted && b.StockQuantity <= b.ReorderLevel);
+
+            var lst = await query.ToListAsync();
+            List<BookModel> books = new List<BookModel>();
+            foreach (var item in lst)
+            {
+                books.Add(new BookModel
+                {
+                    BookId = item.BookId,
+                    Isbn = item.Isbn,
+                    Title = item.Title,
+                    Author = item.Author,
+                    Genre = item.Genre,
+                    Description = item.Description,
+                    Price = item.Price,
+                    StockQuantity = item.StockQuantity,
+                    ReorderLevel = item.ReorderLevel,
+                    IsDeleted = item.IsDeleted
+                });
+            }
+
+            _logger.LogInformation("Get Low Stock Books Async => Low stock books fetched successfully");
+            return new BookListResponseModel
+            {
+                isSuccess = true,
+                Message = "Low stock books fetched successfully",
+                Data = books
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Get Low Stock Books Async => Failed to fetch low stock books");
+            return new BookListResponseModel
+            {
+                isSuccess = false,
+                Message = "Failed to fetch low stock books: " + ex.Message
             };
         }
     }
