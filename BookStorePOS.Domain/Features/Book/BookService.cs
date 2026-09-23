@@ -4,21 +4,26 @@ using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Models.Book;
+using BookStorePOS.Domain.Models.Book;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.Domain.Features.Book;
 
 public class BookService : IBookService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<BookService> _logger;
 
-    public BookService(AppDbContext db)
+    public BookService(AppDbContext db, ILogger<BookService> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task<BookListResponseModel> GetBooksAsync(BookListRequestModel requestModel)
     {
+        _logger.LogInformation("Get Books Async => Fetching all books");
         try
         {
             var query = _db.TblBooks
@@ -70,6 +75,7 @@ public class BookService : IBookService
                 });
             }
 
+            _logger.LogInformation("Get Books Async => Books fetched successfully");
             return new BookListResponseModel
             {
                 isSuccess = true,
@@ -79,6 +85,7 @@ public class BookService : IBookService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Get Books Async => Failed to fetch books {Message}", ex.Message);
             return new BookListResponseModel
             {
                 isSuccess = false,
@@ -89,6 +96,7 @@ public class BookService : IBookService
 
     public async Task<BookByIdResponseModel> GetBookAsync(BookByIdRequestModel requestModel)
     {
+        _logger.LogInformation("Get Book ById Async => Fetching book by Id");
         try
         {
             var item = await _db.TblBooks
@@ -100,12 +108,14 @@ public class BookService : IBookService
                         !x.IsDeleted);
             if (item is null)
             {
+                _logger.LogWarning("Get Book ById Async => Book is not found");
                 return new BookByIdResponseModel
                 {
                     isSuccess = false,
                     Message = "Book is not found"
                 };
             }
+            _logger.LogInformation("Get Book ById Async => Book fetched successfully");
             return new BookByIdResponseModel
             {
                 isSuccess = true,
@@ -127,6 +137,7 @@ public class BookService : IBookService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Get Book ById Async => Failed to fetch book {Message}", ex.Message);
             return new BookByIdResponseModel
             {
                 isSuccess = false,
@@ -137,14 +148,40 @@ public class BookService : IBookService
 
     public async Task<BookCreateResponseModel> CreateBookAsync(BookCreateRequestModel requestModel)
     {
+        _logger.LogInformation("Create Book Async => Creating book");
         try
         {
             if (requestModel.Price <= 0)
             {
+                _logger.LogWarning("Create Book Async => Price must be greater than 0");
                 return new BookCreateResponseModel
                 {
                     isSuccess = false,
                     Message = "Price must be greater than 0."
+                };
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+            {
+                bool isbnExists = await _db.TblBooks
+                    .AnyAsync(b => b.Isbn == requestModel.Isbn && !b.IsDeleted);
+
+                if (isbnExists)
+                {
+                    _logger.LogWarning("Create Book Async => A book with this ISBN already exists");
+                    return new BookCreateResponseModel
+                    {
+                        isSuccess = false,
+                        Message = "A book with this ISBN already exists."
+                    };
+                }
+            }
+            if (requestModel.StockQuantity <= 0)
+            {
+                _logger.LogWarning("Create Book Async => StockQuantity must be greater than 0");
+                return new BookCreateResponseModel
+                {
+                    isSuccess = false,
+                    Message = "StockQuantity must be greater than 0."
                 };
             }
 
@@ -164,6 +201,7 @@ public class BookService : IBookService
             _db.TblBooks.Add(book);
             await _db.SaveChangesAsync();
 
+            _logger.LogInformation("Create Book Async => Book is created successfully");
             return new BookCreateResponseModel
             {
                 isSuccess = true,
@@ -185,6 +223,7 @@ public class BookService : IBookService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Create Book Async => Failed to create book {Message}", ex.Message);
             return new BookCreateResponseModel
             {
                 isSuccess = false,
@@ -195,6 +234,7 @@ public class BookService : IBookService
 
     public async Task<BookPatchResponseModel> UpdateBookAsync(BookPatchRequestModel requestModel)
     {
+        _logger.LogInformation("Update Book Async => Updating book");
         try
         {
             var item = await _db.TblBooks
@@ -205,12 +245,29 @@ public class BookService : IBookService
                         !x.IsDeleted);
             if (item is null)
             {
-
+                _logger.LogWarning("Update Book Async => Book doesn't exist");
                 return new BookPatchResponseModel
                 {
                     isSuccess = false,
                     Message = "Book doesn't exist"
                 };
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+            {
+                bool isbnExists = await _db.TblBooks
+                    .AnyAsync(b => b.Isbn == requestModel.Isbn
+                                && b.BookId != requestModel.BookId
+                                && !b.IsDeleted);
+
+                if (isbnExists)
+                {
+                    _logger.LogWarning("Update Book Async => A book with this ISBN already exists");
+                    return new BookPatchResponseModel
+                    {
+                        isSuccess = false,
+                        Message = "A book with this ISBN already exists."
+                    };
+                }
             }
             if (!string.IsNullOrEmpty(requestModel.Isbn)) item.Isbn = requestModel.Isbn;
             if (!string.IsNullOrEmpty(requestModel.Title)) item.Title = requestModel.Title;
@@ -225,6 +282,7 @@ public class BookService : IBookService
             _db.Entry(item).State = EntityState.Modified;
             await _db.SaveChangesAsync();
 
+            _logger.LogInformation("Update Book Async => Book is updated successfully");
             return new BookPatchResponseModel
             {
                 isSuccess = true,
@@ -246,6 +304,7 @@ public class BookService : IBookService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Update Book Async => Failed to update book {Message}", ex.Message);
             return new BookPatchResponseModel
             {
                 isSuccess = false,
@@ -256,6 +315,7 @@ public class BookService : IBookService
 
     public async Task<BookDeleteResponseModel> DeleteBookAsync(BookDeleteRequestModel requestModel)
     {
+        _logger.LogInformation("Delete Book Async => Deleting book");
         try
         {
             var item = await _db.TblBooks
@@ -264,6 +324,7 @@ public class BookService : IBookService
                     x.BookId == requestModel.BookId);
             if (item is null)
             {
+                _logger.LogWarning("Delete Book Async => Book is not found");
                 return new BookDeleteResponseModel
                 {
                     isSuccess = false,
@@ -277,6 +338,7 @@ public class BookService : IBookService
             _db.Entry(item).State = EntityState.Modified;
             await _db.SaveChangesAsync();
 
+            _logger.LogInformation("Delete Book Async => Book is deleted successfully");
             return new BookDeleteResponseModel
             {
                 isSuccess = true,
@@ -298,6 +360,7 @@ public class BookService : IBookService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Delete Book Async => Failed to delete book {Message}", ex.Message);
             return new BookDeleteResponseModel
             {
                 isSuccess = false,

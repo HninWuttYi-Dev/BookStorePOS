@@ -2,6 +2,7 @@ using System;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Order;
 using BookStorePOS.Domain.Models.Order;
+using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
@@ -10,33 +11,53 @@ namespace BookStorePOS.WebApi.Controllers;
 public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;
+    private readonly ILogger<OrderController> _logger;
 
-    public OrderController(IOrderService orderService)
+    public OrderController(IOrderService orderService, ILogger<OrderController> logger)
     {
         _orderService = orderService;
+        _logger = logger;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetOrdersAsync([FromQuery] OrderListRequestModel requestModel)
     {
+        _logger.LogInformation("Get Orders Async => Fetching all orders");
         var response =await _orderService.GetOrdersAsync(requestModel);
-        if (!response.isSuccess) return BadRequest(response);
+        if (!response.isSuccess)
+        {
+            _logger.LogWarning("Get Orders Async => Failed to fetch orders {Message}", response.Message);
+            return BadRequest(response);
+        }
+        _logger.LogInformation("Get Orders Async => Orders fetched successfully");
         return Ok(response);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOrderAsync(int id)
     {
+        _logger.LogInformation("Get Order Async => Fetching order by Id");
         var response =await _orderService.GetOrder(new OrderGetByIdRequestModel{OrderId = id});
-        if (!response.isSuccess) return BadRequest(response);
+        if (!response.isSuccess)
+        {
+            _logger.LogWarning("Get Order Async => Failed to fetch order {Message}", response.Message);
+            return BadRequest(response);
+        }
+        _logger.LogInformation("Get Order Async => Order fetched successfully");
         return Ok(response);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateOrderAsync([FromBody] OrderCreateRequestModel requestModel)
     {
+        _logger.LogInformation("Create Order Async => Creating order");
         var response =await _orderService.CreateOrder(requestModel);
-        if (!response.isSuccess) return BadRequest(response);
+        if (!response.isSuccess)
+        {
+            _logger.LogWarning("Create Order Async => Failed to create order {Message}", response.Message);
+            return BadRequest(response);
+        }
+        _logger.LogInformation("Create Order Async => Order is created successfully");
         return Ok(response);
     }
 }

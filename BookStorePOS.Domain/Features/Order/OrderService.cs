@@ -3,21 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Models.Order;
+using BookStorePOS.Domain.Models.Order;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.Domain.Features.Order;
 
 public class OrderService : IOrderService
 {
     private readonly AppDbContext _db;
+    private readonly ILogger<OrderService> _logger;
 
-    public OrderService(AppDbContext db)
+    public OrderService(AppDbContext db, ILogger<OrderService> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task<OrderListResponseModel> GetOrdersAsync(OrderListRequestModel requestModel)
     {
+        _logger.LogInformation("Get Orders Async => Fetching all orders");
         try
         {
             var lst = await _db.TblOrders
@@ -34,6 +39,7 @@ public class OrderService : IOrderService
                 });
             }
 
+            _logger.LogInformation("Get Orders Async => Orders fetched successfully");
             return new OrderListResponseModel
             {
                 isSuccess = true,
@@ -43,6 +49,7 @@ public class OrderService : IOrderService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Get Orders Async => Failed to fetch orders {Message}", ex.Message);
             return new OrderListResponseModel
             {
                 isSuccess = false,
@@ -53,6 +60,7 @@ public class OrderService : IOrderService
 
     public async Task<OrderGetByIdResponseModel> GetOrder(OrderGetByIdRequestModel requestModel)
     {
+        _logger.LogInformation("Get Order Async => Fetching order by Id");
         try
         {
             var item = await _db.TblOrders
@@ -63,6 +71,7 @@ public class OrderService : IOrderService
 
             if (item is null)
             {
+                _logger.LogWarning("Get Order Async => Order is not found");
                 return new OrderGetByIdResponseModel
                 {
                     isSuccess = false,
@@ -91,6 +100,7 @@ public class OrderService : IOrderService
                 });
             }
 
+            _logger.LogInformation("Get Order Async => Order fetched successfully");
             return new OrderGetByIdResponseModel
             {
                 isSuccess = true,
@@ -100,6 +110,7 @@ public class OrderService : IOrderService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Get Order Async => Failed to fetch order {Message}", ex.Message);
             return new OrderGetByIdResponseModel
             {
                 isSuccess = false,
@@ -110,6 +121,7 @@ public class OrderService : IOrderService
 
     public async Task<OrderCreateResponseModel> CreateOrder(OrderCreateRequestModel requestModel)
     {
+        _logger.LogInformation("Create Order Async => Creating order");
         try
         {
             TblOrder order = new TblOrder
@@ -186,6 +198,7 @@ public class OrderService : IOrderService
                 modelItem.OrderId = order.OrderId;
             }
 
+            _logger.LogInformation("Create Order Async => Order is created successfully");
             return new OrderCreateResponseModel
             {
                 isSuccess = true,
@@ -201,6 +214,7 @@ public class OrderService : IOrderService
         }
         catch (Exception ex)
         {
+            _logger.LogWarning("Create Order Async => Failed to create order {Message}", ex.Message);
             return new OrderCreateResponseModel
             {
                 isSuccess = false,
