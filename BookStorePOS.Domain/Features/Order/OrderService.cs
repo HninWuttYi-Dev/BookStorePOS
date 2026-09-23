@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Models.Order;
-using BookStorePOS.Domain.Models.Order;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -122,42 +121,76 @@ public class OrderService : IOrderService
     public async Task<OrderCreateResponseModel> CreateOrder(OrderCreateRequestModel requestModel)
     {
         _logger.LogInformation("Create Order Async => Creating order");
+
         try
         {
-            TblOrder order = new TblOrder
+            if (requestModel.Items == null || !requestModel.Items.Any())
+            {
+                _logger.LogWarning("Create Order Async => Order items are required");
+                return new OrderCreateResponseModel
+                {
+                    isSuccess = false,
+                    Message = "Order must contain at least one item."
+                };
+            }
+
+            foreach (var item in requestModel.Items)
+            {
+                if (item.Quantity <= 0)
+                {
+                    return new OrderCreateResponseModel
+                    {
+                        isSuccess = false,
+                        Message = "Quantity must be greater than 0."
+                    };
+                }
+
+                var book = await _db.TblBooks
+                    .FirstOrDefaultAsync(b => b.BookId == item.BookId && !b.IsDeleted);
+
+                if (book == null)
+                {
+                    return new OrderCreateResponseModel
+                    {
+                        isSuccess = false,
+                        Message = $"Book with ID {item.BookId} not found or is deleted."
+                    };
+                }
+
+                if (book.StockQuantity < item.Quantity)
+                {
+                    return new OrderCreateResponseModel
+                    {
+                        isSuccess = false,
+                        Message = $"Insufficient stock for '{book.Title}'. Available: {book.StockQuantity}"
+                    };
+                }
+            }
+
+            // 3. Now create the order (all items are valid)
+            var order = new TblOrder
             {
                 OrderDate = DateTime.Now,
                 TotalPrice = 0
             };
 
-            // 1. Save the order FIRST to generate the OrderId
             _db.TblOrders.Add(order);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync();   // get OrderId
 
             decimal orderTotal = 0;
             var orderModelItems = new List<OrderItemModel>();
 
             foreach (var item in requestModel.Items)
             {
-                var book = _db.TblBooks.FirstOrDefault(b => b.BookId == item.BookId && !b.IsDeleted);
-                if (book == null)
-                {
-                    throw new Exception($"Book with ID {item.BookId} not found or is deleted.");
-                }
+                var book = await _db.TblBooks
+                    .FirstOrDefaultAsync(b => b.BookId == item.BookId && !b.IsDeleted);
 
-                if (book.StockQuantity < item.Quantity)
-                {
-                    throw new Exception($"Insufficient stock for Book '{book.Title}'. Available: {book.StockQuantity}");
-                }
-
-                // Deduct stock
                 book.StockQuantity -= item.Quantity;
 
                 decimal subtotal = book.Price * item.Quantity;
                 orderTotal += subtotal;
 
-                // Create OrderItem using the generated OrderId
-                TblOrderItem orderItem = new TblOrderItem
+                var orderItem = new TblOrderItem
                 {
                     OrderId = order.OrderId,
                     BookId = item.BookId,
@@ -166,7 +199,6 @@ public class OrderService : IOrderService
                     Subtotal = subtotal
                 };
 
-                // 2. Add directly to _db exactly as you learned
                 _db.TblOrderItems.Add(orderItem);
 
                 orderModelItems.Add(new OrderItemModel
@@ -179,24 +211,10 @@ public class OrderService : IOrderService
                 });
             }
 
-            // 3. Update the total price and save everything else
             order.TotalPrice = orderTotal;
             await _db.SaveChangesAsync();
 
-            // Populate the OrderItemId for the response
-            int i = 0;
-            foreach (var modelItem in orderModelItems)
-            {
-                var dbItem = await _db.TblOrderItems
-                            .FirstOrDefaultAsync(oi =>
-                             oi.OrderId == order.OrderId
-                             && oi.BookId == modelItem.BookId);
-                if (dbItem != null)
-                {
-                    modelItem.OrderItemId = dbItem.OrderItemId;
-                }
-                modelItem.OrderId = order.OrderId;
-            }
+            // optional: fill OrderItemId if you need it
 
             _logger.LogInformation("Create Order Async => Order is created successfully");
             return new OrderCreateResponseModel
@@ -214,7 +232,7 @@ public class OrderService : IOrderService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning("Create Order Async => Failed to create order {Message}", ex.Message);
+            _logger.LogWarning(ex, "Create Order Async => Failed to create order");
             return new OrderCreateResponseModel
             {
                 isSuccess = false,
