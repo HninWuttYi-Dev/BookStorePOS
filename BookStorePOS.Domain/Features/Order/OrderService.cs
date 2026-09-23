@@ -167,7 +167,6 @@ public class OrderService : IOrderService
                 }
             }
 
-            // 3. Now create the order (all items are valid)
             var order = new TblOrder
             {
                 OrderDate = DateTime.Now,
@@ -237,6 +236,57 @@ public class OrderService : IOrderService
             {
                 isSuccess = false,
                 Message = "Failed to create order: " + ex.Message
+            };
+        }
+    }
+
+    public async Task<OrderSummaryResponseModel> GetOrderSummaryAsync()
+    {
+        _logger.LogInformation("Get Order Summary Async => Fetching order summary");
+        try
+        {
+            var today = DateTime.Today;
+            var tomorrow = today.AddDays(1);
+            var thisMonth = new DateTime(today.Year, today.Month, 1);
+
+            var _todayOrderCount = await _db.TblOrders
+                                  .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow)
+                                  .CountAsync();
+            
+            var _todayTotal = await _db.TblOrders
+                             .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow)
+                             .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+           
+            var _thisMonthOrderCount = await _db.TblOrders
+                                      .Where(o => o.OrderDate >= thisMonth)
+                                      .CountAsync();
+           
+            var _thisMonthTotal = await _db.TblOrders
+                                 .Where(o => o.OrderDate >= thisMonth)
+                                 .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+            var summary = new OrderSummaryModel
+            {
+                todayTotal = _todayTotal,
+                todayOrderCount = _todayOrderCount,
+                thisMonthTotal = _thisMonthTotal,
+                thisMonthOrderCount = _thisMonthOrderCount
+            };
+
+            _logger.LogInformation("Get Order Summary Async => Order summary fetched successfully");
+            return new OrderSummaryResponseModel
+            {
+                isSuccess = true,
+                Message = "Order summary fetched successfully",
+                Data = summary
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Get Order Summary Async => Failed to fetch order summary");
+            return new OrderSummaryResponseModel
+            {
+                isSuccess = false,
+                Message = "Failed to fetch order summary: " + ex.Message
             };
         }
     }

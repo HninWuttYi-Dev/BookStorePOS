@@ -7,4 +7,5 @@ public interface IOrderService
     Task<OrderCreateResponseModel> CreateOrder(OrderCreateRequestModel requestModel);
     Task<OrderGetByIdResponseModel> GetOrder(OrderGetByIdRequestModel requestModel);
     Task<OrderListResponseModel> GetOrdersAsync(OrderListRequestModel requestModel);
+    Task<OrderSummaryResponseModel> GetOrderSummaryAsync();
 }

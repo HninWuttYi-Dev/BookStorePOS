@@ -19,6 +19,20 @@ public class OrderController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetOrderSummaryAsync()
+    {
+        _logger.LogInformation("Get Order Summary Async => Fetching order summary");
+        var response = await _orderService.GetOrderSummaryAsync();
+        if (!response.isSuccess)
+        {
+            _logger.LogWarning("Get Order Summary Async => Failed to fetch order summary {Message}", response.Message);
+            return BadRequest(response);
+        }
+        _logger.LogInformation("Get Order Summary Async => Order summary fetched successfully");
+        return Ok(response);
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetOrdersAsync([FromQuery] OrderListRequestModel requestModel)
     {
