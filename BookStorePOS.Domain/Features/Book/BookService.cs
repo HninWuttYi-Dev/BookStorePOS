@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Models.Book;
-using BookStorePOS.Domain.Models.Book;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -151,6 +150,26 @@ public class BookService : IBookService
         _logger.LogInformation("Create Book Async => Creating book");
         try
         {
+            if (string.IsNullOrWhiteSpace(requestModel.Title))
+            {
+                _logger.LogWarning("Create Book Async => Title is required");
+                return new BookCreateResponseModel { isSuccess = false, Message = "Title is required." };
+            }
+            if (string.IsNullOrWhiteSpace(requestModel.Author))
+            {
+                _logger.LogWarning("Create Book Async => Author is required");
+                return new BookCreateResponseModel { isSuccess = false, Message = "Author is required." };
+            }
+            if (string.IsNullOrWhiteSpace(requestModel.Genre))
+            {
+                _logger.LogWarning("Create Book Async => Genre is required");
+                return new BookCreateResponseModel { isSuccess = false, Message = "Genre is required." };
+            }
+            if (requestModel.ReorderLevel < 0)
+            {
+                _logger.LogWarning("Create Book Async => ReorderLevel cannot be negative");
+                return new BookCreateResponseModel { isSuccess = false, Message = "ReorderLevel cannot be negative." };
+            }
             if (requestModel.Price <= 0)
             {
                 _logger.LogWarning("Create Book Async => Price must be greater than 0");
@@ -162,6 +181,13 @@ public class BookService : IBookService
             }
             if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
             {
+                var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
+                if (isbn.Length != 10 && isbn.Length != 13)
+                {
+                    _logger.LogWarning("Create Book Async => ISBN must be 10 or 13 digits");
+                    return new BookCreateResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." };
+                }
+
                 bool isbnExists = await _db.TblBooks
                     .AnyAsync(b => b.Isbn == requestModel.Isbn && !b.IsDeleted);
 
@@ -175,13 +201,13 @@ public class BookService : IBookService
                     };
                 }
             }
-            if (requestModel.StockQuantity <= 0)
+            if (requestModel.StockQuantity < 0)
             {
-                _logger.LogWarning("Create Book Async => StockQuantity must be greater than 0");
+                _logger.LogWarning("Create Book Async => StockQuantity cannot be negative");
                 return new BookCreateResponseModel
                 {
                     isSuccess = false,
-                    Message = "StockQuantity must be greater than 0."
+                    Message = "StockQuantity cannot be negative."
                 };
             }
 
@@ -252,8 +278,46 @@ public class BookService : IBookService
                     Message = "Book doesn't exist"
                 };
             }
+
+            if (string.IsNullOrWhiteSpace(requestModel.Title))
+            {
+                _logger.LogWarning("Update Book Async => Title is required");
+                return new BookPatchResponseModel { isSuccess = false, Message = "Title is required." };
+            }
+            if (string.IsNullOrWhiteSpace(requestModel.Author))
+            {
+                _logger.LogWarning("Update Book Async => Author is required");
+                return new BookPatchResponseModel { isSuccess = false, Message = "Author is required." };
+            }
+            if (string.IsNullOrWhiteSpace(requestModel.Genre))
+            {
+                _logger.LogWarning("Update Book Async => Genre is required");
+                return new BookPatchResponseModel { isSuccess = false, Message = "Genre is required." };
+            }
+            if (requestModel.ReorderLevel.HasValue && requestModel.ReorderLevel.Value < 0)
+            {
+                _logger.LogWarning("Update Book Async => ReorderLevel cannot be negative");
+                return new BookPatchResponseModel { isSuccess = false, Message = "ReorderLevel cannot be negative." };
+            }
+            if (requestModel.Price.HasValue && requestModel.Price.Value <= 0)
+            {
+                _logger.LogWarning("Update Book Async => Price must be greater than 0");
+                return new BookPatchResponseModel { isSuccess = false, Message = "Price must be greater than 0." };
+            }
+            if (requestModel.StockQuantity.HasValue && requestModel.StockQuantity.Value < 0)
+            {
+                _logger.LogWarning("Update Book Async => StockQuantity cannot be negative");
+                return new BookPatchResponseModel { isSuccess = false, Message = "StockQuantity cannot be negative." };
+            }
             if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
             {
+                var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
+                if (isbn.Length != 10 && isbn.Length != 13)
+                {
+                    _logger.LogWarning("Update Book Async => ISBN must be 10 or 13 digits");
+                    return new BookPatchResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." };
+                }
+
                 bool isbnExists = await _db.TblBooks
                     .AnyAsync(b => b.Isbn == requestModel.Isbn
                                 && b.BookId != requestModel.BookId
@@ -329,6 +393,16 @@ public class BookService : IBookService
                 {
                     isSuccess = false,
                     Message = "Book is not found"
+                };
+            }
+
+            if (item.IsDeleted)
+            {
+                _logger.LogWarning("Delete Book Async => Book is already deleted");
+                return new BookDeleteResponseModel
+                {
+                    isSuccess = false,
+                    Message = "Book is already deleted."
                 };
             }
 
