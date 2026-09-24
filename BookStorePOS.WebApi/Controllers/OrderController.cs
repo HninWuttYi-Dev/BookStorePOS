@@ -33,6 +33,34 @@ public class OrderController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("history")]
+    public async Task<IActionResult> GetOrderHistoryAsync([FromQuery] OrderHistoryRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Order History Async => Fetching order history");
+        var response = await _orderService.GetOrderHistoryAsync(requestModel);
+        if (!response.isSuccess)
+        {
+            _logger.LogWarning("Get Order History Async => Failed to fetch order history {Message}", response.Message);
+            return BadRequest(response);
+        }
+        _logger.LogInformation("Get Order History Async => Order history fetched successfully");
+        return Ok(response);
+    }
+
+    [HttpGet("history/summary")]
+    public async Task<IActionResult> GetOrderHistorySummaryAsync([FromQuery] OrderHistorySummaryRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Order History Summary Async => Fetching order history summary");
+        var response = await _orderService.GetOrderHistorySummaryAsync(requestModel);
+        if (!response.isSuccess)
+        {
+            _logger.LogWarning("Get Order History Summary Async => Failed to fetch order history summary {Message}", response.Message);
+            return BadRequest(response);
+        }
+        _logger.LogInformation("Get Order History Summary Async => Order history summary fetched successfully");
+        return Ok(response);
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetOrdersAsync([FromQuery] OrderListRequestModel requestModel)
     {

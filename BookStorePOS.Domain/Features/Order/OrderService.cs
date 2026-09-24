@@ -57,7 +57,7 @@ public class OrderService : IOrderService
         }
     }
 
-    public async Task<OrderGetByIdResponseModel> GetOrder(OrderGetByIdRequestModel requestModel)
+    public async Task<OrderGetByIdResponseModel> GetOrderById(OrderGetByIdRequestModel requestModel)
     {
         _logger.LogInformation("Get Order Async => Fetching order by Id");
         try
@@ -266,9 +266,9 @@ public class OrderService : IOrderService
                                  .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
             var summary = new OrderSummaryModel
             {
-                todayTotal = _todayTotal,
+                todayTotalRevenue = _todayTotal,
                 todayOrderCount = _todayOrderCount,
-                thisMonthTotal = _thisMonthTotal,
+                thisMonthTotalRevenue = _thisMonthTotal,
                 thisMonthOrderCount = _thisMonthOrderCount
             };
 
@@ -287,6 +287,108 @@ public class OrderService : IOrderService
             {
                 isSuccess = false,
                 Message = "Failed to fetch order summary: " + ex.Message
+            };
+        }
+    }
+
+    public async Task<OrderHistoryResponseModel> GetOrderHistoryAsync(OrderHistoryRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Order History Async => Fetching order history");
+        try
+        {
+            var query = _db.TblOrders.AsNoTracking().AsQueryable();
+
+            if (requestModel.StartDate.HasValue)
+            {
+                query = query.Where(o => o.OrderDate >= requestModel.StartDate.Value);
+            }
+            if (requestModel.EndDate.HasValue)
+            {
+                var endDay = requestModel.EndDate.Value.AddDays(1);
+                query = query.Where(o => o.OrderDate <= endDay);
+            }
+
+            var orders = await query
+                .OrderByDescending(o => o.OrderDate)
+                .Skip((requestModel.Page - 1) * requestModel.Limit)
+                .Take(requestModel.Limit)
+                .Select(o => new OrderModel
+                {
+                    OrderId = o.OrderId,
+                    OrderDate = o.OrderDate,
+                    TotalPrice = o.TotalPrice
+                })
+                .ToListAsync();
+
+            var data = new OrderHistoryDataModel
+            {
+                Orders = orders,
+                Page = requestModel.Page,
+                Limit = requestModel.Limit
+            };
+
+            _logger.LogInformation("Get Order History Async => Order history fetched successfully");
+            return new OrderHistoryResponseModel
+            {
+                isSuccess = true,
+                Message = "Order history fetched successfully",
+                Data = data
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Get Order History Async => Failed to fetch order history");
+            return new OrderHistoryResponseModel
+            {
+                isSuccess = false,
+                Message = "Failed to fetch order history: " + ex.Message
+            };
+        }
+    }
+
+    public async Task<OrderHistorySummaryResponseModel> GetOrderHistorySummaryAsync(OrderHistorySummaryRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Order History Summary Async => Fetching order history summary");
+        try
+        {
+            var query = _db.TblOrders.AsNoTracking().AsQueryable();
+
+            if (requestModel.StartDate.HasValue)
+            {
+                query = query.Where(o => o.OrderDate >= requestModel.StartDate.Value);
+            }
+            if (requestModel.EndDate.HasValue)
+            {
+                var endDay = requestModel.EndDate.Value.AddDays(1);
+                query = query.Where(o => o.OrderDate <= endDay);
+            }
+
+            var totalOrders = await query.CountAsync();
+            var totalRevenue = await query.SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+            var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+            var summary = new OrderHistorySummaryModel
+            {
+                TotalOrders = totalOrders,
+                TotalRevenue = totalRevenue,
+                AverageOrderValue = averageOrderValue
+            };
+
+            _logger.LogInformation("Get Order History Summary Async => Order history summary fetched successfully");
+            return new OrderHistorySummaryResponseModel
+            {
+                isSuccess = true,
+                Message = "Order history summary fetched successfully",
+                Data = summary
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Get Order History Summary Async => Failed to fetch order history summary");
+            return new OrderHistorySummaryResponseModel
+            {
+                isSuccess = false,
+                Message = "Failed to fetch order history summary: " + ex.Message
             };
         }
     }

@@ -11,8 +11,8 @@ public class OrderSummaryResponseModel
 
 public class OrderSummaryModel
 {
-    public decimal todayTotal { get; set; }
+    public decimal todayTotalRevenue { get; set; }
     public int todayOrderCount { get; set; }
-    public decimal thisMonthTotal { get; set; }
+    public decimal thisMonthTotalRevenue { get; set; }
     public int thisMonthOrderCount { get; set; }
 }
