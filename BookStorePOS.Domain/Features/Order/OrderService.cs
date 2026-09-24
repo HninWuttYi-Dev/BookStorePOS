@@ -305,9 +305,20 @@ public class OrderService : IOrderService
             if (requestModel.EndDate.HasValue)
             {
                 var endDay = requestModel.EndDate.Value.AddDays(1);
-                query = query.Where(o => o.OrderDate <= endDay);
+                query = query.Where(o => o.OrderDate < endDay);
             }
+            var totalOrders = await query.CountAsync();
+            var totalRevenue = await query.SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+            var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            var summary = new OrderHistorySummaryModel
+            {
+                TotalOrders = totalOrders,
+                TotalRevenue = totalRevenue,
+                AverageOrderValue = averageOrderValue
+            };
 
+            var totalPages = (int)Math.Ceiling(totalOrders / (double)requestModel.Limit);
+            if (totalPages == 0) totalPages = 1;
             var orders = await query
                 .OrderByDescending(o => o.OrderDate)
                 .Skip((requestModel.Page - 1) * requestModel.Limit)
@@ -322,9 +333,11 @@ public class OrderService : IOrderService
 
             var data = new OrderHistoryDataModel
             {
+                Summary = summary,
                 Orders = orders,
                 Page = requestModel.Page,
-                Limit = requestModel.Limit
+                Limit = requestModel.Limit,
+                TotalPages = totalPages
             };
 
             _logger.LogInformation("Get Order History Async => Order history fetched successfully");
@@ -346,50 +359,4 @@ public class OrderService : IOrderService
         }
     }
 
-    public async Task<OrderHistorySummaryResponseModel> GetOrderHistorySummaryAsync(OrderHistorySummaryRequestModel requestModel)
-    {
-        _logger.LogInformation("Get Order History Summary Async => Fetching order history summary");
-        try
-        {
-            var query = _db.TblOrders.AsNoTracking().AsQueryable();
-
-            if (requestModel.StartDate.HasValue)
-            {
-                query = query.Where(o => o.OrderDate >= requestModel.StartDate.Value);
-            }
-            if (requestModel.EndDate.HasValue)
-            {
-                var endDay = requestModel.EndDate.Value.AddDays(1);
-                query = query.Where(o => o.OrderDate <= endDay);
-            }
-
-            var totalOrders = await query.CountAsync();
-            var totalRevenue = await query.SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
-            var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-            var summary = new OrderHistorySummaryModel
-            {
-                TotalOrders = totalOrders,
-                TotalRevenue = totalRevenue,
-                AverageOrderValue = averageOrderValue
-            };
-
-            _logger.LogInformation("Get Order History Summary Async => Order history summary fetched successfully");
-            return new OrderHistorySummaryResponseModel
-            {
-                isSuccess = true,
-                Message = "Order history summary fetched successfully",
-                Data = summary
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Get Order History Summary Async => Failed to fetch order history summary");
-            return new OrderHistorySummaryResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to fetch order history summary: " + ex.Message
-            };
-        }
-    }
 }

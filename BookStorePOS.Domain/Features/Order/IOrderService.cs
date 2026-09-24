@@ -9,5 +9,4 @@ public interface IOrderService
     Task<OrderListResponseModel> GetOrdersAsync(OrderListRequestModel requestModel);
     Task<OrderSummaryResponseModel> GetOrderSummaryAsync();
     Task<OrderHistoryResponseModel> GetOrderHistoryAsync(OrderHistoryRequestModel requestModel);
-    Task<OrderHistorySummaryResponseModel> GetOrderHistorySummaryAsync(OrderHistorySummaryRequestModel requestModel);
 }
