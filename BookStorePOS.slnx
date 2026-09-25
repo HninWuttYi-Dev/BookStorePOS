@@ -5,4 +5,5 @@
   <Project Path="BookStorePos.WindowForm/BookStorePos.WindowForm.csproj" />
   <Project Path="BookStorePOS.ConsoleApp/BookStorePOS.ConsoleApp.csproj" />
   <Project Path="BookStorePOS.Chart/BookStorePOS.Chart.csproj" />
+  <Project Path="BookStore.MvcApp/BookStore.MvcApp.csproj" />
 </Solution>

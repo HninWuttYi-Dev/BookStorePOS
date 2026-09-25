@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - BookStore POS</title>
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen flex overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex shadow-sm z-10">
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="bg-teal-700 p-2 rounded-xl text-white shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">BookStore POS</h1>
+            </div>
+            
+            <nav class="space-y-2">
+                <a asp-controller="Home" asp-action="Index" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "text-teal-800 bg-teal-50" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                    </svg>
+                    Dashboard
+                </a>
+                <a asp-controller="Books" asp-action="Index" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Books" ? "text-teal-800 bg-teal-50" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                    </svg>
+                    Books
+                </a>
+                <a asp-controller="POS" asp-action="Index" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors @(ViewContext.RouteData.Values["Controller"]?.ToString() == "POS" ? "text-teal-800 bg-teal-50" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    POS
+                </a>
+                <a asp-controller="Orders" asp-action="Index" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Orders" ? "text-teal-800 bg-teal-50" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50")">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zm0 2h10v7h-2l-1 2H8l-1-2H5V5z" clip-rule="evenodd" />
+                    </svg>
+                    Orders
+                </a>
+            </nav>
+        </div>
+        
+        <div class="p-6">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-teal-50 flex items-center justify-center text-teal-700 font-bold border border-teal-100">
+                    AD
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-900">Admin User</p>
+                    <p class="text-xs text-slate-500">Store Manager</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- Topbar (Mobile only for sidebar toggle + profile) -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-10 md:hidden">
+            <h1 class="text-lg font-bold text-slate-900">BookStore POS</h1>
+            <button class="p-2 rounded-lg bg-slate-50 text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-auto p-6 md:p-10 relative">
+            <div class="max-w-7xl mx-auto">
+                @RenderBody()
+            </div>
+        </div>
+    </main>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
