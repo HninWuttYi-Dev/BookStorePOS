@@ -9,6 +9,9 @@ public class BookListRequestModel
     public string? Author { get; set; }
     public string? Genre {get; set;}
     public bool? OnlyLowStock {get; set;}
+    public int Page {get; set;} = 1;
+    public int Limit {get; set;} = 20;
+    
 }
 
 public class BookListResponseModel
@@ -16,6 +19,10 @@ public class BookListResponseModel
     public bool isSuccess { get; set; }
     public string Message { get; set; } = null!;
     public List<BookModel> Data { get; set; } = null!;
+    public int Page {get; set;}
+    public int Limit {get; set;}
+    public int Count {get;set;}
+    public int TotalPages {get; set;}
 }
 
 public class BookModel

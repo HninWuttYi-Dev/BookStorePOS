@@ -49,8 +49,14 @@ public class BookService : IBookService
             {
                 query = query.Where(b => b.Isbn != null && b.Isbn.Contains(requestModel.Isbn));
             }
-
-            var lst = await query.ToListAsync();
+            //calculating pagination
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
+            if(totalPages == 0) totalPages = 1;
+            var lst = await query.OrderByDescending(b => b.CreatedAt)
+                            .Skip((requestModel.Page -1) * requestModel.Limit)
+                            .Take(requestModel.Limit)
+                            .ToListAsync();
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
             {
@@ -68,13 +74,16 @@ public class BookService : IBookService
                     IsDeleted = item.IsDeleted
                 });
             }
-
             _logger.LogInformation("Get Books Async => Books fetched successfully");
             return new BookListResponseModel
             {
                 isSuccess = true,
                 Message = "Books fetched successfully",
-                Data = books
+                Data = books,
+                Page = requestModel.Page,
+                Limit =requestModel.Limit,
+                Count = totalCount,
+                TotalPages = totalPages
             };
         }
         catch (Exception ex)
