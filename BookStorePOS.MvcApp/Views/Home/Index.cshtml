@@ -1,0 +1,181 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Top Greeting -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Hi, Staff <span class="text-2xl inline-block ml-1">👋</span></h1>
+    <p class="text-slate-500 mt-2 text-sm font-medium">Let's manage the store today</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Today Sales -->
+    <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1">
+        <div class="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 shrink-0">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-slate-500 mb-1">Today's Sales</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">$1,245.00</h3>
+        </div>
+    </div>
+    
+    <!-- This Month Sales -->
+    <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-slate-500 mb-1">This Month</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">$18,450.25</h3>
+        </div>
+    </div>
+    
+    <!-- Low Stock Items -->
+    <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1">
+        <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-slate-500 mb-1">Low Stock Items</p>
+            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">12</h3>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Recent Orders -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col h-full">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
+                <h2 class="text-lg font-bold text-slate-900">Recent Orders</h2>
+                <a href="/Orders" class="text-sm font-semibold text-teal-600 hover:text-teal-700 hover:underline decoration-teal-600/30 underline-offset-4 transition-all">View All</a>
+            </div>
+            <div class="overflow-x-auto flex-1 p-2">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="text-slate-500 bg-slate-50/50 rounded-lg">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold rounded-l-lg">Order ID</th>
+                            <th class="px-6 py-3 font-semibold">Time</th>
+                            <th class="px-6 py-3 font-semibold">Items</th>
+                            <th class="px-6 py-3 font-semibold">Total</th>
+                            <th class="px-6 py-3 font-semibold rounded-r-lg">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-700">
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <td class="px-6 py-4 font-semibold text-teal-700 rounded-l-xl group-hover:text-teal-800">#ORD-092</td>
+                            <td class="px-6 py-4 text-slate-500">10:42 AM</td>
+                            <td class="px-6 py-4">3</td>
+                            <td class="px-6 py-4 font-semibold text-slate-900">$45.90</td>
+                            <td class="px-6 py-4 rounded-r-xl">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                                    Completed
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <td class="px-6 py-4 font-semibold text-teal-700 rounded-l-xl group-hover:text-teal-800">#ORD-091</td>
+                            <td class="px-6 py-4 text-slate-500">10:15 AM</td>
+                            <td class="px-6 py-4">1</td>
+                            <td class="px-6 py-4 font-semibold text-slate-900">$12.50</td>
+                            <td class="px-6 py-4 rounded-r-xl">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                                    Completed
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <td class="px-6 py-4 font-semibold text-teal-700 rounded-l-xl group-hover:text-teal-800">#ORD-090</td>
+                            <td class="px-6 py-4 text-slate-500">09:58 AM</td>
+                            <td class="px-6 py-4">5</td>
+                            <td class="px-6 py-4 font-semibold text-slate-900">$89.00</td>
+                            <td class="px-6 py-4 rounded-r-xl">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100/80 text-amber-800 border border-amber-200/50">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
+                                    Pending
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <td class="px-6 py-4 font-semibold text-teal-700 rounded-l-xl group-hover:text-teal-800">#ORD-089</td>
+                            <td class="px-6 py-4 text-slate-500">09:30 AM</td>
+                            <td class="px-6 py-4">2</td>
+                            <td class="px-6 py-4 font-semibold text-slate-900">$34.20</td>
+                            <td class="px-6 py-4 rounded-r-xl">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                                    Completed
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock -->
+    <div class="h-full">
+        <div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col h-full">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
+                <h2 class="text-lg font-bold text-slate-900">Low Stock</h2>
+                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Action Needed</span>
+            </div>
+            <div class="p-3 flex-1 overflow-y-auto">
+                <ul class="space-y-1">
+                    <li class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-16 bg-slate-100 rounded-lg shadow-sm flex items-center justify-center shrink-0 border border-slate-200 group-hover:border-teal-200 transition-colors">
+                                <svg class="w-6 h-6 text-slate-400 group-hover:text-teal-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-900 group-hover:text-teal-700 transition-colors">The Great Gatsby</p>
+                                <p class="text-xs text-slate-500 font-medium mt-0.5">F. Scott Fitzgerald</p>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm shrink-0 border border-amber-200">
+                            2
+                        </span>
+                    </li>
+                    <li class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-16 bg-slate-100 rounded-lg shadow-sm flex items-center justify-center shrink-0 border border-slate-200 group-hover:border-teal-200 transition-colors">
+                                <svg class="w-6 h-6 text-slate-400 group-hover:text-teal-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-900 group-hover:text-teal-700 transition-colors">1984</p>
+                                <p class="text-xs text-slate-500 font-medium mt-0.5">George Orwell</p>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm shrink-0 border border-amber-200">
+                            3
+                        </span>
+                    </li>
+                    <li class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-16 bg-slate-100 rounded-lg shadow-sm flex items-center justify-center shrink-0 border border-slate-200 group-hover:border-teal-200 transition-colors">
+                                <svg class="w-6 h-6 text-slate-400 group-hover:text-teal-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-900 group-hover:text-teal-700 transition-colors">Dune</p>
+                                <p class="text-xs text-slate-500 font-medium mt-0.5">Frank Herbert</p>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-700 font-bold text-sm shrink-0 border border-red-200">
+                            0
+                        </span>
+                    </li>
+                </ul>
+            </div>
+            <div class="p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
+                <a href="/Books?filter=low-stock" class="flex items-center justify-center w-full py-2 px-4 rounded-xl text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors">
+                    Manage Inventory
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
