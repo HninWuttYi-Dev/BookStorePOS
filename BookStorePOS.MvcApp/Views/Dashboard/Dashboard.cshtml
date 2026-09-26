@@ -110,9 +110,9 @@
                         <tr>
                             <th class="px-4 py-3 font-semibold rounded-l-lg">Order ID</th>
                             <th class="px-4 py-3 font-semibold">Date & Time</th>
-                            <th class="px-4 py-3 font-semibold text-center">Items</th>
-                            <th class="px-4 py-3 font-semibold text-right">Total</th>
-                            <th class="px-4 py-3 font-semibold text-right rounded-r-lg">Status</th>
+                            <th class="px-4 py-3 font-semibold">Items</th>
+                            <th class="px-4 py-3 font-semibold">Total</th>
+                            <th class="px-4 py-3 font-semibold rounded-r-lg">Status</th>
                         </tr>
                     </thead>
                     <tbody class="text-slate-700">
@@ -136,9 +136,9 @@
                                         <div class="font-medium text-slate-700">@FormatOrderDateOnly(order.OrderDate)</div>
                                         <div class="text-xs text-slate-500 mt-0.5">@FormatOrderTimeOnly(order.OrderDate)</div>
                                     </td>
-                                    <td class="px-4 py-4 text-center text-slate-600 font-medium">@order.TotalQuantity</td>
-                                    <td class="px-4 py-4 font-semibold text-slate-900 text-right">$@order.TotalPrice.ToString("0.00")</td>
-                                    <td class="px-4 py-4 rounded-r-xl text-right">
+                                    <td class="px-4 py-4 text-slate-600 font-medium">@order.TotalQuantity</td>
+                                    <td class="px-4 py-4 font-semibold text-slate-900">$@order.TotalPrice.ToString("0.00")</td>
+                                    <td class="px-4 py-4 rounded-r-xl">
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
                                             Completed
