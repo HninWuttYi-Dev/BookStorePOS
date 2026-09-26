@@ -19,6 +19,7 @@ public class OrderModel
     public int OrderId { get; set; }
     public DateTime? OrderDate { get; set; }
     public decimal TotalPrice { get; set; }
+    public int TotalQuantity {get; set;}
     public List<OrderItemModel> Items { get; set; } = new List<OrderItemModel>();
 }
 

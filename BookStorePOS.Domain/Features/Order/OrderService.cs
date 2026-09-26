@@ -327,7 +327,8 @@ public class OrderService : IOrderService
                 {
                     OrderId = o.OrderId,
                     OrderDate = o.OrderDate,
-                    TotalPrice = o.TotalPrice
+                    TotalPrice = o.TotalPrice,
+                    TotalQuantity = o.TblOrderItems.Sum(oi => oi.Quantity)
                 })
                 .ToListAsync();
 
