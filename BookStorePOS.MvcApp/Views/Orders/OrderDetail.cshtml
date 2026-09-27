@@ -74,10 +74,10 @@
                                         @item.Quantity
                                     </td>
                                     <td class="px-4 py-4 text-slate-500 text-right">
-                                        $@item.UnitPrice.ToString("0.00")
+                                        @item.UnitPrice.ToString("#,##0") <span class="text-[10px] ml-0.5">MMK</span>
                                     </td>
                                     <td class="px-4 py-4 font-semibold text-slate-900 text-right">
-                                        $@((item.Subtotal ?? (item.Quantity * item.UnitPrice)).ToString("0.00"))
+                                        @((item.Subtotal ?? (item.Quantity * item.UnitPrice)).ToString("#,##0")) <span class="text-xs text-slate-400 font-bold ml-0.5">MMK</span>
                                     </td>
                                 </tr>
                             }
@@ -114,7 +114,7 @@
             
             <div class="flex justify-between items-center pt-4 mt-2">
                 <span class="text-slate-800 font-bold">Total Amount</span>
-                <span class="font-bold text-2xl text-teal-600">$@order.TotalPrice.ToString("0.00")</span>
+                <span class="font-bold text-2xl text-teal-600">@order.TotalPrice.ToString("#,##0") <span class="text-sm font-bold ml-1 text-teal-600">MMK</span></span>
             </div>
         </div>
     </div>

@@ -58,11 +58,11 @@
         </div>
         <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
             <span class="text-sm font-semibold text-slate-500 mb-2">Total Revenue</span>
-            <span class="text-3xl font-bold text-teal-700">$@summary.TotalRevenue.ToString("0.00")</span>
+            <span class="text-3xl font-bold text-teal-700">@summary.TotalRevenue.ToString("#,##0") <span class="text-sm font-bold ml-1 text-teal-600">MMK</span></span>
         </div>
         <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
             <span class="text-sm font-semibold text-slate-500 mb-2">Average Order Value</span>
-            <span class="text-3xl font-bold text-slate-900">$@summary.AverageOrderValue.ToString("0.00")</span>
+            <span class="text-3xl font-bold text-slate-900">@summary.AverageOrderValue.ToString("#,##0") <span class="text-sm font-bold ml-1 text-slate-500">MMK</span></span>
         </div>
     </div>
 }
@@ -123,7 +123,7 @@
                             <td class="px-4 py-4 text-slate-700 font-medium">@FormatOrderDateOnly(order.OrderDate)</td>
                             <td class="px-4 py-4 text-slate-500">@FormatOrderTimeOnly(order.OrderDate)</td>
                             <td class="px-4 py-4 text-slate-600 font-medium">@order.TotalQuantity</td>
-                            <td class="px-4 py-4 font-semibold text-slate-900">$@order.TotalPrice.ToString("0.00")</td>
+                            <td class="px-4 py-4 font-semibold text-slate-900">@order.TotalPrice.ToString("#,##0") <span class="text-xs text-slate-400 font-bold ml-0.5">MMK</span></td>
                             <td class="px-4 py-4 rounded-r-xl">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
