@@ -82,7 +82,8 @@ public class OrderService : IOrderService
             {
                 OrderId = item.OrderId,
                 OrderDate = item.OrderDate,
-                TotalPrice = item.TotalPrice
+                TotalPrice = item.TotalPrice,
+                TotalQuantity = item.TotalQuantity > 0 ? item.TotalQuantity : item.TblOrderItems.Sum(oi => oi.Quantity)
             };
 
             foreach (var oi in item.TblOrderItems)
@@ -170,13 +171,15 @@ public class OrderService : IOrderService
             var order = new TblOrder
             {
                 OrderDate = DateTime.Now,
-                TotalPrice = 0
+                TotalPrice = 0,
+                TotalQuantity = 0
             };
 
             _db.TblOrders.Add(order);
             await _db.SaveChangesAsync();   // get OrderId
 
             decimal orderTotal = 0;
+            int orderQuantity = 0;
             var orderModelItems = new List<OrderItemModel>();
 
             foreach (var item in requestModel.Items)
@@ -188,6 +191,8 @@ public class OrderService : IOrderService
 
                 decimal subtotal = book.Price * item.Quantity;
                 orderTotal += subtotal;
+                orderQuantity += item.Quantity;
+                
 
                 var orderItem = new TblOrderItem
                 {
@@ -211,6 +216,7 @@ public class OrderService : IOrderService
             }
 
             order.TotalPrice = orderTotal;
+            order.TotalQuantity = orderQuantity;
             await _db.SaveChangesAsync();
 
             // optional: fill OrderItemId if you need it
@@ -225,6 +231,7 @@ public class OrderService : IOrderService
                     OrderId = order.OrderId,
                     OrderDate = order.OrderDate,
                     TotalPrice = order.TotalPrice,
+                    TotalQuantity = order.TotalQuantity,
                     Items = orderModelItems
                 }
             };

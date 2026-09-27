@@ -130,7 +130,9 @@
                             {
                                 <tr class="hover:bg-slate-50/80 transition-colors group">
                                     <td class="px-4 py-4 font-semibold text-teal-700 rounded-l-xl group-hover:text-teal-800">
-                                        @FormatOrderNo(order.OrderId, order.OrderDate)
+                                        <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
+                                            @FormatOrderNo(order.OrderId, order.OrderDate)
+                                        </a>
                                     </td>
                                     <td class="px-4 py-4">
                                         <div class="font-medium text-slate-700">@FormatOrderDateOnly(order.OrderDate)</div>

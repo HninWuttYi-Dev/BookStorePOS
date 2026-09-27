@@ -1,0 +1,121 @@
+@{
+    ViewData["Title"] = "Order Details";
+    var order = ViewData["OrderDetail"] as OrderModel ?? new OrderModel();
+
+    string FormatOrderDateOnly(DateTime? date)
+    {
+        if (!date.HasValue) return "-";
+        return date.Value.ToString("d/M/yyyy");
+    }
+
+    string FormatOrderTimeOnly(DateTime? date)
+    {
+        if (!date.HasValue) return "-";
+        return date.Value.ToString("hh:mm tt");
+    }
+
+    string FormatOrderNo(int id, DateTime? date)
+    {
+        var d = date ?? DateTime.Now;
+        return $"C{d.ToString("yyMMdd")}{id.ToString("0000")}";
+    }
+}
+
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <div class="flex items-center gap-3 mb-2">
+            <a href="/Orders" class="text-slate-400 hover:text-teal-600 transition-colors p-1.5 rounded-lg hover:bg-teal-50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Order Details</h1>
+        </div>
+        <p class="text-slate-500 text-sm font-medium ml-11">View complete information for this transaction</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden mb-6">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h2 class="text-lg font-bold text-slate-800">Items Ordered</h2>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                    Completed
+                </span>
+            </div>
+            <div class="overflow-x-auto p-2">
+                <table class="w-full text-left text-sm">
+                    <thead class="text-slate-500">
+                        <tr>
+                            <th class="px-4 py-3 font-semibold">Book Title</th>
+                            <th class="px-4 py-3 font-semibold text-center">Qty</th>
+                            <th class="px-4 py-3 font-semibold text-right">Unit Price</th>
+                            <th class="px-4 py-3 font-semibold text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-slate-700">
+                        @if (order.Items == null || !order.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="px-4 py-8 text-center text-slate-500 font-medium">No items found.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in order.Items)
+                            {
+                                <tr class="hover:bg-slate-50/80 transition-colors border-t border-slate-50">
+                                    <td class="px-4 py-4 font-medium text-slate-800">
+                                        @item.BookTitle
+                                    </td>
+                                    <td class="px-4 py-4 text-slate-600 font-medium text-center">
+                                        @item.Quantity
+                                    </td>
+                                    <td class="px-4 py-4 text-slate-500 text-right">
+                                        $@item.UnitPrice.ToString("0.00")
+                                    </td>
+                                    <td class="px-4 py-4 font-semibold text-slate-900 text-right">
+                                        $@((item.Subtotal ?? (item.Quantity * item.UnitPrice)).ToString("0.00"))
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex flex-col mb-6 sticky top-6">
+            <h2 class="text-lg font-bold text-slate-800 mb-6">Summary</h2>
+            
+            <div class="flex justify-between items-center py-3 border-b border-slate-50">
+                <span class="text-slate-500 font-medium text-sm">Order ID</span>
+                <span class="font-bold text-teal-700">@FormatOrderNo(order.OrderId, order.OrderDate)</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-3 border-b border-slate-50">
+                <span class="text-slate-500 font-medium text-sm">Date</span>
+                <span class="font-medium text-slate-700">@FormatOrderDateOnly(order.OrderDate)</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-3 border-b border-slate-50">
+                <span class="text-slate-500 font-medium text-sm">Time</span>
+                <span class="font-medium text-slate-700">@FormatOrderTimeOnly(order.OrderDate)</span>
+            </div>
+            
+            <div class="flex justify-between items-center py-3 border-b border-slate-50">
+                <span class="text-slate-500 font-medium text-sm">Total Items</span>
+                <span class="font-medium text-slate-700">@order.TotalQuantity</span>
+            </div>
+            
+            <div class="flex justify-between items-center pt-4 mt-2">
+                <span class="text-slate-800 font-bold">Total Amount</span>
+                <span class="font-bold text-2xl text-teal-600">$@order.TotalPrice.ToString("0.00")</span>
+            </div>
+        </div>
+    </div>
+</div>

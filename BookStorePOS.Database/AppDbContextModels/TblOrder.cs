@@ -7,9 +7,11 @@ public partial class TblOrder
 {
     public int OrderId { get; set; }
 
-    public DateTime? OrderDate { get; set; }
+    public DateTime OrderDate { get; set; }
 
     public decimal TotalPrice { get; set; }
+
+    public int TotalQuantity { get; set; }
 
     public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();
 }

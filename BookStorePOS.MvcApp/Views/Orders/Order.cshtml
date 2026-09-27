@@ -1,3 +1,4 @@
+@model OrderHistoryResponseModel;
 @{
     ViewData["Title"] = "Orders";
     var orders = ViewData["Orders"] as List<OrderModel> ?? new List<OrderModel>();
@@ -115,7 +116,9 @@
                         <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0">
                             <td class="px-4 py-4 font-medium text-slate-500 text-center rounded-l-xl">@(++count)</td>
                             <td class="px-4 py-4 font-semibold text-teal-700 group-hover:text-teal-800">
-                                @FormatOrderNo(order.OrderId, order.OrderDate)
+                                <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
+                                    @FormatOrderNo(order.OrderId, order.OrderDate)
+                                </a>
                             </td>
                             <td class="px-4 py-4 text-slate-700 font-medium">@FormatOrderDateOnly(order.OrderDate)</td>
                             <td class="px-4 py-4 text-slate-500">@FormatOrderTimeOnly(order.OrderDate)</td>
