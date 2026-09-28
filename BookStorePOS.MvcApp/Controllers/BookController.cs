@@ -176,5 +176,30 @@ namespace BookStorePOS.MvcApp.Controllers
 
             return Json(model);
         }
+        [HttpPost]
+        [ActionName("Delete")]
+        public async Task<IActionResult> BookDeleteAsync(BookDeleteRequestModel requestModel)
+        {
+            _logger.LogInformation($"Book Delete Async => Deleting book {requestModel.BookId}");
+            var model = await _bookService.DeleteBookAsync(requestModel);
+            
+            if (model.isSuccess)
+            {
+                _logger.LogInformation("Book Delete Async => Book deleted successfully");
+                TempData["Message"] = model.Message ?? "Book deleted successfully.";
+                TempData["isSuccess"] = true;
+            }
+            else
+            {
+                _logger.LogWarning($"Book Delete Async => Failed to delete book: {model.Message}");
+            }
+            return Json(model);
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View("Error!");
+        }
     }
 }
