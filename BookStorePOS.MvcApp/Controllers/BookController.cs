@@ -108,5 +108,73 @@ namespace BookStorePOS.MvcApp.Controllers
 
             return Json(model);
         }
+        [ActionName("Edit")]
+        public async Task<IActionResult> BookEditAsync(int id)
+        {
+            _logger.LogInformation($"Book Edit Async => Fetching book {id}");
+            var model = await _bookService.GetBookAsync(new BookByIdRequestModel { BookId = id });
+            
+            if (!model.isSuccess)
+            {
+                _logger.LogWarning($"Book Edit Async => Failed to fetch book {id}: {model.Message}");
+                TempData["isSuccess"] = false;
+                TempData["Message"] = model.Message;
+                return Redirect("/Book");
+            }
+
+            ViewData["Id"] = model.Data.BookId;
+            ViewData["Title"] = model.Data.Title;
+            ViewData["Author"] = model.Data.Author;
+            ViewData["Genre"] = model.Data.Genre;
+            ViewData["Isbn"] = model.Data.Isbn;
+            ViewData["Price"] = model.Data.Price;
+            ViewData["StockQuantity"] = model.Data.StockQuantity;
+            ViewData["ReorderLevel"] = model.Data.ReorderLevel;
+            ViewData["Description"] = model.Data.Description;
+
+            return View("BookEdit", model.Data);
+        }
+
+        [HttpPost]
+        [ActionName("Update")]
+        public async Task<IActionResult> BookUpdateAsync(int id, BookPatchRequestModel requestModel)
+        {
+            _logger.LogInformation($"Book Update Async => Updating book {id}");
+            requestModel.BookId = id;
+
+            if (string.IsNullOrWhiteSpace(requestModel.Title) 
+                && string.IsNullOrWhiteSpace(requestModel.Author) 
+                && string.IsNullOrWhiteSpace(requestModel.Genre)
+                && requestModel.Price is null
+                && requestModel.StockQuantity is null)
+            {
+                return Json(new BookPatchResponseModel { isSuccess = false, Message = "Please update at least one field." });
+            }
+
+            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+            {
+                var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
+                if (isbn.Length != 10 && isbn.Length != 13)
+                {
+                    _logger.LogWarning("Book Update Async => ISBN must be 10 or 13 digits");
+                    return Json(new BookPatchResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." });
+                }
+            }
+
+            var model = await _bookService.UpdateBookAsync(requestModel);
+            
+            if (model.isSuccess)
+            {
+                _logger.LogInformation("Book Update Async => Book updated successfully");
+                TempData["Message"] = model.Message ?? "Book updated successfully.";
+                TempData["isSuccess"] = true;
+            }
+            else
+            {
+                _logger.LogWarning($"Book Update Async => Failed to update book: {model.Message}");
+            }
+
+            return Json(model);
+        }
     }
 }
