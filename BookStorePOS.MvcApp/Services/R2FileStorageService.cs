@@ -1,8 +1,5 @@
 using Amazon.S3;
 using Amazon.S3.Model;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 public class R2FileStorageService : IFileStorageService
 {
@@ -53,6 +50,7 @@ public class R2FileStorageService : IFileStorageService
             BucketName = bucketName,
             Key = key,
             InputStream = stream,
+            DisablePayloadSigning = true,
             ContentType = string.IsNullOrWhiteSpace(file.ContentType)
                 ? "application/octet-stream"
                 : file.ContentType

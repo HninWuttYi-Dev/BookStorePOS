@@ -51,6 +51,16 @@
         </div>
     </div>
     
+    <div class="mb-6">
+        <label for="photo" class="block text-sm font-semibold text-slate-700 mb-2">Cover Image</label>
+        <div class="flex items-center gap-4">
+            <input type="file" id="photo" accept="image/*" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all bg-slate-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+            <button type="button" id="btnClearPhoto" class="hidden px-4 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors shadow-sm">
+                Clear
+            </button>
+        </div>
+    </div>
+
     <div class="mb-8">
         <label for="description" class="block text-sm font-semibold text-slate-700 mb-2">Description</label>
         <textarea id="description" rows="4" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all" placeholder="Enter book description here..."></textarea>
@@ -91,6 +101,20 @@
             $(this).siblings('.error-msg').addClass('hidden');
         });
 
+        // Photo file selection logic
+        $('#photo').on('change', function() {
+            if (this.files && this.files.length > 0) {
+                $('#btnClearPhoto').removeClass('hidden');
+            } else {
+                $('#btnClearPhoto').addClass('hidden');
+            }
+        });
+
+        $('#btnClearPhoto').on('click', function() {
+            $('#photo').val(''); // Clear the file input
+            $(this).addClass('hidden');
+        });
+
         $('#btnSave').on('click', function() {
             // Reset errors
             $('.error-msg').addClass('hidden');
@@ -125,21 +149,27 @@
             const $btn = $(this);
             $btn.prop('disabled', true).text('Saving...');
 
-            const _requestModel = {
-                Title: title,
-                Author: author,
-                Genre: genre,
-                Isbn: isbn,
-                Price: price,
-                StockQuantity: stock,
-                ReorderLevel: parseInt($('#reorderLevel').val() || 0),
-                Description: $('#description').val()
-            };
+            const formData = new FormData();
+            formData.append("Title", title);
+            formData.append("Author", author);
+            formData.append("Genre", genre);
+            formData.append("Isbn", isbn);
+            formData.append("Price", price);
+            formData.append("StockQuantity", stock);
+            formData.append("ReorderLevel", $('#reorderLevel').val() || 0);
+            formData.append("Description", $('#description').val());
+
+            const photoFile = $('#photo')[0].files[0];
+            if (photoFile) {
+                formData.append("photo", photoFile);
+            }
 
             $.ajax({
                 type: "POST",
                 url: '/Book/Save',
-                data: _requestModel,
+                data: formData,
+                processData: false,
+                contentType: false,
                 success: function(response) {
                     if (response.isSuccess) {
                         // TempData in controller will handle the success toast on redirect

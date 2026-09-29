@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using BookStorePOS.Domain.Features.Book;
 using BookStorePOS.Domain.Models.Book;
+using Microsoft.AspNetCore.Http;
 
 namespace BookStorePOS.MvcApp.Controllers
 {
@@ -10,11 +11,13 @@ namespace BookStorePOS.MvcApp.Controllers
     {
         private readonly IBookService _bookService;
         private readonly ILogger<BookController> _logger;
+        private readonly IFileStorageService _fileStorageService;
 
-        public BookController(IBookService bookService, ILogger<BookController> logger)
+        public BookController(IBookService bookService, ILogger<BookController> logger, IFileStorageService fileStorageService)
         {
             _bookService = bookService;
             _logger = logger;
+            _fileStorageService = fileStorageService;
         }
 
         [ActionName("Index")]
@@ -53,9 +56,18 @@ namespace BookStorePOS.MvcApp.Controllers
 
         [HttpPost]
         [ActionName("Save")]
-        public async Task<IActionResult> BookSaveAsync(BookCreateRequestModel requestModel)
+        public async Task<IActionResult> BookSaveAsync(BookCreateRequestModel requestModel, IFormFile? photo)
         {
             _logger.LogInformation("Book Save Async => Creating new book");
+
+            if (photo != null && photo.Length > 0)
+            {
+                var url = await _fileStorageService.UploadImageAsync(photo);
+                if (url != null)
+                {
+                    requestModel.CoverImageUrl = url;
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(requestModel.Title))
             {
@@ -137,10 +149,19 @@ namespace BookStorePOS.MvcApp.Controllers
 
         [HttpPost]
         [ActionName("Update")]
-        public async Task<IActionResult> BookUpdateAsync(int id, BookPatchRequestModel requestModel)
+        public async Task<IActionResult> BookUpdateAsync(int id, BookPatchRequestModel requestModel, IFormFile? photo)
         {
             _logger.LogInformation($"Book Update Async => Updating book {id}");
             requestModel.BookId = id;
+
+            if (photo != null && photo.Length > 0)
+            {
+                var url = await _fileStorageService.UploadImageAsync(photo);
+                if (url != null)
+                {
+                    requestModel.CoverImageUrl = url;
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(requestModel.Title) 
                 && string.IsNullOrWhiteSpace(requestModel.Author) 
