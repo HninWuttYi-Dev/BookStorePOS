@@ -102,8 +102,8 @@
                         <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0">
                             <td class="px-4 py-4 font-medium text-slate-500 text-center rounded-l-xl">@(++count)</td>
                             <td class="px-4 py-4 text-slate-500">@(book.Isbn ?? "-")</td>
-                            <td class="px-4 py-4 font-semibold text-teal-700 group-hover:text-teal-800 max-w-[200px] truncate" title="@book.Title">
-                                @book.Title
+                            <td class="px-4 py-4 font-semibold max-w-[200px] truncate" title="@book.Title">
+                                <a href="/Book/Detail/@book.BookId" class="text-teal-700 hover:text-teal-900 transition-colors">@book.Title</a>
                             </td>
                             <td class="px-4 py-4 text-slate-700 font-medium max-w-[150px] truncate" title="@book.Author">@book.Author</td>
                             <td class="px-4 py-4 text-slate-500 max-w-[150px] truncate" title="@book.Genre">@book.Genre</td>
