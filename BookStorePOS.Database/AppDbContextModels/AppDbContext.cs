@@ -29,7 +29,7 @@ public partial class AppDbContext : DbContext
     {
         modelBuilder.Entity<TblBook>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__tmp_ms_x__3DE0C207E7161656");
+            entity.HasKey(e => e.BookId).HasName("PK__tmp_ms_x__3DE0C207D6DEDD12");
 
             entity.ToTable("TblBook");
 
@@ -38,6 +38,7 @@ public partial class AppDbContext : DbContext
                 .HasFilter("([ISBN] IS NOT NULL)");
 
             entity.Property(e => e.Author).HasMaxLength(150);
+            entity.Property(e => e.CoverImageUrl).HasMaxLength(150);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Genre).HasMaxLength(50);
             entity.Property(e => e.Isbn)

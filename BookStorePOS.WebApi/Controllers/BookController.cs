@@ -12,11 +12,13 @@ public class BookController : ControllerBase
 {
     private readonly IBookService _bookService;
     private readonly ILogger<BookController> _logger;
+    private readonly IFileStorageService _fileStorageService;
 
-    public BookController(IBookService bookService, ILogger<BookController> logger)
+    public BookController(IBookService bookService, ILogger<BookController> logger, IFileStorageService fileStorageService)
     {
         _bookService = bookService;
         _logger = logger;
+        _fileStorageService = fileStorageService;
     }
 
 
@@ -63,9 +65,19 @@ public class BookController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateBookAsync([FromBody] BookCreateRequestModel requestModel)
+    public async Task<IActionResult> CreateBookAsync([FromForm] BookCreateRequestModel requestModel, IFormFile? photo)
     {
         _logger.LogInformation("Create Book Async => Creating book");
+        
+        if (photo != null && photo.Length > 0)
+        {
+            var url = await _fileStorageService.UploadImageAsync(photo);
+            if (url != null)
+            {
+                requestModel.CoverImageUrl = url;
+            }
+        }
+
         var response = await _bookService.CreateBookAsync(requestModel);
         if (!response.isSuccess)
         {
@@ -77,10 +89,20 @@ public class BookController : ControllerBase
     }
 
     [HttpPatch("{id}")]
-    public async Task<IActionResult> UpdateBookAsync(int id, [FromBody] BookPatchRequestModel requestModel)
+    public async Task<IActionResult> UpdateBookAsync(int id, [FromForm] BookPatchRequestModel requestModel, IFormFile? photo)
     {
         _logger.LogInformation("Update Book Async => Updating book");
         requestModel.BookId = id;
+        
+        if (photo != null && photo.Length > 0)
+        {
+            var url = await _fileStorageService.UploadImageAsync(photo);
+            if (url != null)
+            {
+                requestModel.CoverImageUrl = url;
+            }
+        }
+
         var response = await _bookService.UpdateBookAsync(requestModel);
         if (!response.isSuccess)
         {

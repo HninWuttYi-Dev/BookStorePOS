@@ -37,4 +37,5 @@ public class BookModel
     public int StockQuantity { get; set; }
     public int ReorderLevel { get; set; }
     public bool IsDeleted { get; set; }
+    public string? CoverImageUrl { get; set; }
 }

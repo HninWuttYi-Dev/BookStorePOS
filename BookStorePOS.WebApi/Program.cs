@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(opts =>
 });
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IFileStorageService, R2FileStorageService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

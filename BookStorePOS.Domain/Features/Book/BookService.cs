@@ -71,7 +71,8 @@ public class BookService : IBookService
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
                     ReorderLevel = item.ReorderLevel,
-                    IsDeleted = item.IsDeleted
+                    IsDeleted = item.IsDeleted,
+                    CoverImageUrl = item.CoverImageUrl
                 });
             }
             _logger.LogInformation("Get Books Async => Books fetched successfully");
@@ -134,7 +135,8 @@ public class BookService : IBookService
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
                     ReorderLevel = item.ReorderLevel,
-                    IsDeleted = item.IsDeleted
+                    IsDeleted = item.IsDeleted,
+                    CoverImageUrl = item.CoverImageUrl
                 }
             };
         }
@@ -225,6 +227,7 @@ public class BookService : IBookService
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
                 ReorderLevel = requestModel.ReorderLevel,
+                CoverImageUrl = requestModel.CoverImageUrl,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
             };
@@ -246,8 +249,9 @@ public class BookService : IBookService
                     Description = book.Description,
                     Price = book.Price,
                     StockQuantity = book.StockQuantity,
-                    ReorderLevel = requestModel.ReorderLevel,
-                    IsDeleted = book.IsDeleted
+                    ReorderLevel = book.ReorderLevel,
+                    IsDeleted = book.IsDeleted,
+                    CoverImageUrl = book.CoverImageUrl
                 }
             };
         }
@@ -345,6 +349,7 @@ public class BookService : IBookService
             if (requestModel.Price.HasValue) item.Price = requestModel.Price.Value;
             if (requestModel.ReorderLevel.HasValue) item.ReorderLevel = requestModel.ReorderLevel.Value;
             if (requestModel.StockQuantity.HasValue) item.StockQuantity = requestModel.StockQuantity.Value;
+            if (requestModel.CoverImageUrl != null) item.CoverImageUrl = requestModel.CoverImageUrl;
 
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;
@@ -366,7 +371,8 @@ public class BookService : IBookService
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
                     ReorderLevel = item.ReorderLevel,
-                    IsDeleted = item.IsDeleted
+                    IsDeleted = item.IsDeleted,
+                    CoverImageUrl = item.CoverImageUrl
                 }
             };
         }
@@ -432,7 +438,8 @@ public class BookService : IBookService
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
                     ReorderLevel = item.ReorderLevel,
-                    IsDeleted = item.IsDeleted
+                    IsDeleted = item.IsDeleted,
+                    CoverImageUrl = item.CoverImageUrl
                 }
             };
         }
@@ -471,7 +478,8 @@ public class BookService : IBookService
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
                     ReorderLevel = item.ReorderLevel,
-                    IsDeleted = item.IsDeleted
+                    IsDeleted = item.IsDeleted,
+                    CoverImageUrl = item.CoverImageUrl
                 });
             }
 

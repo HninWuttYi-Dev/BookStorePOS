@@ -10,6 +10,7 @@ public class BookCreateRequestModel
     public decimal Price { get; set; }
     public int StockQuantity { get; set; }
     public int ReorderLevel { get; set; } = 5;
+    public string? CoverImageUrl { get; set; }
 }
 
 public class BookCreateResponseModel

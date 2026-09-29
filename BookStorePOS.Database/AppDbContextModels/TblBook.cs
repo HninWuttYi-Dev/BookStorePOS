@@ -23,6 +23,8 @@ public partial class TblBook
 
     public int ReorderLevel { get; set; }
 
+    public string? CoverImageUrl { get; set; }
+
     public bool IsDeleted { get; set; }
 
     public DateTime? CreatedAt { get; set; }

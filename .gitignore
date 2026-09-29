@@ -8,3 +8,6 @@ obj/
 # Ignore Mac/Windows system files
 .DS_Store
 Thumbs.db
+appsettings.Development.json
+**/appsettings.Development.json
+secrets.json
