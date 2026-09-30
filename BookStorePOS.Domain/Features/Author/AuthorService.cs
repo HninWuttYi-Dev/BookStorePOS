@@ -131,6 +131,13 @@ public class AuthorService : IAuthorService
                 return new AuthorCreateResponseModel { isSuccess = false, Message = "Author name is required." };
             }
 
+            var exists = await _db.TblAuthors.AnyAsync(a => a.AuthorName.ToLower() == requestModel.AuthorName.ToLower() && !a.IsDeleted);
+            if (exists)
+            {
+                _logger.LogWarning("Create Author Async => Author name already exists");
+                return new AuthorCreateResponseModel { isSuccess = false, Message = "Author already exists." };
+            }
+
             var author = new TblAuthor
             {
                 AuthorName = requestModel.AuthorName,
@@ -187,6 +194,13 @@ public class AuthorService : IAuthorService
             {
                 _logger.LogWarning("Update Author Async => Author name is required");
                 return new AuthorPatchResponseModel { isSuccess = false, Message = "Author name is required." };
+            }
+
+            var exists = await _db.TblAuthors.AnyAsync(a => a.AuthorId != requestModel.AuthorId && a.AuthorName.ToLower() == requestModel.AuthorName.ToLower() && !a.IsDeleted);
+            if (exists)
+            {
+                _logger.LogWarning("Update Author Async => Author name already exists");
+                return new AuthorPatchResponseModel { isSuccess = false, Message = "Author already exists." };
             }
 
             item.AuthorName = requestModel.AuthorName;

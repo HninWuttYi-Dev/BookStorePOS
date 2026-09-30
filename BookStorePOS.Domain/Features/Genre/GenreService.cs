@@ -131,6 +131,13 @@ public class GenreService : IGenreService
                 return new GenreCreateResponseModel { isSuccess = false, Message = "Genre name is required." };
             }
 
+            var exists = await _db.TblGenres.AnyAsync(g => g.GenreName.ToLower() == requestModel.GenreName.ToLower() && !g.IsDeleted);
+            if (exists)
+            {
+                _logger.LogWarning("Create Genre Async => Genre name already exists");
+                return new GenreCreateResponseModel { isSuccess = false, Message = "Genre already exists." };
+            }
+
             var genre = new TblGenre
             {
                 GenreName = requestModel.GenreName,
@@ -187,6 +194,13 @@ public class GenreService : IGenreService
             {
                 _logger.LogWarning("Update Genre Async => Genre name is required");
                 return new GenrePatchResponseModel { isSuccess = false, Message = "Genre name is required." };
+            }
+
+            var exists = await _db.TblGenres.AnyAsync(g => g.GenreId != requestModel.GenreId && g.GenreName.ToLower() == requestModel.GenreName.ToLower() && !g.IsDeleted);
+            if (exists)
+            {
+                _logger.LogWarning("Update Genre Async => Genre name already exists");
+                return new GenrePatchResponseModel { isSuccess = false, Message = "Genre already exists." };
             }
 
             item.GenreName = requestModel.GenreName;

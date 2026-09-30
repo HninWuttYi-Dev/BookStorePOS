@@ -1,10 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using BookStorePOS.Domain.Features.Book;
-using BookStorePOS.Domain.Models.Book;
-using Microsoft.AspNetCore.Http;
-
 namespace BookStorePOS.MvcApp.Controllers
 {
     public class BookController : Controller
