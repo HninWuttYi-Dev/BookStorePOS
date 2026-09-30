@@ -42,6 +42,19 @@ namespace BookStorePOS.MvcApp.Controllers
             return View("AuthorList");
         }
 
+        [HttpGet]
+        [ActionName("Search")]
+        public async Task<IActionResult> AuthorSearchAsync(string query)
+        {
+            var request = new AuthorListRequestModel { AuthorName = query, Page = 1, Limit = 10 };
+            var response = await _authorService.GetAuthorsAsync(request);
+            if (response.isSuccess && response.Data != null)
+            {
+                return Json(response.Data);
+            }
+            return Json(new List<AuthorModel>());
+        }
+
         [ActionName("Create")]
         public IActionResult AuthorCreate()
         {
