@@ -15,7 +15,11 @@ public partial class AppDbContext : DbContext
     {
     }
 
+    public virtual DbSet<TblAuthor> TblAuthors { get; set; }
+
     public virtual DbSet<TblBook> TblBooks { get; set; }
+
+    public virtual DbSet<TblGenre> TblGenres { get; set; }
 
     public virtual DbSet<TblOrder> TblOrders { get; set; }
 
@@ -27,6 +31,20 @@ public partial class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<TblAuthor>(entity =>
+        {
+            entity.HasKey(e => e.AuthorId).HasName("PK__TblAutho__70DAFC346D92882E");
+
+            entity.ToTable("TblAuthor");
+
+            entity.HasIndex(e => e.AuthorName, "UIX_AuthorName")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.Property(e => e.AuthorName).HasMaxLength(150);
+            entity.Property(e => e.CreateAt).HasDefaultValueSql("(getdate())", "DF_TblAuthor_CreatedAt");
+        });
+
         modelBuilder.Entity<TblBook>(entity =>
         {
             entity.HasKey(e => e.BookId).HasName("PK__tmp_ms_x__3DE0C207D6DEDD12");
@@ -48,6 +66,28 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ReorderLevel).HasDefaultValue(5, "DEFAULT_TblBook_ReorderLevel");
             entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.AuthorNavigation).WithMany(p => p.TblBooks)
+                .HasForeignKey(d => d.AuthorId)
+                .HasConstraintName("Fk_Author");
+
+            entity.HasOne(d => d.GenreNavigation).WithMany(p => p.TblBooks)
+                .HasForeignKey(d => d.GenreId)
+                .HasConstraintName("Fk_Genre");
+        });
+
+        modelBuilder.Entity<TblGenre>(entity =>
+        {
+            entity.HasKey(e => e.GenreId).HasName("PK__TblGenre__0385057E26A78F5E");
+
+            entity.ToTable("TblGenre");
+
+            entity.HasIndex(e => e.GenreName, "uidx_genrename")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())", "DF_TblGenre_CreatedAt");
+            entity.Property(e => e.GenreName).HasMaxLength(50);
         });
 
         modelBuilder.Entity<TblOrder>(entity =>

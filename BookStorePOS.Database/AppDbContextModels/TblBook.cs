@@ -31,5 +31,13 @@ public partial class TblBook
 
     public DateTime? UpdatedAt { get; set; }
 
+    public int? AuthorId { get; set; }
+
+    public int? GenreId { get; set; }
+
+    public virtual TblAuthor? AuthorNavigation { get; set; }
+
+    public virtual TblGenre? GenreNavigation { get; set; }
+
     public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();
 }
