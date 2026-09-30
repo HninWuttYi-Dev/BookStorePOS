@@ -38,6 +38,19 @@ namespace BookStorePOS.MvcApp.Controllers
             return View("GenreList");
         }
 
+        [HttpGet]
+        [ActionName("Search")]
+        public async Task<IActionResult> GenreSearchAsync(string query)
+        {
+            var request = new GenreListRequestModel { GenreName = query, Page = 1, Limit = 10 };
+            var response = await _genreService.GetGenresAsync(request);
+            if (response.isSuccess && response.Data != null)
+            {
+                return Json(response.Data);
+            }
+            return Json(new List<GenreModel>());
+        }
+
         [ActionName("Create")]
         public IActionResult GenreCreate()
         {
