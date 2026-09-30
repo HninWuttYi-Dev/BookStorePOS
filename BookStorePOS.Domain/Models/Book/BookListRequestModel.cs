@@ -7,7 +7,9 @@ public class BookListRequestModel
     public string? Isbn {get; set;}
     public string? Title {get; set;}
     public string? Author { get; set; }
+    public int? AuthorId { get; set; }
     public string? Genre {get; set;}
+    public int? GenreId { get; set; }
     public bool? OnlyLowStock {get; set;}
     public int Page {get; set;} = 1;
     public int Limit {get; set;} = 20;
@@ -31,7 +33,9 @@ public class BookModel
     public string? Isbn { get; set; }
     public string Title { get; set; } = null!;
     public string Author { get; set; } = null!;
+    public int? AuthorId { get; set; }
     public string Genre { get; set; } = null!;
+    public int? GenreId { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public int StockQuantity { get; set; }

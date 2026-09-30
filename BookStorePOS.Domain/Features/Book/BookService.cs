@@ -1,7 +1,7 @@
 using System;
-using System.ClientModel.Primitives;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Models.Book;
 using Microsoft.EntityFrameworkCore;
@@ -40,9 +40,19 @@ public class BookService : IBookService
                 query = query.Where(b => b.Author.Contains(requestModel.Author));
             }
 
+            if (requestModel.AuthorId.HasValue)
+            {
+                query = query.Where(b => b.AuthorId == requestModel.AuthorId);
+            }
+
             if (!string.IsNullOrWhiteSpace(requestModel.Genre))
             {
                 query = query.Where(b => b.Genre.Contains(requestModel.Genre));
+            }
+
+            if (requestModel.GenreId.HasValue)
+            {
+                query = query.Where(b => b.GenreId == requestModel.GenreId);
             }
 
             if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
@@ -66,7 +76,9 @@ public class BookService : IBookService
                     Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
+                    AuthorId = item.AuthorId,
                     Genre = item.Genre,
+                    GenreId = item.GenreId,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
@@ -130,7 +142,9 @@ public class BookService : IBookService
                     Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
+                    AuthorId = item.AuthorId,
                     Genre = item.Genre,
+                    GenreId = item.GenreId,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
@@ -161,12 +175,12 @@ public class BookService : IBookService
                 _logger.LogWarning("Create Book Async => Title is required");
                 return new BookCreateResponseModel { isSuccess = false, Message = "Title is required." };
             }
-            if (string.IsNullOrWhiteSpace(requestModel.Author))
+            if ((!requestModel.AuthorId.HasValue || requestModel.AuthorId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Author))
             {
                 _logger.LogWarning("Create Book Async => Author is required");
                 return new BookCreateResponseModel { isSuccess = false, Message = "Author is required." };
             }
-            if (string.IsNullOrWhiteSpace(requestModel.Genre))
+            if ((!requestModel.GenreId.HasValue || requestModel.GenreId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Genre))
             {
                 _logger.LogWarning("Create Book Async => Genre is required");
                 return new BookCreateResponseModel { isSuccess = false, Message = "Genre is required." };
@@ -185,6 +199,31 @@ public class BookService : IBookService
                     Message = "Price must be greater than 0."
                 };
             }
+
+            string authorName = requestModel.Author ?? "";
+            if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0)
+            {
+                var authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId);
+                if (authorEntity != null) authorName = authorEntity.AuthorName;
+                else return new BookCreateResponseModel { isSuccess = false, Message = "Invalid Author." };
+            }
+            else
+            {
+                requestModel.AuthorId = null;
+            }
+
+            string genreName = requestModel.Genre ?? "";
+            if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0)
+            {
+                var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
+                if (genreEntity != null) genreName = genreEntity.GenreName;
+                else return new BookCreateResponseModel { isSuccess = false, Message = "Invalid Genre." };
+            }
+            else
+            {
+                requestModel.GenreId = null;
+            }
+
             if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
             {
                 var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
@@ -221,8 +260,10 @@ public class BookService : IBookService
             {
                 Title = requestModel.Title,
                 Isbn = requestModel.Isbn,
-                Author = requestModel.Author,
-                Genre = requestModel.Genre,
+                Author = authorName,
+                AuthorId = requestModel.AuthorId,
+                Genre = genreName,
+                GenreId = requestModel.GenreId,
                 Description = requestModel.Description,
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
@@ -245,7 +286,9 @@ public class BookService : IBookService
                     Isbn = book.Isbn,
                     Title = book.Title,
                     Author = book.Author,
+                    AuthorId = book.AuthorId,
                     Genre = book.Genre,
+                    GenreId = book.GenreId,
                     Description = book.Description,
                     Price = book.Price,
                     StockQuantity = book.StockQuantity,
@@ -272,7 +315,6 @@ public class BookService : IBookService
         try
         {
             var item = await _db.TblBooks
-                        .AsNoTracking()
                         .FirstOrDefaultAsync(x =>
                         x.BookId == requestModel.BookId
                         &&
@@ -287,20 +329,10 @@ public class BookService : IBookService
                 };
             }
 
-            if (string.IsNullOrWhiteSpace(requestModel.Title))
+            if (requestModel.Title != null && string.IsNullOrWhiteSpace(requestModel.Title))
             {
-                _logger.LogWarning("Update Book Async => Title is required");
-                return new BookPatchResponseModel { isSuccess = false, Message = "Title is required." };
-            }
-            if (string.IsNullOrWhiteSpace(requestModel.Author))
-            {
-                _logger.LogWarning("Update Book Async => Author is required");
-                return new BookPatchResponseModel { isSuccess = false, Message = "Author is required." };
-            }
-            if (string.IsNullOrWhiteSpace(requestModel.Genre))
-            {
-                _logger.LogWarning("Update Book Async => Genre is required");
-                return new BookPatchResponseModel { isSuccess = false, Message = "Genre is required." };
+                _logger.LogWarning("Update Book Async => Title is required if provided");
+                return new BookPatchResponseModel { isSuccess = false, Message = "Title cannot be empty." };
             }
             if (requestModel.ReorderLevel.HasValue && requestModel.ReorderLevel.Value < 0)
             {
@@ -317,6 +349,7 @@ public class BookService : IBookService
                 _logger.LogWarning("Update Book Async => StockQuantity cannot be negative");
                 return new BookPatchResponseModel { isSuccess = false, Message = "StockQuantity cannot be negative." };
             }
+            
             if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
             {
                 var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
@@ -341,10 +374,42 @@ public class BookService : IBookService
                     };
                 }
             }
+
+            string authorName = requestModel.Author ?? item.Author;
+            if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0)
+            {
+                var authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId);
+                if (authorEntity != null) authorName = authorEntity.AuthorName;
+                else return new BookPatchResponseModel { isSuccess = false, Message = "Invalid Author." };
+            }
+            else if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value <= 0)
+            {
+                requestModel.AuthorId = null;
+            }
+
+            string genreName = requestModel.Genre ?? item.Genre;
+            if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0)
+            {
+                var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
+                if (genreEntity != null) genreName = genreEntity.GenreName;
+                else return new BookPatchResponseModel { isSuccess = false, Message = "Invalid Genre." };
+            }
+            else if (requestModel.GenreId.HasValue && requestModel.GenreId.Value <= 0)
+            {
+                requestModel.GenreId = null;
+            }
+
             if (!string.IsNullOrEmpty(requestModel.Isbn)) item.Isbn = requestModel.Isbn;
             if (!string.IsNullOrEmpty(requestModel.Title)) item.Title = requestModel.Title;
-            if (!string.IsNullOrEmpty(requestModel.Author)) item.Author = requestModel.Author;
-            if (!string.IsNullOrEmpty(requestModel.Genre)) item.Genre = requestModel.Genre;
+            
+            item.Author = authorName;
+            if (requestModel.AuthorId.HasValue) item.AuthorId = requestModel.AuthorId;
+            else if (!string.IsNullOrEmpty(requestModel.Author)) item.AuthorId = null; // Unset ID if they manually passed a string
+
+            item.Genre = genreName;
+            if (requestModel.GenreId.HasValue) item.GenreId = requestModel.GenreId;
+            else if (!string.IsNullOrEmpty(requestModel.Genre)) item.GenreId = null; // Unset ID if they manually passed a string
+
             if (requestModel.Description != null) item.Description = requestModel.Description;
             if (requestModel.Price.HasValue) item.Price = requestModel.Price.Value;
             if (requestModel.ReorderLevel.HasValue) item.ReorderLevel = requestModel.ReorderLevel.Value;
@@ -366,7 +431,9 @@ public class BookService : IBookService
                     Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
+                    AuthorId = item.AuthorId,
                     Genre = item.Genre,
+                    GenreId = item.GenreId,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
@@ -393,7 +460,6 @@ public class BookService : IBookService
         try
         {
             var item = await _db.TblBooks
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(x =>
                     x.BookId == requestModel.BookId);
             if (item is null)
@@ -433,7 +499,9 @@ public class BookService : IBookService
                     Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
+                    AuthorId = item.AuthorId,
                     Genre = item.Genre,
+                    GenreId = item.GenreId,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
@@ -473,7 +541,9 @@ public class BookService : IBookService
                     Isbn = item.Isbn,
                     Title = item.Title,
                     Author = item.Author,
+                    AuthorId = item.AuthorId,
                     Genre = item.Genre,
+                    GenreId = item.GenreId,
                     Description = item.Description,
                     Price = item.Price,
                     StockQuantity = item.StockQuantity,
