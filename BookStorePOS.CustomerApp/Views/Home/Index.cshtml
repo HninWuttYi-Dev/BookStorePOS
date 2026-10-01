@@ -1,0 +1,105 @@
+@model BookListResponseModel
+@{
+    ViewData["Title"] = "Our Collections";
+}
+
+<div class="mb-12 text-center max-w-3xl mx-auto">
+    <h1 class="text-4xl md:text-5xl font-heading font-bold text-brand-ink mb-4">Discover Our Collections</h1>
+    <p class="text-brand-inkLight text-lg leading-relaxed font-body">
+        Browse through our carefully curated selection of fine literature, rare editions, and modern classics.
+    </p>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="mb-10 flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-surface p-4 rounded border border-brand-border/50">
+    <form method="get" action="/" class="w-full sm:w-96 flex">
+        <input type="text" name="search" placeholder="Search by title..." value="@Context.Request.Query["search"]" class="flex-1 px-4 py-2.5 bg-brand-bg border border-brand-border rounded-l focus:outline-none focus:border-brand-accent text-brand-ink placeholder:text-brand-inkLight/50">
+        <button type="submit" class="bg-brand-ink hover:bg-brand-accent text-brand-bg px-6 py-2.5 rounded-r transition-colors font-medium">Search</button>
+    </form>
+    <div class="text-sm font-medium text-brand-inkLight uppercase tracking-wider">
+        Showing @Model.Data.Count() Books
+    </div>
+</div>
+
+@if (Model.isSuccess && Model.Data != null && Model.Data.Any())
+{
+    <div class="flex flex-wrap bg-brand-surface border border-brand-border/40 rounded-xl overflow-hidden shadow-inner pt-8 pb-16 px-2 md:px-8">
+        @foreach (var book in Model.Data)
+        {
+            <div class="w-1/2 md:w-1/3 lg:w-1/4 flex flex-col justify-end pt-12 pb-8">
+                <!-- Book Container -->
+                <div class="px-2 md:px-4 flex justify-center mb-0 relative z-10">
+                    <div class="group relative w-32 md:w-44 h-48 md:h-64 shadow-[4px_6px_15px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-6 duration-300 cursor-pointer rounded-r-md rounded-l-sm">
+                        
+                        <!-- Book Spine Highlight -->
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/40 to-transparent z-20 rounded-l-sm"></div>
+                        
+                        @if (!string.IsNullOrEmpty(book.CoverImageUrl))
+                        {
+                            <img src="@book.CoverImageUrl" alt="@book.Title" class="w-full h-full object-cover rounded-r-md rounded-l-sm z-10 relative">
+                        }
+                        else
+                        {
+                            <div class="w-full h-full bg-brand-ink flex items-center justify-center rounded-r-md rounded-l-sm z-10 relative p-4 text-center">
+                                <span class="font-heading text-brand-surface font-bold text-sm">@book.Title</span>
+                            </div>
+                        }
+                        
+                        @if (book.StockQuantity <= 0)
+                        {
+                            <div class="absolute inset-0 bg-brand-ink/60 z-30 flex items-center justify-center rounded-r-md rounded-l-sm backdrop-blur-[1px]">
+                                <span class="bg-brand-danger text-white px-3 py-1 text-xs font-bold uppercase tracking-wider shadow-lg">Out of Stock</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Hover Overlay for Add to Cart -->
+                            <div class="absolute inset-0 bg-brand-ink/90 opacity-0 group-hover:opacity-100 transition-opacity z-30 flex flex-col items-center justify-center rounded-r-md rounded-l-sm backdrop-blur-[2px]">
+                                <span class="text-brand-surface font-bold mb-4 font-heading text-lg">@book.Price.ToString("N0") MMK</span>
+                                <button type="button" class="bg-brand-accent text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-brand-surface hover:text-brand-ink transition-colors shadow-lg transform hover:scale-105 duration-200">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                
+                <!-- The Continuous Shelf -->
+                <div class="w-full h-5 bg-[#e2d5c4] shadow-[0_12px_20px_-5px_rgba(140,111,69,0.4)] border-t-2 border-[#f5ece1] relative z-0">
+                    <!-- Shelf wood grain subtle texture -->
+                    <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]"></div>
+                </div>
+                
+                <!-- Title / Author -->
+                <div class="text-center mt-8 px-4 h-16">
+                    <h3 class="font-heading font-bold text-brand-ink text-lg truncate" title="@book.Title">@book.Title</h3>
+                    <p class="text-sm text-brand-inkLight font-medium mt-1 truncate" title="@book.Author">@book.Author</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Simple Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="mt-16 flex justify-center gap-3">
+            @if (Model.Page > 1)
+            {
+                <a href="/?page=@(Model.Page - 1)&search=@Context.Request.Query["search"]" class="px-5 py-2.5 rounded-full border border-brand-border text-brand-ink hover:bg-brand-surface transition-colors font-medium text-sm shadow-sm">Previous Page</a>
+            }
+            <span class="px-5 py-2.5 rounded-full bg-brand-ink text-brand-surface font-medium text-sm shadow-md">Page @Model.Page of @Model.TotalPages</span>
+            @if (Model.Page < Model.TotalPages)
+            {
+                <a href="/?page=@(Model.Page + 1)&search=@Context.Request.Query["search"]" class="px-5 py-2.5 rounded-full border border-brand-border text-brand-ink hover:bg-brand-surface transition-colors font-medium text-sm shadow-sm">Next Page</a>
+            }
+        </div>
+    }
+}
+else
+{
+    <div class="text-center py-32 bg-brand-surface border border-brand-border/50 rounded-xl shadow-inner">
+        <svg class="w-16 h-16 text-brand-border mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        <h3 class="text-2xl font-heading font-bold text-brand-ink mb-2">The shelves are empty</h3>
+        <p class="text-brand-inkLight">Try adjusting your search to find the story you're looking for.</p>
+    </div>
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - The Oxford Library</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Elegant Fonts (Oxford Vibe) -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#FDFBF7',         
+                            surface: '#F4F1EA',    
+                            border: '#E2DCD0',     
+                            ink: '#2C2621',        
+                            inkLight: '#59534E',   
+                            accent: '#8C6F45',     
+                            accentHover: '#705734',
+                            danger: '#8A3324'      
+                        }
+                    },
+                    fontFamily: {
+                        heading: ['"Playfair Display"', 'serif'],
+                        body: ['"Inter"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: theme('colors.brand.bg');
+            color: theme('colors.brand.ink');
+            font-family: theme('fontFamily.body');
+        }
+        h1, h2, h3, h4, h5, h6, .font-heading {
+            font-family: theme('fontFamily.heading');
+        }
+        
+        /* Subtle texture for the background */
+        .bg-texture {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238c6f45' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="bg-texture min-h-screen flex flex-col">
+
+    <header class="bg-brand-surface border-b border-brand-border py-6 px-8 md:px-16 flex justify-between items-center shadow-sm">
+        <div>
+            <a href="/" class="text-3xl font-heading font-bold text-brand-ink flex items-center gap-3">
+                <svg class="w-8 h-8 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                Babylon
+            </a>
+            <p class="text-brand-inkLight text-sm italic font-heading mt-1">Discover your next great read</p>
+        </div>
+        
+        <nav class="flex gap-6 items-center">
+            <a href="/" class="text-brand-ink hover:text-brand-accent transition-colors font-medium text-sm tracking-widest uppercase">Browse Books</a>
+            <a href="#" class="text-brand-ink hover:text-brand-accent transition-colors font-medium text-sm tracking-widest uppercase">Genres</a>
+            
+            <a href="#" class="flex items-center gap-2 ml-4 px-5 py-2.5 bg-brand-ink text-brand-bg rounded-xl hover:bg-brand-accent transition-colors shadow-md">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                <span class="font-medium text-sm">Cart (0)</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="flex-1 w-full max-w-7xl mx-auto px-6 py-12">
+        @RenderBody()
+    </main>
+
+    <footer class="bg-brand-ink text-brand-bg py-12 px-8 mt-auto border-t-4 border-brand-accent">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+                <h3 class="font-heading text-2xl font-bold mb-4 text-brand-surface">Babylon</h3>
+                <p class="text-brand-border/80 text-sm leading-relaxed mb-4">
+                    Providing timeless classics, rich non-fiction, and captivating stories for the discerning reader. Your ultimate destination for books.
+                </p>
+            </div>
+            <div>
+                <h4 class="font-heading text-lg font-semibold mb-4 text-brand-accent">Information</h4>
+                <ul class="space-y-2 text-sm text-brand-border/80">
+                    <li><a href="#" class="hover:text-brand-surface transition-colors">Shipping & Returns</a></li>
+                    <li><a href="#" class="hover:text-brand-surface transition-colors">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:text-brand-surface transition-colors">Terms of Service</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-heading text-lg font-semibold mb-4 text-brand-accent">Newsletter</h4>
+                <p class="text-brand-border/80 text-sm mb-4">Subscribe for updates on rare finds and new collections.</p>
+                <div class="flex">
+                    <input type="email" placeholder="Your email address" class="px-4 py-2 w-full bg-brand-inkLight/30 border border-brand-border/20 rounded-l text-white focus:outline-none focus:border-brand-accent">
+                    <button class="bg-brand-accent hover:bg-brand-accentHover text-white px-4 py-2 rounded-r transition-colors">Subscribe</button>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto mt-12 pt-6 border-t border-brand-inkLight/30 text-center text-xs text-brand-border/60">
+            &copy; 2026 The Oxford Library. All rights reserved.
+        </div>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
