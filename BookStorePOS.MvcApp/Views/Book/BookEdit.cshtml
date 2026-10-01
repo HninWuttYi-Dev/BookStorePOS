@@ -6,11 +6,12 @@
     {
         bookId = Convert.ToInt32(ViewData["Id"]);
     }
-    string title = ViewData["Title"]?.ToString() ?? "";
+    string title = ViewData["BookTitle"]?.ToString() ?? "";
     string author = ViewData["Author"]?.ToString() ?? "";
     string genre = ViewData["Genre"]?.ToString() ?? "";
     string isbn = ViewData["Isbn"]?.ToString() ?? "";
     string description = ViewData["Description"]?.ToString() ?? "";
+    string coverImageUrl = ViewData["CoverImageUrl"]?.ToString() ?? "";
     decimal price = 0;
     if (ViewData["Price"] != null)
     {
@@ -107,6 +108,18 @@
     
     <div class="mb-6">
         <label for="photo" class="block text-sm font-semibold text-slate-700 mb-2">Update Cover Image (Optional)</label>
+        
+        @if (!string.IsNullOrEmpty(coverImageUrl))
+        {
+            <div class="mb-3 flex items-center gap-4 p-3 border border-slate-100 rounded-xl bg-slate-50">
+                <img src="@coverImageUrl" alt="Current Cover" class="w-12 h-16 object-cover rounded shadow-sm border border-slate-200">
+                <div>
+                    <p class="text-sm font-medium text-slate-700">Current Image Exists</p>
+                    <p class="text-xs text-slate-500">Uploading a new file will replace this image.</p>
+                </div>
+            </div>
+        }
+        
         <div class="flex items-center gap-4">
             <input type="file" id="photo" accept="image/*" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all bg-slate-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
             <button type="button" id="btnClearPhoto" class="hidden px-4 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors shadow-sm">

@@ -21,7 +21,7 @@ namespace BookStorePOS.MvcApp.Controllers
         public async Task<IActionResult> CheckoutAsync(int page = 1, string search = "")
         {
             _logger.LogInformation("Checkout Index => Fetching books");
-            var request = new BookListRequestModel { Page = page, Limit = 9, Title = search };
+            var request = new BookListRequestModel { Page = page, Limit = 12, Title = search };
             var response = await _bookService.GetBooksAsync(request);
             
             if (response.isSuccess && response.Data != null)

@@ -12,7 +12,7 @@ public class BookListRequestModel
     public int? GenreId { get; set; }
     public bool? OnlyLowStock {get; set;}
     public int Page {get; set;} = 1;
-    public int Limit {get; set;} = 20;
+    public int Limit {get; set;} = 10;
     
 }
 

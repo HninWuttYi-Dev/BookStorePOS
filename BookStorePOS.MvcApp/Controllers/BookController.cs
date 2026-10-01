@@ -147,7 +147,7 @@ namespace BookStorePOS.MvcApp.Controllers
             }
 
             ViewData["Id"] = model.Data.BookId;
-            ViewData["Title"] = model.Data.Title;
+            ViewData["BookTitle"] = model.Data.Title;
             ViewData["Author"] = model.Data.Author;
             ViewData["Genre"] = model.Data.Genre;
             ViewData["Isbn"] = model.Data.Isbn;
@@ -155,6 +155,7 @@ namespace BookStorePOS.MvcApp.Controllers
             ViewData["StockQuantity"] = model.Data.StockQuantity;
             ViewData["ReorderLevel"] = model.Data.ReorderLevel;
             ViewData["Description"] = model.Data.Description;
+            ViewData["CoverImageUrl"] = model.Data.CoverImageUrl;
 
             return View("BookEdit", model.Data);
         }

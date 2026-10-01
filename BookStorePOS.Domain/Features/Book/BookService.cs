@@ -63,7 +63,7 @@ public class BookService : IBookService
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
             if(totalPages == 0) totalPages = 1;
-            var lst = await query.OrderByDescending(b => b.CreatedAt)
+            var lst = await query.OrderBy(b => b.Title)
                             .Skip((requestModel.Page -1) * requestModel.Limit)
                             .Take(requestModel.Limit)
                             .ToListAsync();
