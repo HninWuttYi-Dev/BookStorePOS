@@ -1,0 +1,367 @@
+@{
+    ViewData["Title"] = "Checkout";
+    var books = ViewData["Books"] as List<BookModel> ?? new List<BookModel>();
+    
+    int currentPage = ViewData["CurrentPage"] != null ? Convert.ToInt32(ViewData["CurrentPage"]) : 1;
+    int totalPages = ViewData["TotalPages"] != null ? Convert.ToInt32(ViewData["TotalPages"]) : 1;
+    string search = ViewData["Search"]?.ToString() ?? "";
+}
+
+<div class="h-[calc(100vh-8rem)] flex gap-6">
+    <!-- Products Section -->
+    <div class="flex-1 flex flex-col overflow-hidden bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100">
+        
+        <form method="get" action="/Checkout" class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <h2 class="text-lg font-bold text-slate-900">Products</h2>
+            <div class="relative flex items-center gap-2">
+                <div class="relative">
+                    <input type="text" name="search" value="@search" class="pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all w-64" placeholder="Search books...">
+                    <svg class="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <button type="submit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm transition-colors">Search</button>
+                @if(!string.IsNullOrEmpty(search)) {
+                    <a href="/Checkout" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-sm transition-colors">Clear</a>
+                }
+            </div>
+        </form>
+        
+        <div class="flex-1 p-4 overflow-y-auto flex flex-col justify-between">
+            <div>
+                @if(books.Count == 0)
+                {
+                    <div class="text-center text-slate-500 py-10">No books found.</div>
+                }
+                else
+                {
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="productsGrid">
+                        @foreach (var book in books)
+                        {
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col hover:border-teal-300 hover:shadow-md transition-all cursor-pointer product-card" 
+                                 data-id="@book.BookId" 
+                                 data-title="@book.Title" 
+                                 data-price="@book.Price" 
+                                 data-stock="@book.StockQuantity"
+                                 onclick="addToCart(this)">
+                                
+                                <div class="aspect-[3/4] w-full bg-slate-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
+                                    @if (!string.IsNullOrEmpty(book.CoverImageUrl))
+                                    {
+                                        <img src="@book.CoverImageUrl" alt="@book.Title" class="w-full h-full object-cover">
+                                    }
+                                    else
+                                    {
+                                        <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                    }
+                                    @if (book.StockQuantity <= 0)
+                                    {
+                                        <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
+                                            <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Out of Stock</span>
+                                        </div>
+                                    }
+                                </div>
+                                <h3 class="font-semibold text-slate-900 text-sm line-clamp-2 leading-tight mb-2 product-title" title="@book.Title">@book.Title</h3>
+                                <div class="mt-auto flex flex-col gap-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-teal-700 font-bold">@book.Price.ToString("#,##0") <span class="text-xs text-slate-500 font-normal">MMK</span></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-slate-400">Stock: <span class="font-medium text-slate-600">@book.StockQuantity</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            
+            <!-- Pagination -->
+            @if(totalPages > 1)
+            {
+                <div class="mt-6 flex justify-center items-center gap-2 pb-2 shrink-0">
+                    @if (currentPage > 1)
+                    {
+                        <a href="/Checkout?page=@(currentPage - 1)&search=@search" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </a>
+                    }
+                    
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        if (i == currentPage)
+                        {
+                            <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-teal-600 text-white font-semibold shadow-sm">@i</span>
+                        }
+                        else if (i == 1 || i == totalPages || Math.Abs(i - currentPage) <= 1)
+                        {
+                            <a href="/Checkout?page=@i&search=@search" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium transition-colors">@i</a>
+                        }
+                        else if (Math.Abs(i - currentPage) == 2)
+                        {
+                            <span class="w-8 h-8 flex items-center justify-center text-slate-400">...</span>
+                        }
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <a href="/Checkout?page=@(currentPage + 1)&search=@search" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Cart Section -->
+    <div class="w-96 flex flex-col bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden shrink-0">
+        <div class="p-4 border-b border-slate-100 bg-teal-700 text-white flex items-center justify-between">
+            <h2 class="text-lg font-bold">Current Order</h2>
+            <div class="flex items-center gap-2">
+                <button type="button" id="btnClearCart" class="text-teal-200 hover:text-white transition-colors text-xs font-semibold mr-2 hidden">Clear All</button>
+                <span class="bg-teal-800 text-teal-100 text-xs font-bold px-2 py-1 rounded-lg" id="cartItemCount">0 Items</span>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 bg-slate-50/30" id="cartItemsContainer">
+            <!-- Empty state -->
+            <div id="emptyCartState" class="h-full flex flex-col items-center justify-center text-slate-400">
+                <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <p class="text-sm font-medium">Your cart is empty</p>
+                <p class="text-xs mt-1">Select products to add them here</p>
+            </div>
+            
+            <!-- Items list (populated by JS) -->
+            <div id="cartItemsList" class="space-y-3 hidden"></div>
+        </div>
+        
+        <!-- Order Summary & Checkout -->
+        <div class="p-5 bg-white border-t border-slate-100">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-slate-500 text-sm">Subtotal</span>
+                <span class="font-medium text-slate-900" id="subtotalDisplay">0 <span class="text-xs text-slate-400">MMK</span></span>
+            </div>
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-slate-500 text-sm">Tax (0%)</span>
+                <span class="font-medium text-slate-900">0 <span class="text-xs text-slate-400">MMK</span></span>
+            </div>
+            <div class="flex justify-between items-center mb-6 pt-4 border-t border-dashed border-slate-200">
+                <span class="text-lg font-bold text-slate-900">Total</span>
+                <span class="text-2xl font-bold text-teal-700" id="totalDisplay">0 <span class="text-sm text-slate-500">MMK</span></span>
+            </div>
+            
+            <button id="btnCheckout" class="w-full py-3.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-lg shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                Complete Checkout
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container for Notifications -->
+<div id="toastContainer" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="bg-red-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3" id="toastBg">
+        <span class="font-medium text-sm" id="toastText">Message</span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let cart = [];
+
+        // Load cart from localStorage so it persists across search/pagination
+        try {
+            const savedCart = localStorage.getItem('pos_cart');
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
+            }
+        } catch (e) {
+            console.error("Could not load cart from localStorage", e);
+        }
+
+        $(document).ready(function() {
+            renderCart();
+            
+            // Focus the search input and set cursor to the end
+            const searchInput = $('input[name="search"]');
+            const searchVal = searchInput.val();
+            if (searchInput.length) {
+                searchInput.focus();
+                searchInput[0].setSelectionRange(searchVal.length, searchVal.length);
+            }
+        });
+
+        // Debounce search
+        let searchTimeout;
+        $('input[name="search"]').on('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                $(this).closest('form').submit();
+            }, 600);
+        });
+
+        function saveCart() {
+            localStorage.setItem('pos_cart', JSON.stringify(cart));
+        }
+
+        $('#btnClearCart').on('click', function() {
+            cart = [];
+            saveCart();
+            renderCart();
+        });
+
+        function addToCart(element) {
+            const id = parseInt($(element).data('id'));
+            const title = $(element).data('title');
+            const price = parseFloat($(element).data('price'));
+            const stock = parseInt($(element).data('stock'));
+
+            if (stock <= 0) {
+                showToast("This item is out of stock", false);
+                return;
+            }
+
+            const existingItem = cart.find(item => item.bookId === id);
+            
+            if (existingItem) {
+                if (existingItem.quantity < stock) {
+                    existingItem.quantity += 1;
+                } else {
+                    showToast(`Only ${stock} items available in stock`, false);
+                    return;
+                }
+            } else {
+                cart.push({
+                    bookId: id,
+                    title: title,
+                    price: price,
+                    quantity: 1,
+                    maxStock: stock
+                });
+            }
+            
+            saveCart();
+            renderCart();
+        }
+
+        function updateQuantity(id, delta) {
+            const item = cart.find(i => i.bookId === id);
+            if (!item) return;
+
+            const newQty = item.quantity + delta;
+            
+            if (newQty > item.maxStock) {
+                showToast(`Only ${item.maxStock} items available in stock`, false);
+                return;
+            }
+            
+            if (newQty <= 0) {
+                cart = cart.filter(i => i.bookId !== id);
+            } else {
+                item.quantity = newQty;
+            }
+            
+            saveCart();
+            renderCart();
+        }
+
+        function renderCart() {
+            const $list = $('#cartItemsList');
+            $list.empty();
+            
+            let totalQty = 0;
+            let totalPrice = 0;
+
+            if (cart.length === 0) {
+                $('#emptyCartState').removeClass('hidden');
+                $list.addClass('hidden');
+                $('#btnCheckout').prop('disabled', true);
+                $('#btnClearCart').addClass('hidden');
+            } else {
+                $('#emptyCartState').addClass('hidden');
+                $list.removeClass('hidden');
+                $('#btnCheckout').prop('disabled', false);
+                $('#btnClearCart').removeClass('hidden');
+
+                cart.forEach(item => {
+                    totalQty += item.quantity;
+                    const itemTotal = item.price * item.quantity;
+                    totalPrice += itemTotal;
+
+                    $list.append(`
+                        <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col gap-2">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-semibold text-slate-900 text-sm leading-tight pr-4">${item.title}</h4>
+                                <button type="button" onclick="updateQuantity(${item.bookId}, -${item.quantity})" class="text-slate-400 hover:text-red-500 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                            <div class="flex justify-between items-center mt-1">
+                                <div class="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-200">
+                                    <button type="button" onclick="updateQuantity(${item.bookId}, -1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all border border-slate-200">-</button>
+                                    <span class="text-sm font-bold text-slate-900 min-w-[20px] text-center">${item.quantity}</span>
+                                    <button type="button" onclick="updateQuantity(${item.bookId}, 1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all border border-slate-200">+</button>
+                                </div>
+                                <span class="font-bold text-teal-700">${itemTotal.toLocaleString()} <span class="text-[10px] text-slate-500 font-normal">MMK</span></span>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+
+            $('#cartItemCount').text(`${totalQty} Items`);
+            $('#subtotalDisplay').html(`${totalPrice.toLocaleString()} <span class="text-xs text-slate-400">MMK</span>`);
+            $('#totalDisplay').html(`${totalPrice.toLocaleString()} <span class="text-sm text-slate-500">MMK</span>`);
+        }
+
+        function showToast(message, isSuccess = false) {
+            $('#toastText').text(message);
+            
+            if (isSuccess) {
+                $('#toastBg').removeClass('bg-red-600').addClass('bg-emerald-600');
+            } else {
+                $('#toastBg').removeClass('bg-emerald-600').addClass('bg-red-600');
+            }
+            
+            $('#toastContainer').removeClass('opacity-0 pointer-events-none');
+            setTimeout(() => {
+                $('#toastContainer').addClass('opacity-0 pointer-events-none');
+            }, 3000);
+        }
+
+        $('#btnCheckout').on('click', function() {
+            if (cart.length === 0) return;
+
+            const $btn = $(this);
+            $btn.prop('disabled', true).html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...');
+
+            const requestModel = {
+                Items: cart.map(i => ({ BookId: i.bookId, Quantity: i.quantity }))
+            };
+
+            $.ajax({
+                url: '/Orders/Create',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestModel),
+                success: function(response) {
+                    if (response.isSuccess) {
+                        showToast("Order created successfully!", true);
+                        // Clear the cart on successful checkout
+                        cart = [];
+                        saveCart();
+                        setTimeout(() => {
+                            window.location.href = '/Orders/OrderDetail/' + response.data.orderId;
+                        }, 1000);
+                    } else {
+                        showToast(response.message || "Failed to create order");
+                        $btn.prop('disabled', false).html('<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Complete Checkout');
+                    }
+                },
+                error: function() {
+                    showToast("Server Error: Failed to process order");
+                    $btn.prop('disabled', false).html('<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Complete Checkout');
+                }
+            });
+        });
+    </script>
+}

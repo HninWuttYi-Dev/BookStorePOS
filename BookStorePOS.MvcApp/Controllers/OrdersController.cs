@@ -64,5 +64,31 @@ namespace BookStorePOS.MvcApp.Controllers
                 return RedirectToAction("Index");
             }
         }
+
+        [HttpPost]
+        [ActionName("Create")]
+        public async Task<IActionResult> OrderCreateAsync([FromBody] OrderCreateRequestModel requestModel)
+        {
+            _logger.LogInformation("Order Create Async => Creating new order");
+
+            if (requestModel == null || requestModel.Items == null || requestModel.Items.Count == 0)
+            {
+                _logger.LogWarning("Order Create Async => No items provided");
+                return Json(new OrderCreateResponseModel { isSuccess = false, Message = "Please provide at least one item." });
+            }
+
+            var response = await _orderService.CreateOrder(requestModel);
+            
+            if (response.isSuccess)
+            {
+                _logger.LogInformation("Order Create Async => Order created successfully");
+            }
+            else
+            {
+                _logger.LogWarning($"Order Create Async => Failed to create order: {response.Message}");
+            }
+
+            return Json(response);
+        }
     }
 }
