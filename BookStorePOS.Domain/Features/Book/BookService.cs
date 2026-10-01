@@ -207,6 +207,27 @@ public class BookService : IBookService
                 if (authorEntity != null) authorName = authorEntity.AuthorName;
                 else return new BookCreateResponseModel { isSuccess = false, Message = "Invalid Author." };
             }
+            else if (!string.IsNullOrWhiteSpace(authorName))
+            {
+                var existingAuthor = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == authorName.ToLower() && !a.IsDeleted);
+                if (existingAuthor != null)
+                {
+                    requestModel.AuthorId = existingAuthor.AuthorId;
+                    authorName = existingAuthor.AuthorName;
+                }
+                else
+                {
+                    var newAuthor = new TblAuthor
+                    {
+                        AuthorName = authorName,
+                        CreateAt = DateTime.Now,
+                        IsDeleted = false
+                    };
+                    _db.TblAuthors.Add(newAuthor);
+                    await _db.SaveChangesAsync();
+                    requestModel.AuthorId = newAuthor.AuthorId;
+                }
+            }
             else
             {
                 requestModel.AuthorId = null;
@@ -218,6 +239,27 @@ public class BookService : IBookService
                 var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
                 if (genreEntity != null) genreName = genreEntity.GenreName;
                 else return new BookCreateResponseModel { isSuccess = false, Message = "Invalid Genre." };
+            }
+            else if (!string.IsNullOrWhiteSpace(genreName))
+            {
+                var existingGenre = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == genreName.ToLower() && !g.IsDeleted);
+                if (existingGenre != null)
+                {
+                    requestModel.GenreId = existingGenre.GenreId;
+                    genreName = existingGenre.GenreName;
+                }
+                else
+                {
+                    var newGenre = new TblGenre
+                    {
+                        GenreName = genreName,
+                        CreatedAt = DateTime.Now,
+                        IsDeleted = false
+                    };
+                    _db.TblGenres.Add(newGenre);
+                    await _db.SaveChangesAsync();
+                    requestModel.GenreId = newGenre.GenreId;
+                }
             }
             else
             {
@@ -382,6 +424,28 @@ public class BookService : IBookService
                 if (authorEntity != null) authorName = authorEntity.AuthorName;
                 else return new BookPatchResponseModel { isSuccess = false, Message = "Invalid Author." };
             }
+            else if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value <= 0 && !string.IsNullOrWhiteSpace(requestModel.Author))
+            {
+                var existingAuthor = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == requestModel.Author.ToLower() && !a.IsDeleted);
+                if (existingAuthor != null)
+                {
+                    requestModel.AuthorId = existingAuthor.AuthorId;
+                    authorName = existingAuthor.AuthorName;
+                }
+                else
+                {
+                    var newAuthor = new TblAuthor
+                    {
+                        AuthorName = requestModel.Author,
+                        CreateAt = DateTime.Now,
+                        IsDeleted = false
+                    };
+                    _db.TblAuthors.Add(newAuthor);
+                    await _db.SaveChangesAsync();
+                    requestModel.AuthorId = newAuthor.AuthorId;
+                    authorName = newAuthor.AuthorName;
+                }
+            }
             else if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value <= 0)
             {
                 requestModel.AuthorId = null;
@@ -393,6 +457,28 @@ public class BookService : IBookService
                 var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
                 if (genreEntity != null) genreName = genreEntity.GenreName;
                 else return new BookPatchResponseModel { isSuccess = false, Message = "Invalid Genre." };
+            }
+            else if (requestModel.GenreId.HasValue && requestModel.GenreId.Value <= 0 && !string.IsNullOrWhiteSpace(requestModel.Genre))
+            {
+                var existingGenre = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == requestModel.Genre.ToLower() && !g.IsDeleted);
+                if (existingGenre != null)
+                {
+                    requestModel.GenreId = existingGenre.GenreId;
+                    genreName = existingGenre.GenreName;
+                }
+                else
+                {
+                    var newGenre = new TblGenre
+                    {
+                        GenreName = requestModel.Genre,
+                        CreatedAt = DateTime.Now,
+                        IsDeleted = false
+                    };
+                    _db.TblGenres.Add(newGenre);
+                    await _db.SaveChangesAsync();
+                    requestModel.GenreId = newGenre.GenreId;
+                    genreName = newGenre.GenreName;
+                }
             }
             else if (requestModel.GenreId.HasValue && requestModel.GenreId.Value <= 0)
             {
