@@ -61,7 +61,7 @@
             <!-- Logo -->
             <a href="/" class="text-3xl font-heading font-bold text-brand-ink flex items-center gap-3 shrink-0">
                 <svg class="w-8 h-8 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                <span>Babylon</span>
+                <span>BABYLON</span>
             </a>
 
             <!-- Desktop Navigation -->
@@ -73,13 +73,6 @@
 
             <!-- Search, Cart, Login (Desktop) -->
             <div class="hidden md:flex items-center gap-6 ml-auto">
-                <!-- Search -->
-                <form method="get" action="/Books" class="relative group">
-                    <input type="text" name="search" placeholder="Search books..." class="w-64 pl-4 pr-10 py-2 bg-brand-bg border border-brand-border rounded-full focus:outline-none focus:border-brand-accent text-sm text-brand-ink transition-all">
-                    <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-inkLight hover:text-brand-accent">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </button>
-                </form>
 
                 <a href="/Cart" class="flex items-center gap-2 text-brand-ink hover:text-brand-accent transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -107,12 +100,7 @@
         <!-- Mobile Drawer / Menu -->
         <div id="mobileMenu" class="hidden md:hidden bg-brand-surface border-t border-brand-border absolute w-full left-0 shadow-lg">
             <div class="flex flex-col px-6 py-4 gap-4">
-                <form method="get" action="/Books" class="relative w-full mb-2">
-                    <input type="text" name="search" placeholder="Search books..." class="w-full pl-4 pr-10 py-2.5 bg-brand-bg border border-brand-border rounded-lg focus:outline-none focus:border-brand-accent text-sm text-brand-ink">
-                    <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-inkLight">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </button>
-                </form>
+
                 
                 <a href="/Books" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Browse</a>
                 <a href="/Authors" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Authors</a>
@@ -174,6 +162,45 @@
                     icon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
                 } else {
                     icon.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+                }
+            });
+
+            // Debounce Search Logic
+            let debounceTimer;
+            const searchForms = document.querySelectorAll('.debounce-search-form');
+            
+            searchForms.forEach(form => {
+                const input = form.querySelector('.debounce-search-input');
+                const clearBtn = form.querySelector('.debounce-clear-btn');
+                
+                if(!input) return;
+
+                const toggleClearBtn = () => {
+                    if(clearBtn) {
+                        if(input.value.length > 0) {
+                            clearBtn.classList.remove('hidden');
+                        } else {
+                            clearBtn.classList.add('hidden');
+                        }
+                    }
+                };
+
+                toggleClearBtn();
+
+                input.addEventListener('input', () => {
+                    toggleClearBtn();
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        form.submit();
+                    }, 500);
+                });
+
+                if(clearBtn) {
+                    clearBtn.addEventListener('click', () => {
+                        input.value = '';
+                        toggleClearBtn();
+                        form.submit();
+                    });
                 }
             });
         });

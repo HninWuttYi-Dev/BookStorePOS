@@ -30,6 +30,13 @@ public class BookService : IBookService
                     .Where(b => !b.IsDeleted);
 
             //apply filters if the user sent a value
+            if (!string.IsNullOrWhiteSpace(requestModel.SearchQuery))
+            {
+                var queryTerm = requestModel.SearchQuery.Trim().ToLower();
+                query = query.Where(b => b.Title.ToLower().Contains(queryTerm) ||
+                                         b.Author.ToLower().Contains(queryTerm) ||
+                                         (b.Isbn != null && b.Isbn.ToLower().Contains(queryTerm)));
+            }
             if (!string.IsNullOrWhiteSpace(requestModel.Title))
             {
                 query = query.Where(b => b.Title.Contains(requestModel.Title));
@@ -63,7 +70,7 @@ public class BookService : IBookService
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
             if(totalPages == 0) totalPages = 1;
-            var lst = await query.OrderBy(b => b.Title)
+            var lst = await query.OrderByDescending(b => b.BookId)
                             .Skip((requestModel.Page -1) * requestModel.Limit)
                             .Take(requestModel.Limit)
                             .ToListAsync();

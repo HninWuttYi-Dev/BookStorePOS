@@ -1,0 +1,120 @@
+@{
+    ViewData["Title"] = "Browse Books";
+    var books = ViewData["Books"] as List<BookModel> ?? new List<BookModel>();
+    var currentPage = ViewData["CurrentPage"] as int? ?? 1;
+    var totalPages = ViewData["TotalPages"] as int? ?? 1;
+    var searchQuery = ViewData["SearchQuery"] as string ?? "";
+    var genreFilter = ViewData["GenreFilter"] as string ?? "";
+}
+
+<div class="mb-12">
+    <h1 class="text-4xl font-heading font-bold text-brand-ink mb-4">Browse Books</h1>
+    <p class="text-brand-inkLight text-lg">Discover our full collection of titles.</p>
+</div>
+
+<!-- Search and Filter -->
+<section class="mb-12">
+    <div class="bg-brand-surface p-4 rounded-2xl shadow-sm border border-brand-border/50">
+        <form method="get" action="/Books" class="flex flex-col sm:flex-row gap-3 debounce-search-form">
+            <div class="relative flex-1">
+                <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-brand-inkLight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" name="SearchQuery" value="@searchQuery" placeholder="Search by title, author, or ISBN..." class="w-full pl-12 pr-12 py-3 bg-brand-bg border border-brand-border rounded-xl focus:outline-none focus:border-brand-accent text-brand-ink placeholder:text-brand-inkLight/60 debounce-search-input">
+                <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-brand-inkLight hover:text-brand-accent hidden debounce-clear-btn" aria-label="Clear">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            @if(!string.IsNullOrEmpty(genreFilter)) {
+                <input type="hidden" name="genre" value="@genreFilter" />
+            }
+        </form>
+    </div>
+</section>
+
+<!-- Bookshelf Grid -->
+<section class="mb-16">
+    @if(books.Any())
+    {
+        <div class="flex flex-wrap bg-brand-surface border border-brand-border/40 rounded-xl overflow-hidden shadow-inner pt-8 pb-16 px-2 md:px-8">
+            @foreach(var book in books)
+            {
+                <div class="w-1/2 md:w-1/3 lg:w-1/5 flex flex-col justify-end pt-12 pb-8">
+                    <!-- Book Container -->
+                    <div class="px-2 md:px-4 flex justify-center mb-0 relative z-10">
+                        <div class="group relative w-32 md:w-44 h-48 md:h-64 shadow-[4px_6px_15px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-6 duration-300 cursor-pointer rounded-r-md rounded-l-sm block">
+                            
+                            <!-- Book Spine Highlight -->
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/40 to-transparent z-20 rounded-l-sm"></div>
+                            
+                            <!-- Cover -->
+                            @if(!string.IsNullOrEmpty(book.CoverImageUrl))
+                            {
+                                <img src="@book.CoverImageUrl" alt="@book.Title" class="w-full h-full object-cover rounded-r-md rounded-l-sm z-10 relative">
+                            }
+                            else
+                            {
+                                <div class="w-full h-full bg-brand-ink flex items-center justify-center rounded-r-md rounded-l-sm z-10 relative p-4 text-center">
+                                    <span class="font-heading text-brand-surface font-bold text-sm">@book.Title</span>
+                                </div>
+                            }
+                            
+                            <!-- Hover Overlay for Add to Cart -->
+                            <div class="absolute inset-0 bg-brand-ink/90 opacity-0 group-hover:opacity-100 transition-opacity z-30 flex flex-col items-center justify-center rounded-r-md rounded-l-sm backdrop-blur-[2px]">
+                                <span class="text-brand-surface font-bold mb-4 font-heading text-lg">@book.Price.ToString("N0") MMK</span>
+                                <button type="button" onclick="event.preventDefault(); window.location.href='/Cart/Add/@book.BookId'" class="bg-brand-accent text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-brand-surface hover:text-brand-ink transition-colors shadow-lg transform hover:scale-105 duration-200">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- The Continuous Shelf -->
+                    <div class="w-full h-5 bg-[#e2d5c4] shadow-[0_12px_20px_-5px_rgba(140,111,69,0.4)] border-t-2 border-[#f5ece1] relative z-0">
+                        <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.85%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E')]"></div>
+                    </div>
+                    
+                    <!-- Title / Author -->
+                    <div class="text-center mt-8 px-4 h-16">
+                        <h3 class="font-heading font-bold text-brand-ink text-lg truncate" title="@book.Title">@book.Title</h3>
+                        <p class="text-sm text-brand-inkLight font-medium mt-1 truncate" title="@book.Author">@book.Author</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-24 bg-brand-surface border border-brand-border rounded-xl">
+            <svg class="w-16 h-16 text-brand-inkLight mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <h3 class="text-2xl font-heading font-bold text-brand-ink mb-2">No books found</h3>
+            <p class="text-brand-inkLight">We couldn't find any books matching your search criteria.</p>
+        </div>
+    }
+</section>
+
+<!-- Pagination -->
+@if(totalPages > 1)
+{
+    <div class="flex justify-center items-center gap-2 mb-12">
+        @if (currentPage > 1)
+        {
+            <a href="/Books?page=@(currentPage - 1)&SearchQuery=@searchQuery&genre=@genreFilter" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-accent hover:text-white transition-colors shadow-sm">Previous</a>
+        }
+        
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            if (i == currentPage)
+            {
+                <span class="px-4 py-2 bg-brand-accent text-white rounded-lg shadow-sm font-medium">@i</span>
+            }
+            else
+            {
+                <a href="/Books?page=@i&SearchQuery=@searchQuery&genre=@genreFilter" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-surface transition-colors">@i</a>
+            }
+        }
+        
+        @if (currentPage < totalPages)
+        {
+            <a href="/Books?page=@(currentPage + 1)&SearchQuery=@searchQuery&genre=@genreFilter" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-accent hover:text-white transition-colors shadow-sm">Next</a>
+        }
+    </div>
+}
