@@ -54,24 +54,76 @@
 </head>
 <body class="bg-texture min-h-screen flex flex-col">
 
-    <header class="bg-brand-surface border-b border-brand-border py-6 px-8 md:px-16 flex justify-between items-center shadow-sm">
-        <div>
-            <a href="/" class="text-3xl font-heading font-bold text-brand-ink flex items-center gap-3">
+    <header class="bg-brand-surface border-b border-brand-border shadow-sm sticky top-0 z-50">
+        <!-- Desktop & Mobile Container -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center h-20">
+            
+            <!-- Logo -->
+            <a href="/" class="text-3xl font-heading font-bold text-brand-ink flex items-center gap-3 shrink-0">
                 <svg class="w-8 h-8 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                Babylon
+                <span>Babylon</span>
             </a>
-            <p class="text-brand-inkLight text-sm italic font-heading mt-1">Discover your next great read</p>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center gap-2 ml-8">
+                <a href="/Books" class="text-brand-ink hover:text-brand-accent hover:bg-brand-accent/10 px-4 py-2 rounded-lg transition-all font-semibold text-base tracking-wider uppercase">Browse</a>
+                <a href="/Authors" class="text-brand-ink hover:text-brand-accent hover:bg-brand-accent/10 px-4 py-2 rounded-lg transition-all font-semibold text-base tracking-wider uppercase">Authors</a>
+                <a href="/Genres" class="text-brand-ink hover:text-brand-accent hover:bg-brand-accent/10 px-4 py-2 rounded-lg transition-all font-semibold text-base tracking-wider uppercase">Genres</a>
+            </nav>
+
+            <!-- Search, Cart, Login (Desktop) -->
+            <div class="hidden md:flex items-center gap-6 ml-auto">
+                <!-- Search -->
+                <form method="get" action="/Books" class="relative group">
+                    <input type="text" name="search" placeholder="Search books..." class="w-64 pl-4 pr-10 py-2 bg-brand-bg border border-brand-border rounded-full focus:outline-none focus:border-brand-accent text-sm text-brand-ink transition-all">
+                    <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-inkLight hover:text-brand-accent">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </form>
+
+                <a href="/Cart" class="flex items-center gap-2 text-brand-ink hover:text-brand-accent transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    <span class="font-medium text-sm">Cart</span>
+                </a>
+
+                <a href="/Account/Login" class="text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-2 rounded-full transition-colors font-medium text-sm shadow-sm">
+                    Login
+                </a>
+            </div>
+
+            <!-- Mobile Cart & Toggle -->
+            <div class="flex md:hidden items-center gap-4">
+                <a href="/Cart" class="text-brand-ink hover:text-brand-accent transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                </a>
+                <button id="mobileMenuBtn" class="text-brand-ink hover:text-brand-accent focus:outline-none" aria-label="Toggle menu">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path id="menuIcon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
         
-        <nav class="flex gap-6 items-center">
-            <a href="/" class="text-brand-ink hover:text-brand-accent transition-colors font-medium text-sm tracking-widest uppercase">Browse Books</a>
-            <a href="#" class="text-brand-ink hover:text-brand-accent transition-colors font-medium text-sm tracking-widest uppercase">Genres</a>
-            
-            <a href="#" class="flex items-center gap-2 ml-4 px-5 py-2.5 bg-brand-ink text-brand-bg rounded-xl hover:bg-brand-accent transition-colors shadow-md">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                <span class="font-medium text-sm">Cart (0)</span>
-            </a>
-        </nav>
+        <!-- Mobile Drawer / Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-brand-surface border-t border-brand-border absolute w-full left-0 shadow-lg">
+            <div class="flex flex-col px-6 py-4 gap-4">
+                <form method="get" action="/Books" class="relative w-full mb-2">
+                    <input type="text" name="search" placeholder="Search books..." class="w-full pl-4 pr-10 py-2.5 bg-brand-bg border border-brand-border rounded-lg focus:outline-none focus:border-brand-accent text-sm text-brand-ink">
+                    <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-brand-inkLight">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </form>
+                
+                <a href="/Books" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Browse</a>
+                <a href="/Authors" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Authors</a>
+                <a href="/Genres" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Genres</a>
+                <a href="/Cart" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Cart</a>
+                
+                <a href="/Account/Login" class="text-center mt-2 text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-3 rounded-lg transition-colors font-medium text-base w-full">
+                    Login
+                </a>
+            </div>
+        </div>
     </header>
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-6 py-12">
@@ -107,6 +159,25 @@
             &copy; 2026 The Oxford Library. All rights reserved.
         </div>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobileMenuBtn');
+            const menu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('menuIcon');
+            
+            btn.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+                
+                // Toggle between hamburger and close icon
+                if (menu.classList.contains('hidden')) {
+                    icon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+                } else {
+                    icon.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+                }
+            });
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
