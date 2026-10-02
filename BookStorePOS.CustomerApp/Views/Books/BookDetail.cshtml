@@ -1,0 +1,227 @@
+@using BookStorePOS.Domain.Models.Book
+@{
+    var book = ViewData["Book"] as BookModel;
+    ViewData["Title"] = book?.Title ?? "Book Detail";
+}
+
+@if (book == null)
+{
+    <div class="flex items-center justify-center min-h-[50vh]">
+        <div class="text-center bg-brand-surface p-12 rounded-2xl shadow-sm border border-brand-border">
+            <svg class="w-16 h-16 text-brand-inkLight mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <h2 class="text-3xl font-heading text-brand-ink mb-2">Book Not Found</h2>
+            <p class="text-brand-inkLight mb-6">The book you are looking for might have been removed or doesn't exist.</p>
+            <a href="/Books" class="inline-flex items-center gap-2 bg-brand-accent hover:bg-brand-accentHover text-white px-6 py-3 rounded-xl transition-colors font-medium">
+                Return to Library
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="max-w-6xl mx-auto px-4 lg:px-8 py-8 md:py-16">
+        
+        <!-- Back Link -->
+        <a href="/Books" class="inline-flex items-center gap-2 text-brand-inkLight hover:text-brand-accent transition-colors mb-10 group">
+            <div class="w-8 h-8 rounded-full bg-brand-surface flex items-center justify-center border border-brand-border group-hover:border-brand-accent transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </div>
+            <span class="font-medium tracking-wide text-sm uppercase">Back to Browse</span>
+        </a>
+
+        <div class="flex flex-col lg:flex-row gap-16 lg:gap-24 items-center lg:items-start">
+            
+            <!-- Left Column: Interactive 3D Book -->
+            <div class="w-full lg:w-5/12 flex justify-center perspective-[1500px]">
+                <!-- Book Container (Hover to open) -->
+                <div class="group relative w-64 h-96 sm:w-80 sm:h-[32rem] transform-style-[preserve-3d] cursor-pointer book-animation-intro">
+                    
+                    <!-- Inside Pages / Back Cover -->
+                    <div class="absolute inset-0 bg-[#3a2818] border-2 border-[#5c4033] rounded-r-3xl rounded-l-md shadow-2xl transform-[translateZ(-25px)]">
+                        <!-- Simulated pages -->
+                        <div class="absolute inset-y-1.5 right-1 left-2 shadow-[inset_4px_0_15px_rgba(0,0,0,0.5)] rounded-r-2xl border-l border-[#2a1b10] overflow-hidden flex flex-col justify-evenly py-6 px-1 old-paper-texture">
+                            @for(int i=0; i<30; i++) {
+                                <div class="w-full h-px bg-[#8c6f45]/10"></div>
+                            }
+                            
+                            <!-- Aged border overlay for dark, burned edges -->
+                            <div class="absolute inset-0 shadow-[inset_0_0_40px_rgba(92,64,51,0.9),inset_0_0_80px_rgba(101,67,33,0.4)] pointer-events-none rounded-r-2xl mix-blend-multiply"></div>
+                            
+                            <!-- Stains overlay -->
+                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(139,69,19,0.15)_0%,transparent_20%),radial-gradient(circle_at_80%_80%,rgba(101,67,33,0.2)_0%,transparent_30%)] pointer-events-none mix-blend-multiply"></div>
+
+                            <!-- Inside text snippet (readable) -->
+                            <div class="absolute inset-8 flex items-center justify-center opacity-80 font-heading text-xl text-[#2a1b10] italic text-center z-10" style="text-shadow: 1px 1px 0px rgba(255,255,255,0.1);">
+                                <div>
+                                    <h3 class="text-3xl font-bold mb-4 font-serif">@book.Title</h3>
+                                    <p class="text-lg">~ @book.Author ~</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Front Cover -->
+                    <div class="front-cover absolute inset-0 origin-left transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:[transform:rotateY(-145deg)] transform-style-[preserve-3d] rounded-r-3xl rounded-l-md shadow-[10px_15px_35px_rgba(0,0,0,0.3)]" style="transition-duration: 10s;">
+                        
+                        <!-- Inside of Front Cover -->
+                        <div class="absolute inset-0 old-paper-texture rounded-r-3xl rounded-l-md [transform:rotateY(180deg)] [backface-visibility:hidden] border-l border-y border-[#5c4033] shadow-[inset_-4px_0_25px_rgba(0,0,0,0.4)] overflow-hidden">
+                            <!-- Aged border overlay for dark, burned edges (Inside Cover) -->
+                            <div class="absolute inset-0 shadow-[inset_0_0_40px_rgba(92,64,51,0.9),inset_0_0_80px_rgba(101,67,33,0.4)] pointer-events-none rounded-r-3xl mix-blend-multiply"></div>
+                            <div class="absolute inset-3 border border-brand-accent/20 rounded-2xl border-dashed"></div>
+                        </div>
+
+                        <!-- Outside of Front Cover -->
+                        <div class="absolute inset-0 bg-brand-ink rounded-r-3xl rounded-l-md [backface-visibility:hidden] overflow-hidden flex flex-col items-center justify-center text-center">
+                            @if(!string.IsNullOrEmpty(book.CoverImageUrl))
+                            {
+                                <img src="@book.CoverImageUrl" alt="@book.Title" class="w-full h-full object-cover">
+                            }
+                            else
+                            {
+                                <!-- Beautiful Fallback Cover -->
+                                <div class="absolute inset-0 bg-texture opacity-30"></div>
+                                <div class="p-8 z-10 w-full">
+                                    <div class="border-y-2 border-brand-accent/40 py-6">
+                                        <h2 class="font-heading text-brand-surface font-bold text-3xl mb-6 leading-snug drop-shadow-lg px-2">@book.Title</h2>
+                                        <p class="text-brand-accent font-medium font-body uppercase tracking-widest text-sm drop-shadow-md">@book.Author</p>
+                                    </div>
+                                </div>
+                            }
+                            
+                            <!-- Book Spine Highlight -->
+                            <div class="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black/60 via-white/20 to-transparent z-20 rounded-l-md"></div>
+                            
+                            <!-- Premium Emboss lighting overlay -->
+                            <div class="absolute inset-0 shadow-[inset_4px_4px_12px_rgba(255,255,255,0.15),inset_-4px_-4px_12px_rgba(0,0,0,0.4)] z-30 pointer-events-none rounded-r-3xl rounded-l-md"></div>
+                        </div>
+                    </div>
+
+                </div>
+            
+            </div>
+
+            <!-- Right Column: Details Content -->
+            <div class="w-full lg:w-7/12 animate-fade-in-up flex flex-col pt-4">
+                
+                <div class="mb-6">
+                    <div class="flex items-center gap-3 mb-5">
+                        <span class="px-4 py-1.5 bg-brand-accent/10 text-brand-accent font-semibold text-xs tracking-widest uppercase rounded-full border border-brand-accent/20">
+                            @book.Genre
+                        </span>
+                        @if (book.StockQuantity > book.ReorderLevel)
+                        {
+                            <span class="px-3 py-1 bg-green-500/10 text-green-700 text-xs font-semibold uppercase tracking-wider rounded-full border border-green-500/20 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> In Stock
+                            </span>
+                        }
+                        else if (book.StockQuantity > 0)
+                        {
+                            <span class="px-3 py-1 bg-yellow-500/10 text-yellow-700 text-xs font-semibold uppercase tracking-wider rounded-full border border-yellow-500/20 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Low Stock
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="px-3 py-1 bg-red-500/10 text-red-700 text-xs font-semibold uppercase tracking-wider rounded-full border border-red-500/20 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Out of Stock
+                            </span>
+                        }
+                    </div>
+
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-heading font-bold text-brand-ink mb-4 leading-tight">@book.Title</h1>
+                    <p class="text-xl md:text-2xl text-brand-inkLight font-medium font-heading italic">By @book.Author</p>
+                </div>
+
+                <div class="w-24 h-1 bg-brand-accent mb-8 rounded-full"></div>
+
+                <div class="prose prose-brand prose-lg text-brand-ink/90 mb-10 max-w-none font-body leading-relaxed">
+                    <p class="whitespace-pre-wrap">@(string.IsNullOrWhiteSpace(book.Description) ? "No description available for this timeless piece. Please contact the library for more details." : book.Description)</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                    <div class="bg-brand-surface p-5 rounded-2xl border border-brand-border/60 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-brand-accent shadow-sm border border-brand-border/50">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-bold text-brand-inkLight/70 uppercase tracking-widest mb-0.5">Price</span>
+                            <span class="text-2xl font-bold text-brand-ink font-heading">@book.Price.ToString("N0") <span class="text-sm font-medium">MMK</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-brand-surface p-5 rounded-2xl border border-brand-border/60 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-brand-accent shadow-sm border border-brand-border/50">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-bold text-brand-inkLight/70 uppercase tracking-widest mb-0.5">ISBN</span>
+                            <span class="text-lg font-semibold text-brand-ink font-mono">@(book.Isbn ?? "N/A")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-auto">
+                    <form action="/Cart/Add/@book.BookId" method="post" class="flex flex-col sm:flex-row gap-4">
+                        <button type="submit" @(book.StockQuantity <= 0 ? "disabled" : "") class="flex-1 bg-brand-ink hover:bg-brand-accent disabled:bg-brand-border disabled:text-brand-inkLight disabled:cursor-not-allowed text-brand-bg px-8 py-5 rounded-2xl font-bold text-lg transition-all shadow-[0_10px_25px_-5px_rgba(44,38,33,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(140,111,69,0.4)] hover:-translate-y-1 flex items-center justify-center gap-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            @(book.StockQuantity <= 0 ? "Out of Stock" : "Add to Cart")
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Injecting styles using Tailwind arbitrary values requires some custom classes for complex transforms -->
+    <style>
+        .perspective-\[1500px\] {
+            perspective: 1500px;
+        }
+        .transform-style-\[preserve-3d\] {
+            transform-style: preserve-3d;
+        }
+        .transform-\[translateZ\(-25px\)\] {
+            transform: translateZ(-25px);
+        }
+        
+        /* Realistic old paper texture */
+        .old-paper-texture {
+            background-color: #d6b18e;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(214, 177, 142, 1) 0%, rgba(194, 153, 109, 1) 100%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+            background-blend-mode: overlay;
+        }
+        
+        /* Attention-grabbing intro animation */
+        @@keyframes bookNudge {
+            0% { transform: rotateY(0); }
+            15% { transform: rotateY(-25deg) translateX(10px); }
+            30% { transform: rotateY(0); }
+            100% { transform: rotateY(0); }
+        }
+        
+        .book-animation-intro .front-cover {
+            animation: bookNudge 3s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+        }
+        
+        /* Stop animation on hover */
+        .book-animation-intro:hover .front-cover {
+            animation: none;
+        }
+
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+    </style>
+}

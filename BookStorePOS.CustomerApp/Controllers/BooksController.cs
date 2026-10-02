@@ -42,5 +42,23 @@ namespace BookStorePOS.CustomerApp.Controllers
 
             return View("BookList");
         }
+
+        [ActionName("Detail")]
+        public async Task<IActionResult> BookDetailAsync(int id)
+        {
+            _logger.LogInformation($"Book Detail Async => Fetching book {id}");
+            var response = await _bookService.GetBookAsync(new BookByIdRequestModel { BookId = id });
+            
+            if (!response.isSuccess || response.Data == null)
+            {
+                _logger.LogWarning($"Book Detail Async => Failed to fetch book {id}");
+                TempData["Message"] = "Book not found.";
+                TempData["isSuccess"] = false;
+                return RedirectToAction("Index");
+            }
+
+            ViewData["Book"] = response.Data;
+            return View("BookDetail");
+        }
     }
 }
