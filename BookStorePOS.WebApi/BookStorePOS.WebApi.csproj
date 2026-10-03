@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BookStorePOS.Domain\BookStorePOS.Domain.csproj" />
+    <ProjectReference Include="..\BookStorePOS.Shared\BookStorePOS.Shared.csproj" />
   </ItemGroup>
 
 </Project>

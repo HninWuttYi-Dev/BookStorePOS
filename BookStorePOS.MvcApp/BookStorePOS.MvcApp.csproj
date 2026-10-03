@@ -7,12 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../BookStorePOS.Database/BookStorePOS.Database.csproj" />
-    <ProjectReference Include="../BookStorePOS.Domain/BookStorePOS.Domain.csproj" />
+    <ProjectReference Include="..\BookStorePOS.Shared\BookStorePOS.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="4.0.103.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 
 </Project>

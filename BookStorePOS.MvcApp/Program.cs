@@ -1,23 +1,13 @@
-using BookStorePOS.Database.AppDbContextModels;
-using BookStorePOS.Domain.Features.Book;
-using BookStorePOS.Domain.Features.Order;
-using BookStorePOS.Domain.Features.Author;
-using BookStorePOS.Domain.Features.Genre;
-using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AppDbContext>(opts =>
+builder.Services.AddHttpClient("WebAPI", client =>
 {
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
+    client.BaseAddress = new Uri("http://localhost:5201/");
 });
-builder.Services.AddScoped<IBookService, BookService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IAuthorService, AuthorService>();
-builder.Services.AddScoped<IGenreService, GenreService>();
-builder.Services.AddScoped<IFileStorageService, R2FileStorageService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

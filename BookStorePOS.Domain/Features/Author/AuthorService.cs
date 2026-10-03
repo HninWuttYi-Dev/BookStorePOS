@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
-using BookStorePOS.Domain.Models.Author;
+using BookStorePOS.Shared.Models.Author;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

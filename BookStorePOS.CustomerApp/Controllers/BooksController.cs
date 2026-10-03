@@ -4,12 +4,12 @@ namespace BookStorePOS.CustomerApp.Controllers
 {
     public class BooksController : Controller
     {
-        private readonly IBookService _bookService;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<BooksController> _logger;
 
-        public BooksController(IBookService bookService, ILogger<BooksController> logger)
+        public BooksController(IHttpClientFactory httpClientFactory, ILogger<BooksController> logger)
         {
-            _bookService = bookService;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
         
@@ -18,10 +18,13 @@ namespace BookStorePOS.CustomerApp.Controllers
         {
             _logger.LogInformation("Book List Async => Fetching books");
 
-            // Use Title from layout search if it was mistakenly passed as "search", though we will fix layout too.
-            var response = await _bookService.GetBooksAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&SearchQuery={Uri.EscapeDataString(requestModel.SearchQuery ?? "")}&Isbn={Uri.EscapeDataString(requestModel.Isbn ?? "")}&Title={Uri.EscapeDataString(requestModel.Title ?? "")}&Author={Uri.EscapeDataString(requestModel.Author ?? "")}&Genre={Uri.EscapeDataString(requestModel.Genre ?? "")}";
+            var httpResponse = await client.GetAsync($"api/book{qs}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
 
-            if (response.isSuccess && response.Data != null)
+            if (response != null && response.isSuccess && response.Data != null)
             {
                 ViewData["Books"] = response.Data;
                 ViewData["CurrentPage"] = response.Page;
@@ -35,8 +38,8 @@ namespace BookStorePOS.CustomerApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Book List Async => Failed to fetch books: {response.Message}");
-                TempData["Message"] = response.Message;
+                _logger.LogWarning($"Book List Async => Failed to fetch books: {response?.Message}");
+                TempData["Message"] = response?.Message ?? "Failed to fetch books.";
                 TempData["isSuccess"] = false;
             }
 
@@ -47,9 +50,12 @@ namespace BookStorePOS.CustomerApp.Controllers
         public async Task<IActionResult> BookDetailAsync(int id)
         {
             _logger.LogInformation($"Book Detail Async => Fetching book {id}");
-            var response = await _bookService.GetBookAsync(new BookByIdRequestModel { BookId = id });
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var httpResponse = await client.GetAsync($"api/book/{id}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-            if (!response.isSuccess || response.Data == null)
+            if (response == null || !response.isSuccess || response.Data == null)
             {
                 _logger.LogWarning($"Book Detail Async => Failed to fetch book {id}");
                 TempData["Message"] = "Book not found.";

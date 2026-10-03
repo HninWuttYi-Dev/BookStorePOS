@@ -1,7 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Book;
-using BookStorePOS.Domain.Models.Book;
+using BookStorePOS.Shared.Models.Book;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;

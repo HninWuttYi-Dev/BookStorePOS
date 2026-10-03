@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BookStorePOS.Domain.Models.Book;
+namespace BookStorePOS.Shared.Models.Book;
 
 public class BookListRequestModel
 {

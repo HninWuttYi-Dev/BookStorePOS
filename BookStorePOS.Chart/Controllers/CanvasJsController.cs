@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Book;
-using BookStorePOS.Domain.Models.Book;
+using BookStorePOS.Shared.Models.Book;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;

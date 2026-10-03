@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
-using BookStorePOS.Domain.Models.Order;
+using BookStorePOS.Shared.Models.Order;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

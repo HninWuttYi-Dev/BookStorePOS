@@ -1,11 +1,11 @@
-namespace BookStorePOS.Domain.Models.Book;
+namespace BookStorePOS.Shared.Models.Book;
 
-public class BookByIdRequestModel
+public class BookDeleteRequestModel
 {
     public int BookId { get; set; }
 }
 
-public class BookByIdResponseModel
+public class BookDeleteResponseModel
 {
     public bool isSuccess { get; set; }
     public string Message { get; set; } = null!;

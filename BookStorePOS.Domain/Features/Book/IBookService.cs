@@ -1,4 +1,4 @@
-using BookStorePOS.Domain.Models.Book;
+using BookStorePOS.Shared.Models.Book;
 
 namespace BookStorePOS.Domain.Features.Book;
 

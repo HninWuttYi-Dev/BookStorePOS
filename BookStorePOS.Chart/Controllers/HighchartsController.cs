@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Order;
-using BookStorePOS.Domain.Models.Order;
+using BookStorePOS.Shared.Models.Order;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;

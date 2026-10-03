@@ -7,12 +7,12 @@ namespace BookStorePOS.MvcApp.Controllers
 {
     public class OrdersController : Controller
     {
-        private readonly IOrderService _orderService;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<OrdersController> _logger;
 
-        public OrdersController(IOrderService orderService, ILogger<OrdersController> logger)
+        public OrdersController(IHttpClientFactory httpClientFactory, ILogger<OrdersController> logger)
         {
-            _orderService = orderService;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
@@ -21,9 +21,16 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             _logger.LogInformation("Orders Async => Fetching order history");
 
-            var response = await _orderService.GetOrderHistoryAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}";
+            if (requestModel.StartDate.HasValue) qs += $"&StartDate={requestModel.StartDate.Value:yyyy-MM-dd}";
+            if (requestModel.EndDate.HasValue) qs += $"&EndDate={requestModel.EndDate.Value:yyyy-MM-dd}";
 
-            if (response.isSuccess && response.Data != null)
+            var httpResponse = await client.GetAsync($"api/order/history{qs}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<OrderHistoryResponseModel>(jsonString);
+
+            if (response != null && response.isSuccess && response.Data != null)
             {
                 ViewData["Orders"] = response.Data.Orders;
                 ViewData["Summary"] = response.Data.Summary;
@@ -35,8 +42,8 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Orders Async => Failed to fetch order history: {response.Message}");
-                TempData["Message"] = response.Message;
+                _logger.LogWarning($"Orders Async => Failed to fetch order history: {response?.Message}");
+                TempData["Message"] = response?.Message;
                 TempData["isSuccess"] = false;
             }
 
@@ -48,9 +55,12 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             _logger.LogInformation($"Order Detail Async => Fetching order details for OrderId: {id}");
 
-            var response = await _orderService.GetOrderById(new OrderGetByIdRequestModel { OrderId = id });
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var httpResponse = await client.GetAsync($"api/order/{id}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<OrderGetByIdResponseModel>(jsonString);
 
-            if (response.isSuccess && response.Data != null)
+            if (response != null && response.isSuccess && response.Data != null)
             {
                 _logger.LogInformation($"Order Detail Async => Order details fetched successfully for OrderId: {id}");
                 ViewData["OrderDetail"] = response.Data;
@@ -58,8 +68,8 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Order Detail Async => Failed to fetch order details for OrderId: {id}. Message: {response.Message}");
-                TempData["Message"] = response.Message;
+                _logger.LogWarning($"Order Detail Async => Failed to fetch order details for OrderId: {id}. Message: {response?.Message}");
+                TempData["Message"] = response?.Message;
                 TempData["isSuccess"] = false;
                 return RedirectToAction("Index");
             }
@@ -77,15 +87,19 @@ namespace BookStorePOS.MvcApp.Controllers
                 return Json(new OrderCreateResponseModel { isSuccess = false, Message = "Please provide at least one item." });
             }
 
-            var response = await _orderService.CreateOrder(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
+            var httpResponse = await client.PostAsync("api/order", content);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<OrderCreateResponseModel>(jsonString) ?? new OrderCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (response.isSuccess)
+            if (response != null && response.isSuccess)
             {
                 _logger.LogInformation("Order Create Async => Order created successfully");
             }
             else
             {
-                _logger.LogWarning($"Order Create Async => Failed to create order: {response.Message}");
+                _logger.LogWarning($"Order Create Async => Failed to create order: {response?.Message}");
             }
 
             return Json(response);

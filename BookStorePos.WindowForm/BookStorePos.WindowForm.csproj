@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BookStorePOS.Domain\BookStorePOS.Domain.csproj" />
     <ProjectReference Include="..\BookStorePOS.Database\BookStorePOS.Database.csproj" />
+    <ProjectReference Include="..\BookStorePOS.Shared\BookStorePOS.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

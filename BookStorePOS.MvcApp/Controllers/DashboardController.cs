@@ -9,14 +9,12 @@ namespace BookStorePOS.MvcApp.Controllers
 {
     public class DashboardController : Controller
     {
-        private readonly IOrderService _orderService;
-        private readonly IBookService _bookService;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<DashboardController> _logger;
 
-        public DashboardController(IOrderService orderService, IBookService bookService, ILogger<DashboardController> logger)
+        public DashboardController(IHttpClientFactory httpClientFactory, ILogger<DashboardController> logger)
         {
-            _orderService = orderService;
-            _bookService = bookService;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
         [ActionName("Index")]
@@ -24,9 +22,14 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             _logger.LogInformation("Dashboard Index Async => Fetching dashboard data");
 
+            var client = _httpClientFactory.CreateClient("WebAPI");
+
             // 1) Summary
-            var summaryResponse = await _orderService.GetOrderSummaryAsync();
-            if (summaryResponse.isSuccess && summaryResponse.Data != null)
+            var summaryHttp = await client.GetAsync("api/order/summary");
+            var summaryJson = await summaryHttp.Content.ReadAsStringAsync();
+            var summaryResponse = JsonConvert.DeserializeObject<OrderSummaryResponseModel>(summaryJson);
+
+            if (summaryResponse != null && summaryResponse.isSuccess && summaryResponse.Data != null)
             {
                 ViewData["TodaySales"] = summaryResponse.Data.todayTotalRevenue;
                 ViewData["ThisMonthSales"] = summaryResponse.Data.thisMonthTotalRevenue;
@@ -36,12 +39,15 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["TodaySales"] = 0m;
                 ViewData["ThisMonthSales"] = 0m;
                 ViewData["isSuccess"] = false;
-                ViewData["Message"] = summaryResponse.Message;
+                ViewData["Message"] = summaryResponse?.Message;
             }
 
             // 2) Low stock
-            var lowStockResponse = await _bookService.GetLowStockBooksAsync();
-            var lowStockBooks = lowStockResponse.isSuccess && lowStockResponse.Data != null
+            var lowStockHttp = await client.GetAsync("api/book/low-stock");
+            var lowStockJson = await lowStockHttp.Content.ReadAsStringAsync();
+            var lowStockResponse = JsonConvert.DeserializeObject<BookListResponseModel>(lowStockJson);
+
+            var lowStockBooks = lowStockResponse != null && lowStockResponse.isSuccess && lowStockResponse.Data != null
                 ? lowStockResponse.Data
                 : new List<BookModel>();
 
@@ -49,10 +55,11 @@ namespace BookStorePOS.MvcApp.Controllers
             ViewData["LowStockBooks"] = lowStockBooks.Take(5).ToList();
 
             // 3) Recent orders
-            var historyResponse = await _orderService.GetOrderHistoryAsync(
-                new OrderHistoryRequestModel { Page = 1, Limit = 5 });
+            var historyHttp = await client.GetAsync("api/order/history?Page=1&Limit=5");
+            var historyJson = await historyHttp.Content.ReadAsStringAsync();
+            var historyResponse = JsonConvert.DeserializeObject<OrderHistoryResponseModel>(historyJson);
 
-            var recentOrders = historyResponse.isSuccess && historyResponse.Data?.Orders != null
+            var recentOrders = historyResponse != null && historyResponse.isSuccess && historyResponse.Data?.Orders != null
                 ? historyResponse.Data.Orders
                 : new List<OrderModel>();
 

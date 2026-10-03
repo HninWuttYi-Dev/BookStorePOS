@@ -1,4 +1,4 @@
-namespace BookStorePOS.Domain.Models.Author;
+namespace BookStorePOS.Shared.Models.Author;
 
 public class AuthorCreateRequestModel
 {

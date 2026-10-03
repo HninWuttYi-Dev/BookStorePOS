@@ -1,4 +1,4 @@
-namespace BookStorePOS.Domain.Models.Genre;
+namespace BookStorePOS.Shared.Models.Genre;
 
 public class GenreCreateRequestModel
 {

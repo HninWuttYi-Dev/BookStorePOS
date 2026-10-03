@@ -1,4 +1,4 @@
-using BookStorePOS.Domain.Models.Order;
+using BookStorePOS.Shared.Models.Order;
 
 namespace BookStorePOS.Domain.Features.Order;
 

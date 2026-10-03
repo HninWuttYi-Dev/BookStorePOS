@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using BookStorePOS.Domain.Models.Author;
+using BookStorePOS.Shared.Models.Author;
 
 namespace BookStorePOS.Domain.Features.Author;
 

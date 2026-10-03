@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using BookStorePOS.Domain.Features.Book;
-using BookStorePOS.Domain.Models.Book;
+using BookStorePOS.Shared.Models.Book;
 
 namespace BookStorePos.WindowForm;
 

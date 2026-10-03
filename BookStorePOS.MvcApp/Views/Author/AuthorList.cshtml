@@ -1,5 +1,5 @@
 @model AuthorListResponseModel;
-@using BookStorePOS.Domain.Models.Author;
+@using BookStorePOS.Shared.Models.Author;
 @{
     ViewData["Title"] = "Author List";
     var authors = ViewData["Authors"] as List<AuthorModel> ?? new List<AuthorModel>();

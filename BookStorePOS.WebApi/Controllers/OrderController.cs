@@ -1,7 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Order;
-using BookStorePOS.Domain.Models.Order;
+using BookStorePOS.Shared.Models.Order;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;

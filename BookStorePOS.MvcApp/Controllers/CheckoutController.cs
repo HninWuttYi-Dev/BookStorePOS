@@ -1,19 +1,18 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
-using BookStorePOS.Domain.Features.Book;
-using BookStorePOS.Domain.Models.Book;
+using BookStorePOS.Shared.Models.Book;
 
 namespace BookStorePOS.MvcApp.Controllers
 {
     public class CheckoutController : Controller
     {
-        private readonly IBookService _bookService;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<CheckoutController> _logger;
 
-        public CheckoutController(IBookService bookService, ILogger<CheckoutController> logger)
+        public CheckoutController(IHttpClientFactory httpClientFactory, ILogger<CheckoutController> logger)
         {
-            _bookService = bookService;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
@@ -21,10 +20,13 @@ namespace BookStorePOS.MvcApp.Controllers
         public async Task<IActionResult> CheckoutAsync(int page = 1, string search = "")
         {
             _logger.LogInformation("Checkout Index => Fetching books");
-            var request = new BookListRequestModel { Page = page, Limit = 12, Title = search };
-            var response = await _bookService.GetBooksAsync(request);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var qs = $"?Page={page}&Limit=12&Title={Uri.EscapeDataString(search ?? "")}";
+            var httpResponse = await client.GetAsync($"api/book{qs}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
             
-            if (response.isSuccess && response.Data != null)
+            if (response != null && response.isSuccess && response.Data != null)
             {
                 ViewData["Books"] = response.Data;
                 ViewData["CurrentPage"] = response.Page;

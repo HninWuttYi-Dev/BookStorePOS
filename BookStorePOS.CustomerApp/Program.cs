@@ -1,17 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<AppDbContext>(opts =>
+builder.Services.AddHttpClient("WebAPI", client =>
 {
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection"));
+    client.BaseAddress = new Uri("http://localhost:5201/");
 });
-builder.Services.AddScoped<IBookService, BookService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IAuthorService, AuthorService>();
-builder.Services.AddScoped<IGenreService, GenreService>();
 
 var app = builder.Build();
 

@@ -4,12 +4,12 @@ namespace BookStorePOS.MvcApp.Controllers
 {
     public class GenreController : Controller
     {
-        private readonly IGenreService _genreService;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<GenreController> _logger;
 
-        public GenreController(IGenreService genreService, ILogger<GenreController> logger)
+        public GenreController(IHttpClientFactory httpClientFactory, ILogger<GenreController> logger)
         {
-            _genreService = genreService;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
 
@@ -18,9 +18,13 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             _logger.LogInformation("Genre List Async => Fetching genres");
 
-            var response = await _genreService.GetGenresAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&GenreName={Uri.EscapeDataString(requestModel.GenreName ?? "")}";
+            var httpResponse = await client.GetAsync($"api/genre{qs}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<GenreListResponseModel>(jsonString);
 
-            if (response.isSuccess && response.Data != null)
+            if (response != null && response.isSuccess && response.Data != null)
             {
                 ViewData["Genres"] = response.Data;
                 ViewData["CurrentPage"] = response.Page;
@@ -30,8 +34,8 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Genre List Async => Failed to fetch genres: {response.Message}");
-                TempData["Message"] = response.Message;
+                _logger.LogWarning($"Genre List Async => Failed to fetch genres: {response?.Message}");
+                TempData["Message"] = response?.Message;
                 TempData["isSuccess"] = false;
             }
 
@@ -42,9 +46,12 @@ namespace BookStorePOS.MvcApp.Controllers
         [ActionName("Search")]
         public async Task<IActionResult> GenreSearchAsync(string query)
         {
-            var request = new GenreListRequestModel { GenreName = query, Page = 1, Limit = 10 };
-            var response = await _genreService.GetGenresAsync(request);
-            if (response.isSuccess && response.Data != null)
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var qs = $"?Page=1&Limit=10&GenreName={Uri.EscapeDataString(query ?? "")}";
+            var httpResponse = await client.GetAsync($"api/genre{qs}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<GenreListResponseModel>(jsonString);
+            if (response != null && response.isSuccess && response.Data != null)
             {
                 return Json(response.Data);
             }
@@ -69,9 +76,13 @@ namespace BookStorePOS.MvcApp.Controllers
                 return Json(new GenreCreateResponseModel { isSuccess = false, Message = "Genre name is required" });
             }
 
-            var model = await _genreService.CreateGenreAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
+            var httpResponse = await client.PostAsync("api/genre", content);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<GenreCreateResponseModel>(jsonString) ?? new GenreCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model.isSuccess)
+            if (model != null && model.isSuccess)
             {
                 _logger.LogInformation("Genre Save Async => Genre created successfully");
                 TempData["Message"] = model.Message ?? "Genre created successfully.";
@@ -79,7 +90,7 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Genre Save Async => Failed to create genre: {model.Message}");
+                _logger.LogWarning($"Genre Save Async => Failed to create genre: {model?.Message}");
             }
 
             return Json(model);
@@ -89,13 +100,16 @@ namespace BookStorePOS.MvcApp.Controllers
         public async Task<IActionResult> GenreEditAsync(int id)
         {
             _logger.LogInformation($"Genre Edit Async => Fetching genre {id}");
-            var model = await _genreService.GetGenreByIdAsync(new GenreByIdRequestModel { GenreId = id });
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var httpResponse = await client.GetAsync($"api/genre/{id}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<GenreByIdResponseModel>(jsonString);
             
-            if (!model.isSuccess || model.Data == null)
+            if (model == null || !model.isSuccess || model.Data == null)
             {
-                _logger.LogWarning($"Genre Edit Async => Failed to fetch genre {id}: {model.Message}");
+                _logger.LogWarning($"Genre Edit Async => Failed to fetch genre {id}: {model?.Message}");
                 TempData["isSuccess"] = false;
-                TempData["Message"] = model.Message ?? "Genre not found.";
+                TempData["Message"] = model?.Message ?? "Genre not found.";
                 return Redirect("/Genre");
             }
 
@@ -117,9 +131,13 @@ namespace BookStorePOS.MvcApp.Controllers
                 return Json(new GenrePatchResponseModel { isSuccess = false, Message = "Genre name is required." });
             }
 
-            var model = await _genreService.UpdateGenreAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
+            var httpResponse = await client.PatchAsync($"api/genre/{id}", content);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<GenrePatchResponseModel>(jsonString) ?? new GenrePatchResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model.isSuccess)
+            if (model != null && model.isSuccess)
             {
                 _logger.LogInformation("Genre Update Async => Genre updated successfully");
                 TempData["Message"] = model.Message ?? "Genre updated successfully.";
@@ -127,7 +145,7 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Genre Update Async => Failed to update genre: {model.Message}");
+                _logger.LogWarning($"Genre Update Async => Failed to update genre: {model?.Message}");
             }
 
             return Json(model);
@@ -138,9 +156,12 @@ namespace BookStorePOS.MvcApp.Controllers
         public async Task<IActionResult> GenreDeleteAsync(GenreDeleteRequestModel requestModel)
         {
             _logger.LogInformation($"Genre Delete Async => Deleting genre {requestModel.GenreId}");
-            var model = await _genreService.DeleteGenreAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var httpResponse = await client.DeleteAsync($"api/genre/{requestModel.GenreId}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<GenreDeleteResponseModel>(jsonString) ?? new GenreDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model.isSuccess)
+            if (model != null && model.isSuccess)
             {
                 _logger.LogInformation("Genre Delete Async => Genre deleted successfully");
                 TempData["Message"] = model.Message ?? "Genre deleted successfully.";
@@ -148,7 +169,7 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Genre Delete Async => Failed to delete genre: {model.Message}");
+                _logger.LogWarning($"Genre Delete Async => Failed to delete genre: {model?.Message}");
             }
             return Json(model);
         }

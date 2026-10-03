@@ -3,15 +3,13 @@ namespace BookStorePOS.MvcApp.Controllers
 {
     public class BookController : Controller
     {
-        private readonly IBookService _bookService;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<BookController> _logger;
-        private readonly IFileStorageService _fileStorageService;
 
-        public BookController(IBookService bookService, ILogger<BookController> logger, IFileStorageService fileStorageService)
+        public BookController(IHttpClientFactory httpClientFactory, ILogger<BookController> logger)
         {
-            _bookService = bookService;
+            _httpClientFactory = httpClientFactory;
             _logger = logger;
-            _fileStorageService = fileStorageService;
         }
 
         [ActionName("Index")]
@@ -19,9 +17,13 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             _logger.LogInformation("Book List Async => Fetching books");
 
-            var response = await _bookService.GetBooksAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&SearchQuery={Uri.EscapeDataString(requestModel.SearchQuery ?? "")}&Isbn={Uri.EscapeDataString(requestModel.Isbn ?? "")}&Title={Uri.EscapeDataString(requestModel.Title ?? "")}&Author={Uri.EscapeDataString(requestModel.Author ?? "")}&Genre={Uri.EscapeDataString(requestModel.Genre ?? "")}";
+            var httpResponse = await client.GetAsync($"api/book{qs}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
 
-            if (response.isSuccess && response.Data != null)
+            if (response != null && response.isSuccess && response.Data != null)
             {
                 ViewData["Books"] = response.Data;
                 ViewData["CurrentPage"] = response.Page;
@@ -34,8 +36,8 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Book List Async => Failed to fetch books: {response.Message}");
-                TempData["Message"] = response.Message;
+                _logger.LogWarning($"Book List Async => Failed to fetch books: {response?.Message}");
+                TempData["Message"] = response?.Message;
                 TempData["isSuccess"] = false;
             }
 
@@ -46,9 +48,12 @@ namespace BookStorePOS.MvcApp.Controllers
         public async Task<IActionResult> BookDetailAsync(int id)
         {
             _logger.LogInformation($"Book Detail Async => Fetching book {id}");
-            var response = await _bookService.GetBookAsync(new BookByIdRequestModel { BookId = id });
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var httpResponse = await client.GetAsync($"api/book/{id}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-            if (!response.isSuccess || response.Data == null)
+            if (response == null || !response.isSuccess || response.Data == null)
             {
                 _logger.LogWarning($"Book Detail Async => Failed to fetch book {id}");
                 TempData["Message"] = "Book not found.";
@@ -72,14 +77,7 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             _logger.LogInformation("Book Save Async => Creating new book");
 
-            if (photo != null && photo.Length > 0)
-            {
-                var url = await _fileStorageService.UploadImageAsync(photo);
-                if (url != null)
-                {
-                    requestModel.CoverImageUrl = url;
-                }
-            }
+
 
             if (string.IsNullOrWhiteSpace(requestModel.Title))
             {
@@ -117,9 +115,29 @@ namespace BookStorePOS.MvcApp.Controllers
                 }
             }
 
-            BookCreateResponseModel model = await _bookService.CreateBookAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            using var content = new MultipartFormDataContent();
+
+            if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
+            if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
+            if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
+            if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
+            content.Add(new StringContent(requestModel.Price.ToString()), "Price");
+            content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
+            if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
+
+            if (photo != null && photo.Length > 0)
+            {
+                var streamContent = new StreamContent(photo.OpenReadStream());
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                content.Add(streamContent, "photo", photo.FileName);
+            }
+
+            var httpResponse = await client.PostAsync("api/book", content);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<BookCreateResponseModel>(jsonString) ?? new BookCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model.isSuccess)
+            if (model != null && model.isSuccess)
             {
                 _logger.LogInformation("Book Save Async => Book created successfully");
                 TempData["Message"] = model.Message ?? "Book created successfully.";
@@ -127,7 +145,7 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Book Save Async => Failed to create book: {model.Message}");
+                _logger.LogWarning($"Book Save Async => Failed to create book: {model?.Message}");
             }
 
             return Json(model);
@@ -136,13 +154,16 @@ namespace BookStorePOS.MvcApp.Controllers
         public async Task<IActionResult> BookEditAsync(int id)
         {
             _logger.LogInformation($"Book Edit Async => Fetching book {id}");
-            var model = await _bookService.GetBookAsync(new BookByIdRequestModel { BookId = id });
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var httpResponse = await client.GetAsync($"api/book/{id}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-            if (!model.isSuccess)
+            if (model == null || !model.isSuccess)
             {
-                _logger.LogWarning($"Book Edit Async => Failed to fetch book {id}: {model.Message}");
+                _logger.LogWarning($"Book Edit Async => Failed to fetch book {id}: {model?.Message}");
                 TempData["isSuccess"] = false;
-                TempData["Message"] = model.Message;
+                TempData["Message"] = model?.Message;
                 return Redirect("/Book");
             }
 
@@ -167,14 +188,7 @@ namespace BookStorePOS.MvcApp.Controllers
             _logger.LogInformation($"Book Update Async => Updating book {id}");
             requestModel.BookId = id;
 
-            if (photo != null && photo.Length > 0)
-            {
-                var url = await _fileStorageService.UploadImageAsync(photo);
-                if (url != null)
-                {
-                    requestModel.CoverImageUrl = url;
-                }
-            }
+
 
             if (string.IsNullOrWhiteSpace(requestModel.Title) 
                 && string.IsNullOrWhiteSpace(requestModel.Author) 
@@ -195,9 +209,30 @@ namespace BookStorePOS.MvcApp.Controllers
                 }
             }
 
-            var model = await _bookService.UpdateBookAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            using var content = new MultipartFormDataContent();
+
+            content.Add(new StringContent(id.ToString()), "BookId");
+            if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
+            if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
+            if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
+            if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
+            if (requestModel.Price.HasValue) content.Add(new StringContent(requestModel.Price.Value.ToString()), "Price");
+            if (requestModel.StockQuantity.HasValue) content.Add(new StringContent(requestModel.StockQuantity.Value.ToString()), "StockQuantity");
+            if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
+
+            if (photo != null && photo.Length > 0)
+            {
+                var streamContent = new StreamContent(photo.OpenReadStream());
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                content.Add(streamContent, "photo", photo.FileName);
+            }
+
+            var httpResponse = await client.PatchAsync($"api/book/{id}", content);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<BookPatchResponseModel>(jsonString) ?? new BookPatchResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model.isSuccess)
+            if (model != null && model.isSuccess)
             {
                 _logger.LogInformation("Book Update Async => Book updated successfully");
                 TempData["Message"] = model.Message ?? "Book updated successfully.";
@@ -205,7 +240,7 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Book Update Async => Failed to update book: {model.Message}");
+                _logger.LogWarning($"Book Update Async => Failed to update book: {model?.Message}");
             }
 
             return Json(model);
@@ -215,9 +250,12 @@ namespace BookStorePOS.MvcApp.Controllers
         public async Task<IActionResult> BookDeleteAsync(BookDeleteRequestModel requestModel)
         {
             _logger.LogInformation($"Book Delete Async => Deleting book {requestModel.BookId}");
-            var model = await _bookService.DeleteBookAsync(requestModel);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var httpResponse = await client.DeleteAsync($"api/book/{requestModel.BookId}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<BookDeleteResponseModel>(jsonString) ?? new BookDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model.isSuccess)
+            if (model != null && model.isSuccess)
             {
                 _logger.LogInformation("Book Delete Async => Book deleted successfully");
                 TempData["Message"] = model.Message ?? "Book deleted successfully.";
@@ -225,7 +263,7 @@ namespace BookStorePOS.MvcApp.Controllers
             }
             else
             {
-                _logger.LogWarning($"Book Delete Async => Failed to delete book: {model.Message}");
+                _logger.LogWarning($"Book Delete Async => Failed to delete book: {model?.Message}");
             }
             return Json(model);
         }

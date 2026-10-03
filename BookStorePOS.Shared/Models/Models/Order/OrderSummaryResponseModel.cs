@@ -1,6 +1,6 @@
 using System;
 
-namespace BookStorePOS.Domain.Models.Order;
+namespace BookStorePOS.Shared.Models.Order;
 
 public class OrderSummaryResponseModel
 {

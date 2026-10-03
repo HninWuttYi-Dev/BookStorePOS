@@ -1,11 +1,12 @@
-namespace BookStorePOS.Domain.Models.Genre;
+namespace BookStorePOS.Shared.Models.Genre;
 
-public class GenreByIdRequestModel
+public class GenrePatchRequestModel
 {
     public int GenreId { get; set; }
+    public string? GenreName { get; set; }
 }
 
-public class GenreByIdResponseModel
+public class GenrePatchResponseModel
 {
     public bool isSuccess { get; set; }
     public string Message { get; set; } = null!;

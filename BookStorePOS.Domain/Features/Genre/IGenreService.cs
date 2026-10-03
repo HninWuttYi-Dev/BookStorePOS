@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using BookStorePOS.Domain.Models.Genre;
+using BookStorePOS.Shared.Models.Genre;
 
 namespace BookStorePOS.Domain.Features.Genre;
 

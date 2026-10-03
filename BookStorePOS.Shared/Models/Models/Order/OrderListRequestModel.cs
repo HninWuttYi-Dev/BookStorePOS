@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BookStorePOS.Domain.Models.Order;
+namespace BookStorePOS.Shared.Models.Order;
 
 public class OrderListRequestModel
 {

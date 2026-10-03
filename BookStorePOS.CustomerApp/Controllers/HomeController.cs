@@ -4,19 +4,22 @@ namespace BookStorePOS.CustomerApp.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly IBookService _bookService;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public HomeController(IBookService bookService)
+        public HomeController(IHttpClientFactory httpClientFactory)
         {
-            _bookService = bookService;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IActionResult> Index(int page = 1, string search = "")
         {
-            var request = new BookListRequestModel { Page = page, Limit = 12, Title = search };
-            var response = await _bookService.GetBooksAsync(request);
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            var qs = $"?Page={page}&Limit=12&Title={Uri.EscapeDataString(search ?? "")}";
+            var httpResponse = await client.GetAsync($"api/book{qs}");
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
             
-            return View(response);
+            return View(response ?? new BookListResponseModel());
         }
     }
 }

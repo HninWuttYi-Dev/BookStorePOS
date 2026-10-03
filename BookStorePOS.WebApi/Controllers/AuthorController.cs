@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Author;
-using BookStorePOS.Domain.Models.Author;
+using BookStorePOS.Shared.Models.Author;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
