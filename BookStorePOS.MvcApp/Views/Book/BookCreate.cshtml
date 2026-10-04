@@ -328,7 +328,10 @@
             $(this).addClass('hidden');
         });
 
+        let isSubmitting = false;
+
         $('#btnSave').on('click', function() {
+            if (isSubmitting) return;
             // Reset errors
             $('.error-msg').addClass('hidden');
             $('input').removeClass('border-red-500 focus:ring-red-500/50 focus:border-red-500');
@@ -380,6 +383,7 @@
                 formData.append("photo", photoFile);
             }
 
+            isSubmitting = true;
             $.ajax({
                 type: "POST",
                 url: '/Book/Save',
@@ -392,11 +396,14 @@
                         window.location.href = '/Book';
                     } else {
                         showToast(response.message || response.Message || "Failed to create book.");
+                        isSubmitting = false;
                         $btn.prop('disabled', false).text('Save Book');
                     }
                 },
-                error: function(xhr) {
-                    showToast("Server Error: " + xhr.statusText);
+                error: function(xhr, status, err) {
+                    console.error("AJAX Error:", status, err, xhr.responseText);
+                    showToast("Server Error: " + status + " - " + err);
+                    isSubmitting = false;
                     $btn.prop('disabled', false).text('Save Book');
                 }
             });

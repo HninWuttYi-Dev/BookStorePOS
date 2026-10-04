@@ -367,7 +367,10 @@
             $(this).addClass('hidden');
         });
 
+        let isSubmitting = false;
+
         $('#btnUpdate').on('click', function() {
+            if (isSubmitting) return;
             // Reset errors
             $('.error-msg').addClass('hidden');
             $('input').removeClass('border-red-500 focus:ring-red-500/50 focus:border-red-500');
@@ -418,6 +421,7 @@
                 formData.append("photo", photoFile);
             }
 
+            isSubmitting = true;
             $.ajax({
                 type: "POST",
                 url: '/Book/Update/@bookId',
@@ -430,11 +434,13 @@
                         window.location.href = '/Book';
                     } else {
                         showToast(response.message || response.Message || "Failed to update book.");
+                        isSubmitting = false;
                         $btn.prop('disabled', false).text('Update Book');
                     }
                 },
                 error: function(xhr) {
                     showToast("Server Error: " + xhr.statusText);
+                    isSubmitting = false;
                     $btn.prop('disabled', false).text('Update Book');
                 }
             });

@@ -69,12 +69,14 @@
         }
 
         $(document).ready(function() {
+            let isSubmitting = false;
             $('#GenreName').on('input', function() {
                 $(this).removeClass('border-red-500 focus:ring-red-500/50 focus:border-red-500');
                 $('#genreNameError').addClass('hidden');
             });
 
             $('#btnSave').on('click', function () {
+                if (isSubmitting) return;
                 const genreName = $('#GenreName').val().trim();
                 const originalName = $('#OriginalGenreName').val().trim();
                 
@@ -96,6 +98,7 @@
                     GenreName: genreName
                 };
 
+                isSubmitting = true;
                 $.ajax({
                     type: 'POST',
                     url: '/Genre/Update/@genreId',
@@ -105,11 +108,13 @@
                             window.location.href = '/Genre';
                         } else {
                             showToast(response.message || response.Message || "Failed to update genre.");
+                            isSubmitting = false;
                             $btn.prop('disabled', false).text('Update Genre');
                         }
                     },
                     error: function(xhr) {
                         showToast("Error: " + xhr.statusText);
+                        isSubmitting = false;
                         $btn.prop('disabled', false).text('Update Genre');
                     }
                 });

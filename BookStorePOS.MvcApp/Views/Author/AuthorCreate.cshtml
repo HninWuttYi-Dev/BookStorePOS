@@ -58,12 +58,14 @@
         }
 
         $(document).ready(function() {
+            let isSubmitting = false;
             $('#AuthorName').on('input', function() {
                 $(this).removeClass('border-red-500 focus:ring-red-500/50 focus:border-red-500');
                 $('#authorNameError').addClass('hidden');
             });
 
             $('#btnSave').on('click', function () {
+                if (isSubmitting) return;
                 const authorName = $('#AuthorName').val().trim();
                 
                 if (!authorName) {
@@ -79,6 +81,7 @@
                     AuthorName: authorName
                 };
 
+                isSubmitting = true;
                 $.ajax({
                     type: 'POST',
                     url: '/Author/Save',
@@ -88,11 +91,13 @@
                             window.location.href = '/Author';
                         } else {
                             showToast(response.message || response.Message || "Failed to create author.");
+                            isSubmitting = false;
                             $btn.prop('disabled', false).text('Save Author');
                         }
                     },
                     error: function(xhr) {
                         showToast("Error: " + xhr.statusText);
+                        isSubmitting = false;
                         $btn.prop('disabled', false).text('Save Author');
                     }
                 });
