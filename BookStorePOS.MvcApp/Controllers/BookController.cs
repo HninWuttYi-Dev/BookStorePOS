@@ -187,9 +187,6 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             _logger.LogInformation($"Book Update Async => Updating book {id}");
             requestModel.BookId = id;
-
-
-
             if (string.IsNullOrWhiteSpace(requestModel.Title) 
                 && string.IsNullOrWhiteSpace(requestModel.Author) 
                 && string.IsNullOrWhiteSpace(requestModel.Genre)

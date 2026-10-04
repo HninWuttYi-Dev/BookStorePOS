@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 using BookStorePOS.Shared.Models.Author;
 
 namespace BookStorePOS.MvcApp.Controllers
@@ -80,8 +82,9 @@ namespace BookStorePOS.MvcApp.Controllers
             }
 
             var client = _httpClientFactory.CreateClient("WebAPI");
-            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
-            var httpResponse = await client.PostAsync("api/author", content);
+            string json = JsonConvert.SerializeObject(requestModel);
+            StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
+            var httpResponse = await client.PostAsync("api/author", stringContent);
             var jsonString = await httpResponse.Content.ReadAsStringAsync();
             var model = JsonConvert.DeserializeObject<AuthorCreateResponseModel>(jsonString) ?? new AuthorCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
@@ -135,8 +138,9 @@ namespace BookStorePOS.MvcApp.Controllers
             }
 
             var client = _httpClientFactory.CreateClient("WebAPI");
-            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
-            var httpResponse = await client.PatchAsync($"api/author/{id}", content);
+            string json = JsonConvert.SerializeObject(requestModel);
+            StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
+            var httpResponse = await client.PatchAsync($"api/author/{id}", stringContent);
             var jsonString = await httpResponse.Content.ReadAsStringAsync();
             var model = JsonConvert.DeserializeObject<AuthorPatchResponseModel>(jsonString) ?? new AuthorPatchResponseModel { isSuccess = false, Message = "Unknown error" };
             

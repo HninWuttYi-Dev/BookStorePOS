@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-
+using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 namespace BookStorePOS.MvcApp.Controllers
 {
     public class GenreController : Controller
@@ -77,8 +78,9 @@ namespace BookStorePOS.MvcApp.Controllers
             }
 
             var client = _httpClientFactory.CreateClient("WebAPI");
-            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
-            var httpResponse = await client.PostAsync("api/genre", content);
+            string json = JsonConvert.SerializeObject(requestModel);
+            StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
+            var httpResponse = await client.PostAsync("api/genre", stringContent);
             var jsonString = await httpResponse.Content.ReadAsStringAsync();
             var model = JsonConvert.DeserializeObject<GenreCreateResponseModel>(jsonString) ?? new GenreCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
@@ -132,8 +134,9 @@ namespace BookStorePOS.MvcApp.Controllers
             }
 
             var client = _httpClientFactory.CreateClient("WebAPI");
-            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
-            var httpResponse = await client.PatchAsync($"api/genre/{id}", content);
+            string json = JsonConvert.SerializeObject(requestModel);
+            StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
+            var httpResponse = await client.PatchAsync($"api/genre/{id}", stringContent);
             var jsonString = await httpResponse.Content.ReadAsStringAsync();
             var model = JsonConvert.DeserializeObject<GenrePatchResponseModel>(jsonString) ?? new GenrePatchResponseModel { isSuccess = false, Message = "Unknown error" };
             

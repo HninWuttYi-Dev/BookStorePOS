@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace BookStorePOS.MvcApp.Controllers
 {
@@ -88,8 +90,9 @@ namespace BookStorePOS.MvcApp.Controllers
             }
 
             var client = _httpClientFactory.CreateClient("WebAPI");
-            var content = new StringContent(JsonConvert.SerializeObject(requestModel), System.Text.Encoding.UTF8, "application/json");
-            var httpResponse = await client.PostAsync("api/order", content);
+            string json = JsonConvert.SerializeObject(requestModel);
+            StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
+            var httpResponse = await client.PostAsync("api/order", stringContent);
             var jsonString = await httpResponse.Content.ReadAsStringAsync();
             var response = JsonConvert.DeserializeObject<OrderCreateResponseModel>(jsonString) ?? new OrderCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
