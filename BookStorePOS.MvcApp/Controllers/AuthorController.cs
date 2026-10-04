@@ -21,164 +21,227 @@ namespace BookStorePOS.MvcApp.Controllers
         [ActionName("Index")]
         public async Task<IActionResult> AuthorListAsync(AuthorListRequestModel requestModel)
         {
-            _logger.LogInformation("Author List Async => Fetching authors");
+        try
+        {
+                _logger.LogInformation("Author List Async => Fetching authors");
 
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&AuthorName={Uri.EscapeDataString(requestModel.AuthorName ?? "")}";
-            var httpResponse = await client.GetAsync($"api/author{qs}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<AuthorListResponseModel>(jsonString);
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&AuthorName={Uri.EscapeDataString(requestModel.AuthorName ?? "")}";
+                var httpResponse = await client.GetAsync($"api/author{qs}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<AuthorListResponseModel>(jsonString);
 
-            if (response != null && response.isSuccess && response.Data != null)
-            {
-                ViewData["Authors"] = response.Data;
-                ViewData["CurrentPage"] = response.Page;
-                ViewData["TotalPages"] = response.TotalPages;
-                ViewData["AuthorNameFilter"] = requestModel.AuthorName;
-                _logger.LogInformation("Author List Async => Authors fetched successfully");
-            }
-            else
-            {
-                _logger.LogWarning($"Author List Async => Failed to fetch authors: {response?.Message}");
-                TempData["Message"] = response?.Message;
-                TempData["isSuccess"] = false;
-            }
+                if (response != null && response.isSuccess && response.Data != null)
+                {
+                    ViewData["Authors"] = response.Data;
+                    ViewData["CurrentPage"] = response.Page;
+                    ViewData["TotalPages"] = response.TotalPages;
+                    ViewData["AuthorNameFilter"] = requestModel.AuthorName;
+                    _logger.LogInformation("Author List Async => Authors fetched successfully");
+                }
+                else
+                {
+                    _logger.LogWarning($"Author List Async => Failed to fetch authors: {response?.Message}");
+                    TempData["Message"] = response?.Message;
+                    TempData["isSuccess"] = false;
+                }
 
-            return View("AuthorList");
+                return View("AuthorList");
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AuthorListAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [HttpGet]
         [ActionName("Search")]
         public async Task<IActionResult> AuthorSearchAsync(string query)
         {
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var qs = $"?Page=1&Limit=10&AuthorName={Uri.EscapeDataString(query ?? "")}";
-            var httpResponse = await client.GetAsync($"api/author{qs}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<AuthorListResponseModel>(jsonString);
-            if (response != null && response.isSuccess && response.Data != null)
-            {
-                return Json(response.Data);
-            }
-            return Json(new List<AuthorModel>());
+        try
+        {
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var qs = $"?Page=1&Limit=10&AuthorName={Uri.EscapeDataString(query ?? "")}";
+                var httpResponse = await client.GetAsync($"api/author{qs}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<AuthorListResponseModel>(jsonString);
+                if (response != null && response.isSuccess && response.Data != null)
+                {
+                    return Json(response.Data);
+                }
+                return Json(new List<AuthorModel>());
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AuthorSearchAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [ActionName("Create")]
         public IActionResult AuthorCreate()
         {
-            return View("AuthorCreate");
+        try
+        {
+                return View("AuthorCreate");
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AuthorCreate => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [HttpPost]
         [ActionName("Save")]
         public async Task<IActionResult> AuthorSaveAsync(AuthorCreateRequestModel requestModel)
         {
-            _logger.LogInformation("Author Save Async => Creating new author");
+        try
+        {
+                _logger.LogInformation("Author Save Async => Creating new author");
 
-            if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
-            {
-                _logger.LogWarning("Author Save Async => Author name is required");
-                return Json(new AuthorCreateResponseModel { isSuccess = false, Message = "Author name is required" });
-            }
+                if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
+                {
+                    _logger.LogWarning("Author Save Async => Author name is required");
+                    return Json(new AuthorCreateResponseModel { isSuccess = false, Message = "Author name is required" });
+                }
 
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            string json = JsonConvert.SerializeObject(requestModel);
-            StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
-            var httpResponse = await client.PostAsync("api/author", stringContent);
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<AuthorCreateResponseModel>(jsonString) ?? new AuthorCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                string json = JsonConvert.SerializeObject(requestModel);
+                StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
+                var httpResponse = await client.PostAsync("api/author", stringContent);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<AuthorCreateResponseModel>(jsonString) ?? new AuthorCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model != null && model.isSuccess)
-            {
-                _logger.LogInformation("Author Save Async => Author created successfully");
-                TempData["Message"] = model.Message ?? "Author created successfully.";
-                TempData["isSuccess"] = true;
-            }
-            else
-            {
-                _logger.LogWarning($"Author Save Async => Failed to create author: {model?.Message}");
-            }
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Author Save Async => Author created successfully");
+                    TempData["Message"] = model.Message ?? "Author created successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Author Save Async => Failed to create author: {model?.Message}");
+                }
 
-            return Json(model);
+                return Json(model);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AuthorSaveAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [ActionName("Edit")]
         public async Task<IActionResult> AuthorEditAsync(int id)
         {
-            _logger.LogInformation($"Author Edit Async => Fetching author {id}");
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var httpResponse = await client.GetAsync($"api/author/{id}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<AuthorByIdResponseModel>(jsonString);
+        try
+        {
+                _logger.LogInformation($"Author Edit Async => Fetching author {id}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.GetAsync($"api/author/{id}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<AuthorByIdResponseModel>(jsonString);
             
-            if (model == null || !model.isSuccess || model.Data == null)
-            {
-                _logger.LogWarning($"Author Edit Async => Failed to fetch author {id}: {model?.Message}");
-                TempData["isSuccess"] = false;
-                TempData["Message"] = model?.Message ?? "Author not found.";
-                return Redirect("/Author");
-            }
+                if (model == null || !model.isSuccess || model.Data == null)
+                {
+                    _logger.LogWarning($"Author Edit Async => Failed to fetch author {id}: {model?.Message}");
+                    TempData["isSuccess"] = false;
+                    TempData["Message"] = model?.Message ?? "Author not found.";
+                    return Redirect("/Author");
+                }
 
-            ViewData["Id"] = model.Data.AuthorId;
-            ViewData["AuthorName"] = model.Data.AuthorName;
+                ViewData["Id"] = model.Data.AuthorId;
+                ViewData["AuthorName"] = model.Data.AuthorName;
 
-            return View("AuthorEdit", model.Data);
+                return View("AuthorEdit", model.Data);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AuthorEditAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [HttpPost]
         [ActionName("Update")]
         public async Task<IActionResult> AuthorUpdateAsync(int id, AuthorPatchRequestModel requestModel)
         {
-            _logger.LogInformation($"Author Update Async => Updating author {id}");
-            requestModel.AuthorId = id;
+        try
+        {
+                _logger.LogInformation($"Author Update Async => Updating author {id}");
+                requestModel.AuthorId = id;
 
-            if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
-            {
-                return Json(new AuthorPatchResponseModel { isSuccess = false, Message = "Author name is required." });
-            }
+                if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
+                {
+                    return Json(new AuthorPatchResponseModel { isSuccess = false, Message = "Author name is required." });
+                }
 
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            string json = JsonConvert.SerializeObject(requestModel);
-            StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
-            var httpResponse = await client.PatchAsync($"api/author/{id}", stringContent);
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<AuthorPatchResponseModel>(jsonString) ?? new AuthorPatchResponseModel { isSuccess = false, Message = "Unknown error" };
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                string json = JsonConvert.SerializeObject(requestModel);
+                StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
+                var httpResponse = await client.PatchAsync($"api/author/{id}", stringContent);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<AuthorPatchResponseModel>(jsonString) ?? new AuthorPatchResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model != null && model.isSuccess)
-            {
-                _logger.LogInformation("Author Update Async => Author updated successfully");
-                TempData["Message"] = model.Message ?? "Author updated successfully.";
-                TempData["isSuccess"] = true;
-            }
-            else
-            {
-                _logger.LogWarning($"Author Update Async => Failed to update author: {model?.Message}");
-            }
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Author Update Async => Author updated successfully");
+                    TempData["Message"] = model.Message ?? "Author updated successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Author Update Async => Failed to update author: {model?.Message}");
+                }
 
-            return Json(model);
+                return Json(model);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AuthorUpdateAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [HttpPost]
         [ActionName("Delete")]
         public async Task<IActionResult> AuthorDeleteAsync(AuthorDeleteRequestModel requestModel)
         {
-            _logger.LogInformation($"Author Delete Async => Deleting author {requestModel.AuthorId}");
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var httpResponse = await client.DeleteAsync($"api/author/{requestModel.AuthorId}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<AuthorDeleteResponseModel>(jsonString) ?? new AuthorDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+        try
+        {
+                _logger.LogInformation($"Author Delete Async => Deleting author {requestModel.AuthorId}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.DeleteAsync($"api/author/{requestModel.AuthorId}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<AuthorDeleteResponseModel>(jsonString) ?? new AuthorDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model != null && model.isSuccess)
-            {
-                _logger.LogInformation("Author Delete Async => Author deleted successfully");
-                TempData["Message"] = model.Message ?? "Author deleted successfully.";
-                TempData["isSuccess"] = true;
-            }
-            else
-            {
-                _logger.LogWarning($"Author Delete Async => Failed to delete author: {model?.Message}");
-            }
-            return Json(model);
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Author Delete Async => Author deleted successfully");
+                    TempData["Message"] = model.Message ?? "Author deleted successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Author Delete Async => Failed to delete author: {model?.Message}");
+                }
+                return Json(model);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "AuthorDeleteAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
     }
 }

@@ -15,260 +15,332 @@ namespace BookStorePOS.MvcApp.Controllers
         [ActionName("Index")]
         public async Task<IActionResult> BookListAsync(BookListRequestModel requestModel)
         {
-            _logger.LogInformation("Book List Async => Fetching books");
+        try
+        {
+                _logger.LogInformation("Book List Async => Fetching books");
 
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&SearchQuery={Uri.EscapeDataString(requestModel.SearchQuery ?? "")}&Isbn={Uri.EscapeDataString(requestModel.Isbn ?? "")}&Title={Uri.EscapeDataString(requestModel.Title ?? "")}&Author={Uri.EscapeDataString(requestModel.Author ?? "")}&Genre={Uri.EscapeDataString(requestModel.Genre ?? "")}";
-            var httpResponse = await client.GetAsync($"api/book{qs}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&SearchQuery={Uri.EscapeDataString(requestModel.SearchQuery ?? "")}&Isbn={Uri.EscapeDataString(requestModel.Isbn ?? "")}&Title={Uri.EscapeDataString(requestModel.Title ?? "")}&Author={Uri.EscapeDataString(requestModel.Author ?? "")}&Genre={Uri.EscapeDataString(requestModel.Genre ?? "")}";
+                var httpResponse = await client.GetAsync($"api/book{qs}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
 
-            if (response != null && response.isSuccess && response.Data != null)
-            {
-                ViewData["Books"] = response.Data;
-                ViewData["CurrentPage"] = response.Page;
-                ViewData["TotalPages"] = response.TotalPages;
-                ViewData["IsbnFilter"] = requestModel.Isbn;
-                ViewData["TitleFilter"] = requestModel.Title;
-                ViewData["AuthorFilter"] = requestModel.Author;
-                ViewData["GenreFilter"] = requestModel.Genre;
-                _logger.LogInformation("Book List Async => Books fetched successfully");
-            }
-            else
-            {
-                _logger.LogWarning($"Book List Async => Failed to fetch books: {response?.Message}");
-                TempData["Message"] = response?.Message;
-                TempData["isSuccess"] = false;
-            }
+                if (response != null && response.isSuccess && response.Data != null)
+                {
+                    ViewData["Books"] = response.Data;
+                    ViewData["CurrentPage"] = response.Page;
+                    ViewData["TotalPages"] = response.TotalPages;
+                    ViewData["IsbnFilter"] = requestModel.Isbn;
+                    ViewData["TitleFilter"] = requestModel.Title;
+                    ViewData["AuthorFilter"] = requestModel.Author;
+                    ViewData["GenreFilter"] = requestModel.Genre;
+                    _logger.LogInformation("Book List Async => Books fetched successfully");
+                }
+                else
+                {
+                    _logger.LogWarning($"Book List Async => Failed to fetch books: {response?.Message}");
+                    TempData["Message"] = response?.Message;
+                    TempData["isSuccess"] = false;
+                }
 
-            return View("BookList");
+                return View("BookList");
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BookListAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [ActionName("Detail")]
         public async Task<IActionResult> BookDetailAsync(int id)
         {
-            _logger.LogInformation($"Book Detail Async => Fetching book {id}");
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var httpResponse = await client.GetAsync($"api/book/{id}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var response = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
+        try
+        {
+                _logger.LogInformation($"Book Detail Async => Fetching book {id}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.GetAsync($"api/book/{id}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-            if (response == null || !response.isSuccess || response.Data == null)
-            {
-                _logger.LogWarning($"Book Detail Async => Failed to fetch book {id}");
-                TempData["Message"] = "Book not found.";
-                TempData["isSuccess"] = false;
-                return RedirectToAction("Index");
-            }
+                if (response == null || !response.isSuccess || response.Data == null)
+                {
+                    _logger.LogWarning($"Book Detail Async => Failed to fetch book {id}");
+                    TempData["Message"] = "Book not found.";
+                    TempData["isSuccess"] = false;
+                    return RedirectToAction("Index");
+                }
 
-            ViewData["Book"] = response.Data;
-            return View("BookDetail");
+                ViewData["Book"] = response.Data;
+                return View("BookDetail");
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BookDetailAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [ActionName("Create")]
         public IActionResult BookCreate()
         {
-            return View("BookCreate");
+        try
+        {
+                return View("BookCreate");
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BookCreate => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [HttpPost]
         [ActionName("Save")]
         public async Task<IActionResult> BookSaveAsync(BookCreateRequestModel requestModel, IFormFile? photo)
         {
-            _logger.LogInformation("Book Save Async => Creating new book");
+        try
+        {
+                _logger.LogInformation("Book Save Async => Creating new book");
 
 
 
-            if (string.IsNullOrWhiteSpace(requestModel.Title))
-            {
-                _logger.LogWarning("Book Save Async => Title is required");
-                return Json(new BookCreateResponseModel { isSuccess = false, Message = "Title is required" });
-            }
-            if (string.IsNullOrWhiteSpace(requestModel.Author))
-            {
-                _logger.LogWarning("Book Save Async => Author is required");
-                return Json(new BookCreateResponseModel { isSuccess = false, Message = "Author is required" });
-            }
-            if (string.IsNullOrWhiteSpace(requestModel.Genre))
-            {
-                _logger.LogWarning("Book Save Async => Genre is required");
-                return Json(new BookCreateResponseModel { isSuccess = false, Message = "Genre is required" });
-            }
-            if (requestModel.Price <= 0)
-            {
-                _logger.LogWarning("Book Save Async => Price must be greater than zero");
-                return Json(new BookCreateResponseModel { isSuccess = false, Message = "Price must be greater than zero" });
-            }
-            if (requestModel.StockQuantity < 0)
-            {
-                _logger.LogWarning("Book Save Async => StockQuantity must be greater or zero");
-                return Json(new BookCreateResponseModel { isSuccess = false, Message = "StockQuantity must be greater or equal to zero" });
-            }
-
-            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
-            {
-                var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
-                if (isbn.Length != 10 && isbn.Length != 13)
+                if (string.IsNullOrWhiteSpace(requestModel.Title))
                 {
-                    _logger.LogWarning("Book Save Async => ISBN must be 10 or 13 digits");
-                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." });
+                    _logger.LogWarning("Book Save Async => Title is required");
+                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Title is required" });
                 }
-            }
+                if (string.IsNullOrWhiteSpace(requestModel.Author))
+                {
+                    _logger.LogWarning("Book Save Async => Author is required");
+                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Author is required" });
+                }
+                if (string.IsNullOrWhiteSpace(requestModel.Genre))
+                {
+                    _logger.LogWarning("Book Save Async => Genre is required");
+                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Genre is required" });
+                }
+                if (requestModel.Price <= 0)
+                {
+                    _logger.LogWarning("Book Save Async => Price must be greater than zero");
+                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Price must be greater than zero" });
+                }
+                if (requestModel.StockQuantity < 0)
+                {
+                    _logger.LogWarning("Book Save Async => StockQuantity must be greater or zero");
+                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "StockQuantity must be greater or equal to zero" });
+                }
 
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            using var content = new MultipartFormDataContent();
+                if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+                {
+                    var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
+                    if (isbn.Length != 10 && isbn.Length != 13)
+                    {
+                        _logger.LogWarning("Book Save Async => ISBN must be 10 or 13 digits");
+                        return Json(new BookCreateResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." });
+                    }
+                }
 
-            if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
-            if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
-            if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
-            if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
-            content.Add(new StringContent(requestModel.Price.ToString()), "Price");
-            content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
-            if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                using var content = new MultipartFormDataContent();
 
-            if (photo != null && photo.Length > 0)
-            {
-                var streamContent = new StreamContent(photo.OpenReadStream());
-                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
-                content.Add(streamContent, "photo", photo.FileName);
-            }
+                if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
+                if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
+                if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
+                if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
+                content.Add(new StringContent(requestModel.Price.ToString()), "Price");
+                content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
+                if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
 
-            var httpResponse = await client.PostAsync("api/book", content);
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<BookCreateResponseModel>(jsonString) ?? new BookCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                if (photo != null && photo.Length > 0)
+                {
+                    var streamContent = new StreamContent(photo.OpenReadStream());
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                    content.Add(streamContent, "photo", photo.FileName);
+                }
+
+                var httpResponse = await client.PostAsync("api/book", content);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookCreateResponseModel>(jsonString) ?? new BookCreateResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model != null && model.isSuccess)
-            {
-                _logger.LogInformation("Book Save Async => Book created successfully");
-                TempData["Message"] = model.Message ?? "Book created successfully.";
-                TempData["isSuccess"] = true;
-            }
-            else
-            {
-                _logger.LogWarning($"Book Save Async => Failed to create book: {model?.Message}");
-            }
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Book Save Async => Book created successfully");
+                    TempData["Message"] = model.Message ?? "Book created successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Book Save Async => Failed to create book: {model?.Message}");
+                }
 
-            return Json(model);
+                return Json(model);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BookSaveAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
         [ActionName("Edit")]
         public async Task<IActionResult> BookEditAsync(int id)
         {
-            _logger.LogInformation($"Book Edit Async => Fetching book {id}");
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var httpResponse = await client.GetAsync($"api/book/{id}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
+        try
+        {
+                _logger.LogInformation($"Book Edit Async => Fetching book {id}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.GetAsync($"api/book/{id}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-            if (model == null || !model.isSuccess)
-            {
-                _logger.LogWarning($"Book Edit Async => Failed to fetch book {id}: {model?.Message}");
-                TempData["isSuccess"] = false;
-                TempData["Message"] = model?.Message;
-                return Redirect("/Book");
-            }
+                if (model == null || !model.isSuccess)
+                {
+                    _logger.LogWarning($"Book Edit Async => Failed to fetch book {id}: {model?.Message}");
+                    TempData["isSuccess"] = false;
+                    TempData["Message"] = model?.Message;
+                    return Redirect("/Book");
+                }
 
-            ViewData["Id"] = model.Data.BookId;
-            ViewData["BookTitle"] = model.Data.Title;
-            ViewData["Author"] = model.Data.Author;
-            ViewData["Genre"] = model.Data.Genre;
-            ViewData["Isbn"] = model.Data.Isbn;
-            ViewData["Price"] = model.Data.Price;
-            ViewData["StockQuantity"] = model.Data.StockQuantity;
-            ViewData["ReorderLevel"] = model.Data.ReorderLevel;
-            ViewData["Description"] = model.Data.Description;
-            ViewData["CoverImageUrl"] = model.Data.CoverImageUrl;
+                ViewData["Id"] = model.Data.BookId;
+                ViewData["BookTitle"] = model.Data.Title;
+                ViewData["Author"] = model.Data.Author;
+                ViewData["Genre"] = model.Data.Genre;
+                ViewData["Isbn"] = model.Data.Isbn;
+                ViewData["Price"] = model.Data.Price;
+                ViewData["StockQuantity"] = model.Data.StockQuantity;
+                ViewData["ReorderLevel"] = model.Data.ReorderLevel;
+                ViewData["Description"] = model.Data.Description;
+                ViewData["CoverImageUrl"] = model.Data.CoverImageUrl;
 
-            return View("BookEdit", model.Data);
+                return View("BookEdit", model.Data);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BookEditAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [HttpPost]
         [ActionName("Update")]
         public async Task<IActionResult> BookUpdateAsync(int id, BookPatchRequestModel requestModel, IFormFile? photo)
         {
-            _logger.LogInformation($"Book Update Async => Updating book {id}");
-            requestModel.BookId = id;
-            if (string.IsNullOrWhiteSpace(requestModel.Title) 
-                && string.IsNullOrWhiteSpace(requestModel.Author) 
-                && string.IsNullOrWhiteSpace(requestModel.Genre)
-                && requestModel.Price is null
-                && requestModel.StockQuantity is null)
-            {
-                return Json(new BookPatchResponseModel { isSuccess = false, Message = "Please update at least one field." });
-            }
-
-            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
-            {
-                var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
-                if (isbn.Length != 10 && isbn.Length != 13)
+        try
+        {
+                _logger.LogInformation($"Book Update Async => Updating book {id}");
+                requestModel.BookId = id;
+                if (string.IsNullOrWhiteSpace(requestModel.Title) 
+                    && string.IsNullOrWhiteSpace(requestModel.Author) 
+                    && string.IsNullOrWhiteSpace(requestModel.Genre)
+                    && requestModel.Price is null
+                    && requestModel.StockQuantity is null)
                 {
-                    _logger.LogWarning("Book Update Async => ISBN must be 10 or 13 digits");
-                    return Json(new BookPatchResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." });
+                    return Json(new BookPatchResponseModel { isSuccess = false, Message = "Please update at least one field." });
                 }
-            }
 
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            using var content = new MultipartFormDataContent();
+                if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+                {
+                    var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
+                    if (isbn.Length != 10 && isbn.Length != 13)
+                    {
+                        _logger.LogWarning("Book Update Async => ISBN must be 10 or 13 digits");
+                        return Json(new BookPatchResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." });
+                    }
+                }
 
-            content.Add(new StringContent(id.ToString()), "BookId");
-            if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
-            if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
-            if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
-            if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
-            if (requestModel.Price.HasValue) content.Add(new StringContent(requestModel.Price.Value.ToString()), "Price");
-            if (requestModel.StockQuantity.HasValue) content.Add(new StringContent(requestModel.StockQuantity.Value.ToString()), "StockQuantity");
-            if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                using var content = new MultipartFormDataContent();
 
-            if (photo != null && photo.Length > 0)
-            {
-                var streamContent = new StreamContent(photo.OpenReadStream());
-                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
-                content.Add(streamContent, "photo", photo.FileName);
-            }
+                content.Add(new StringContent(id.ToString()), "BookId");
+                if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
+                if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
+                if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
+                if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
+                if (requestModel.Price.HasValue) content.Add(new StringContent(requestModel.Price.Value.ToString()), "Price");
+                if (requestModel.StockQuantity.HasValue) content.Add(new StringContent(requestModel.StockQuantity.Value.ToString()), "StockQuantity");
+                if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
 
-            var httpResponse = await client.PatchAsync($"api/book/{id}", content);
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<BookPatchResponseModel>(jsonString) ?? new BookPatchResponseModel { isSuccess = false, Message = "Unknown error" };
+                if (photo != null && photo.Length > 0)
+                {
+                    var streamContent = new StreamContent(photo.OpenReadStream());
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                    content.Add(streamContent, "photo", photo.FileName);
+                }
+
+                var httpResponse = await client.PatchAsync($"api/book/{id}", content);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookPatchResponseModel>(jsonString) ?? new BookPatchResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model != null && model.isSuccess)
-            {
-                _logger.LogInformation("Book Update Async => Book updated successfully");
-                TempData["Message"] = model.Message ?? "Book updated successfully.";
-                TempData["isSuccess"] = true;
-            }
-            else
-            {
-                _logger.LogWarning($"Book Update Async => Failed to update book: {model?.Message}");
-            }
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Book Update Async => Book updated successfully");
+                    TempData["Message"] = model.Message ?? "Book updated successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Book Update Async => Failed to update book: {model?.Message}");
+                }
 
-            return Json(model);
+                return Json(model);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BookUpdateAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
         [HttpPost]
         [ActionName("Delete")]
         public async Task<IActionResult> BookDeleteAsync(BookDeleteRequestModel requestModel)
         {
-            _logger.LogInformation($"Book Delete Async => Deleting book {requestModel.BookId}");
-            var client = _httpClientFactory.CreateClient("WebAPI");
-            var httpResponse = await client.DeleteAsync($"api/book/{requestModel.BookId}");
-            var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<BookDeleteResponseModel>(jsonString) ?? new BookDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+        try
+        {
+                _logger.LogInformation($"Book Delete Async => Deleting book {requestModel.BookId}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.DeleteAsync($"api/book/{requestModel.BookId}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookDeleteResponseModel>(jsonString) ?? new BookDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
             
-            if (model != null && model.isSuccess)
-            {
-                _logger.LogInformation("Book Delete Async => Book deleted successfully");
-                TempData["Message"] = model.Message ?? "Book deleted successfully.";
-                TempData["isSuccess"] = true;
-            }
-            else
-            {
-                _logger.LogWarning($"Book Delete Async => Failed to delete book: {model?.Message}");
-            }
-            return Json(model);
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Book Delete Async => Book deleted successfully");
+                    TempData["Message"] = model.Message ?? "Book deleted successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Book Delete Async => Failed to delete book: {model?.Message}");
+                }
+                return Json(model);
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BookDeleteAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View("Error!");
+        try
+        {
+                return View("Error!");
+        
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
     }
 }
