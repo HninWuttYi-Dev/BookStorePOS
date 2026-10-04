@@ -209,12 +209,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["BookTitle"] = model.Data.Title;
                 ViewData["Author"] = model.Data.Author;
                 ViewData["Genre"] = model.Data.Genre;
-                ViewData["Isbn"] = model.Data.Isbn;
-                ViewData["Price"] = model.Data.Price;
-                ViewData["StockQuantity"] = model.Data.StockQuantity;
-                ViewData["ReorderLevel"] = model.Data.ReorderLevel;
                 ViewData["Description"] = model.Data.Description;
-                ViewData["CoverImageUrl"] = model.Data.CoverImageUrl;
 
                 return View("BookEdit", model.Data);
         
@@ -237,20 +232,10 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (string.IsNullOrWhiteSpace(requestModel.Title) 
                     && string.IsNullOrWhiteSpace(requestModel.Author) 
                     && string.IsNullOrWhiteSpace(requestModel.Genre)
-                    && requestModel.Price is null
-                    && requestModel.StockQuantity is null)
+                    && string.IsNullOrWhiteSpace(requestModel.Description)
+                    && photo == null)
                 {
                     return Json(new BookPatchResponseModel { isSuccess = false, Message = "Please update at least one field." });
-                }
-
-                if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
-                {
-                    var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
-                    if (isbn.Length != 10 && isbn.Length != 13)
-                    {
-                        _logger.LogWarning("Book Update Async => ISBN must be 10 or 13 digits");
-                        return Json(new BookPatchResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." });
-                    }
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -260,9 +245,6 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
                 if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
                 if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
-                if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
-                if (requestModel.Price.HasValue) content.Add(new StringContent(requestModel.Price.Value.ToString()), "Price");
-                if (requestModel.StockQuantity.HasValue) content.Add(new StringContent(requestModel.StockQuantity.Value.ToString()), "StockQuantity");
                 if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
 
                 if (photo != null && photo.Length > 0)

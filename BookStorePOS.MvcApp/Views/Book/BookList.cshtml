@@ -97,20 +97,21 @@
                 {
                     foreach (var book in books)
                     {
-                        var stockBg = book.StockQuantity == 0 ? "bg-red-100 text-red-800 border-red-200" : (book.StockQuantity <= book.ReorderLevel ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-emerald-100 text-emerald-800 border-emerald-200");
+                        var reorderLevel = book.Editions?.FirstOrDefault()?.ReorderLevel ?? 0;
+                        var stockBg = book.TotalStockQuantity == 0 ? "bg-red-100 text-red-800 border-red-200" : (book.TotalStockQuantity <= reorderLevel ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-emerald-100 text-emerald-800 border-emerald-200");
                         
                         <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0">
                             <td class="px-4 py-4 font-medium text-slate-500 text-center rounded-l-xl">@(++count)</td>
-                            <td class="px-4 py-4 text-slate-500">@(book.Isbn ?? "-")</td>
+                            <td class="px-4 py-4 text-slate-500">@(book.Editions?.FirstOrDefault()?.Isbn ?? "-")</td>
                             <td class="px-4 py-4 font-semibold max-w-[200px] truncate" title="@book.Title">
                                 <a href="/Book/Detail/@book.BookId" class="text-teal-700 hover:text-teal-900 transition-colors">@book.Title</a>
                             </td>
                             <td class="px-4 py-4 text-slate-700 font-medium max-w-[150px] truncate" title="@book.Author">@book.Author</td>
                             <td class="px-4 py-4 text-slate-500 max-w-[150px] truncate" title="@book.Genre">@book.Genre</td>
-                            <td class="px-4 py-4 font-semibold text-slate-900">@book.Price.ToString("#,##0")</td>
+                            <td class="px-4 py-4 font-semibold text-slate-900">@book.StartingPrice.ToString("#,##0")</td>
                             <td class="px-4 py-4 text-center">
                                 <span class="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-full text-xs font-bold border @stockBg">
-                                    @book.StockQuantity
+                                    @book.TotalStockQuantity
                                 </span>
                             </td>
                             <td class="px-4 py-4 rounded-r-xl">

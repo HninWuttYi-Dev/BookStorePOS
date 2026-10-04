@@ -215,7 +215,7 @@ else
                     {
                         foreach (var book in lowStockBooks)
                         {
-                            var stockBg = book.StockQuantity == 0 ? "bg-red-100 text-red-700 border-red-200" : "bg-amber-100 text-amber-700 border-amber-200";
+                            var stockBg = book.TotalStockQuantity == 0 ? "bg-red-100 text-red-700 border-red-200" : "bg-amber-100 text-amber-700 border-amber-200";
                             
                             <li class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
                                 <div class="flex items-center gap-4">
@@ -228,7 +228,7 @@ else
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm shrink-0 border @stockBg">
-                                    @book.StockQuantity
+                                    @book.TotalStockQuantity
                                 </span>
                             </li>
                         }

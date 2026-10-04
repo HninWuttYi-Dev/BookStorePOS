@@ -41,13 +41,6 @@ public class BookModel
     
     public decimal StartingPrice { get; set; }
     public int TotalStockQuantity { get; set; }
-
-    public string? Isbn { get; set; }
-    public decimal Price { get; set; }
-    public int StockQuantity { get; set; }
-    public int ReorderLevel { get; set; }
-    public string? CoverImageUrl { get; set; }
-
     public List<BookEditionModel> Editions { get; set; } = new List<BookEditionModel>();
 }
 

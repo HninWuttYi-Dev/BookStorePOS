@@ -135,10 +135,7 @@ public class BookController : ControllerBase
             if (photo != null && photo.Length > 0)
             {
                 var url = await _fileStorageService.UploadImageAsync(photo);
-                if (url != null)
-                {
-                    requestModel.CoverImageUrl = url;
-                }
+                // Image uploading for book cover is now handled at the Edition level
             }
 
             var response = await _bookService.UpdateBookAsync(requestModel);

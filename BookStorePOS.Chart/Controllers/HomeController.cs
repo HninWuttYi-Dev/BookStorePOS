@@ -33,7 +33,7 @@ public class HomeController : Controller
         // 1. Total Metrics
         var totalSales = orders.Sum(o => o.TotalPrice);
         var totalOrders = orders.Count;
-        var totalStock = books.Sum(b => b.StockQuantity);
+        var totalStock = books.Sum(b => b.TotalStockQuantity);
 
         // 2. Sparkline Data
         // Sales over time (group by day)
@@ -53,12 +53,12 @@ public class HomeController : Controller
             .ToList();
             
         // Stock history (we don't have time series for stock, so we'll just plot stock per book for visual variation)
-        var stockHistory = books.Select(b => (decimal)b.StockQuantity).ToList();
+        var stockHistory = books.Select(b => (decimal)b.TotalStockQuantity).ToList();
 
         // 3. Main Charts Data (Top 5 Books)
-        var topBooks = books.OrderByDescending(b => b.StockQuantity).Take(5).ToList();
+        var topBooks = books.OrderByDescending(b => b.TotalStockQuantity).Take(5).ToList();
         List<string> topBookLabels = topBooks.Select(b => b.Title).ToList();
-        List<int> topBookStock = topBooks.Select(b => b.StockQuantity).ToList();
+        List<int> topBookStock = topBooks.Select(b => b.TotalStockQuantity).ToList();
 
         ViewData["TotalSales"] = totalSales.ToString("N0");
         ViewData["TotalOrders"] = totalOrders.ToString("N0");

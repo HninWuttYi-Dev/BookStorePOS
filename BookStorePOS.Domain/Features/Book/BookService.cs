@@ -90,11 +90,6 @@ public class BookService : IBookService
                     IsDeleted = item.IsDeleted,
                     StartingPrice = item.TblBookEditions.Any() ? item.TblBookEditions.Min(e => e.Price) : 0,
                     TotalStockQuantity = item.TblBookEditions.Sum(e => e.StockQuantity),
-                    Isbn = item.TblBookEditions.FirstOrDefault()?.Isbn,
-                    Price = item.TblBookEditions.FirstOrDefault()?.Price ?? 0,
-                    StockQuantity = item.TblBookEditions.Sum(e => e.StockQuantity),
-                    ReorderLevel = item.TblBookEditions.FirstOrDefault()?.ReorderLevel ?? 0,
-                    CoverImageUrl = item.TblBookEditions.FirstOrDefault()?.CoverImageUrl,
                     Editions = item.TblBookEditions.Select(e => new BookEditionModel {
                         BookEditionId = e.BookEditionId,
                         BookId = e.BookId,
@@ -175,11 +170,6 @@ public class BookService : IBookService
                     IsDeleted = item.IsDeleted,
                     StartingPrice = item.TblBookEditions.Any() ? item.TblBookEditions.Min(e => e.Price) : 0,
                     TotalStockQuantity = item.TblBookEditions.Sum(e => e.StockQuantity),
-                    Isbn = item.TblBookEditions.FirstOrDefault()?.Isbn,
-                    Price = item.TblBookEditions.FirstOrDefault()?.Price ?? 0,
-                    StockQuantity = item.TblBookEditions.Sum(e => e.StockQuantity),
-                    ReorderLevel = item.TblBookEditions.FirstOrDefault()?.ReorderLevel ?? 0,
-                    CoverImageUrl = item.TblBookEditions.FirstOrDefault()?.CoverImageUrl,
                     Editions = item.TblBookEditions.Select(e => new BookEditionModel {
                         BookEditionId = e.BookEditionId,
                         BookId = e.BookId,
@@ -363,11 +353,6 @@ public class BookService : IBookService
                     IsDeleted = book.IsDeleted,
                     StartingPrice = bookEdition.Price,
                     TotalStockQuantity = bookEdition.StockQuantity,
-                    Isbn = bookEdition.Isbn,
-                    Price = bookEdition.Price,
-                    StockQuantity = bookEdition.StockQuantity,
-                    ReorderLevel = bookEdition.ReorderLevel,
-                    CoverImageUrl = bookEdition.CoverImageUrl,
                     Editions = new List<BookEditionModel> {
                         new BookEditionModel {
                             BookEditionId = bookEdition.BookEditionId,
@@ -497,12 +482,7 @@ public class BookService : IBookService
                     Genre = genreName,
                     GenreId = item.GenreId,
                     Description = item.Description,
-                    IsDeleted = item.IsDeleted,
-                    Isbn = item.TblBookEditions?.FirstOrDefault()?.Isbn,
-                    Price = item.TblBookEditions?.FirstOrDefault()?.Price ?? 0,
-                    StockQuantity = item.TblBookEditions?.Sum(e => e.StockQuantity) ?? 0,
-                    ReorderLevel = item.TblBookEditions?.FirstOrDefault()?.ReorderLevel ?? 0,
-                    CoverImageUrl = item.TblBookEditions?.FirstOrDefault()?.CoverImageUrl
+                    IsDeleted = item.IsDeleted
                 }
             };
         }
@@ -588,11 +568,6 @@ public class BookService : IBookService
                     IsDeleted = item.IsDeleted,
                     StartingPrice = item.TblBookEditions.Any() ? item.TblBookEditions.Min(e => e.Price) : 0,
                     TotalStockQuantity = item.TblBookEditions.Sum(e => e.StockQuantity),
-                    Isbn = item.TblBookEditions.FirstOrDefault()?.Isbn,
-                    Price = item.TblBookEditions.FirstOrDefault()?.Price ?? 0,
-                    StockQuantity = item.TblBookEditions.Sum(e => e.StockQuantity),
-                    ReorderLevel = item.TblBookEditions.FirstOrDefault()?.ReorderLevel ?? 0,
-                    CoverImageUrl = item.TblBookEditions.FirstOrDefault()?.CoverImageUrl,
                     Editions = item.TblBookEditions.Select(e => new BookEditionModel {
                         BookEditionId = e.BookEditionId,
                         BookId = e.BookId,

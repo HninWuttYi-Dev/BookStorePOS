@@ -46,9 +46,9 @@
                             <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/40 to-transparent z-20 rounded-l-sm"></div>
                             
                             <!-- Cover -->
-                            @if(!string.IsNullOrEmpty(book.CoverImageUrl))
+                            @if(!string.IsNullOrEmpty(book.Editions?.FirstOrDefault()?.CoverImageUrl))
                             {
-                                <img src="@book.CoverImageUrl" alt="@book.Title" class="w-full h-full object-cover rounded-r-md rounded-l-sm z-10 relative">
+                                <img src="@(book.Editions?.FirstOrDefault()?.CoverImageUrl)" alt="@book.Title" class="w-full h-full object-cover rounded-r-md rounded-l-sm z-10 relative">
                             }
                             else
                             {
@@ -59,7 +59,7 @@
                             
                             <!-- Hover Overlay for Add to Cart -->
                             <div class="absolute inset-0 bg-brand-ink/90 opacity-0 group-hover:opacity-100 transition-opacity z-30 flex flex-col items-center justify-center rounded-r-md rounded-l-sm backdrop-blur-[2px]">
-                                <span class="text-brand-surface font-bold mb-4 font-heading text-lg">@book.Price.ToString("N0") MMK</span>
+                                <span class="text-brand-surface font-bold mb-4 font-heading text-lg">@book.StartingPrice.ToString("N0") MMK</span>
                                 <button type="button" onclick="event.preventDefault(); window.location.href='/Cart/Add/@book.BookId'" class="bg-brand-accent text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-brand-surface hover:text-brand-ink transition-colors shadow-lg transform hover:scale-105 duration-200">
                                     Add to Cart
                                 </button>

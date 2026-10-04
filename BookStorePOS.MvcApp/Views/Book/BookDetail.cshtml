@@ -4,7 +4,7 @@
     var book = ViewData["Book"] as BookModel;
     if (book == null) return;
     
-    var stockBg = book.StockQuantity == 0 ? "bg-red-100 text-red-800 border-red-200" : (book.StockQuantity <= book.ReorderLevel ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-emerald-100 text-emerald-800 border-emerald-200");
+    var stockBg = book.TotalStockQuantity == 0 ? "bg-red-100 text-red-800 border-red-200" : (book.TotalStockQuantity <= (book.Editions?.FirstOrDefault()?.ReorderLevel ?? 0) ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-emerald-100 text-emerald-800 border-emerald-200");
 }
 
 <div class="max-w-4xl mx-auto">
@@ -33,9 +33,9 @@
     <div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col md:flex-row">
         <!-- Cover Image -->
         <div class="w-full md:w-1/3 bg-slate-50 flex items-center justify-center p-8 border-b md:border-b-0 md:border-r border-slate-100">
-            @if (!string.IsNullOrEmpty(book.CoverImageUrl))
+            @if (!string.IsNullOrEmpty(book.Editions?.FirstOrDefault()?.CoverImageUrl))
             {
-                <img src="@book.CoverImageUrl" alt="@book.Title Cover" class="w-full max-w-[240px] h-auto object-cover rounded-lg shadow-md aspect-[2/3]" />
+                <img src="@(book.Editions?.FirstOrDefault()?.CoverImageUrl)" alt="@book.Title Cover" class="w-full max-w-[240px] h-auto object-cover rounded-lg shadow-md aspect-[2/3]" />
             }
             else
             {
@@ -57,21 +57,21 @@
             <div class="mt-8 grid grid-cols-2 gap-y-6 gap-x-8">
                 <div>
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">ISBN</h4>
-                    <p class="text-slate-800 font-medium">@(string.IsNullOrEmpty(book.Isbn) ? "N/A" : book.Isbn)</p>
+                    <p class="text-slate-800 font-medium">@(string.IsNullOrEmpty(book.Editions?.FirstOrDefault()?.Isbn) ? "N/A" : book.Editions?.FirstOrDefault()?.Isbn)</p>
                 </div>
                 <div>
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Price</h4>
-                    <p class="text-xl font-bold text-slate-900">@book.Price.ToString("#,##0") <span class="text-sm font-medium text-slate-500">MMK</span></p>
+                    <p class="text-xl font-bold text-slate-900">@book.StartingPrice.ToString("#,##0") <span class="text-sm font-medium text-slate-500">MMK</span></p>
                 </div>
                 <div>
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Stock Status</h4>
                     <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-bold border @stockBg">
-                        @book.StockQuantity in stock
+                        @book.TotalStockQuantity in stock
                     </span>
                 </div>
                 <div>
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Reorder Level</h4>
-                    <p class="text-slate-800 font-medium">@book.ReorderLevel</p>
+                    <p class="text-slate-800 font-medium">@(book.Editions?.FirstOrDefault()?.ReorderLevel ?? 0)</p>
                 </div>
             </div>
             
