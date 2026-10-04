@@ -7,23 +7,9 @@ public partial class TblBook
 {
     public int BookId { get; set; }
 
-    public string? Isbn { get; set; }
-
     public string Title { get; set; } = null!;
 
-    public string Author { get; set; } = null!;
-
-    public string Genre { get; set; } = null!;
-
     public string? Description { get; set; }
-
-    public decimal Price { get; set; }
-
-    public int StockQuantity { get; set; }
-
-    public int ReorderLevel { get; set; }
-
-    public string? CoverImageUrl { get; set; }
 
     public bool IsDeleted { get; set; }
 
@@ -35,9 +21,11 @@ public partial class TblBook
 
     public int? GenreId { get; set; }
 
-    public virtual TblAuthor? AuthorNavigation { get; set; }
+    public virtual TblAuthor? Author { get; set; }
 
-    public virtual TblGenre? GenreNavigation { get; set; }
+    public virtual TblGenre? Genre { get; set; }
+
+    public virtual ICollection<TblBookEdition> TblBookEditions { get; set; } = new List<TblBookEdition>();
 
     public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();
 }

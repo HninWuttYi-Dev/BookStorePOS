@@ -31,16 +31,36 @@ public class BookListResponseModel
 public class BookModel
 {
     public int BookId { get; set; }
-    public string? Isbn { get; set; }
     public string Title { get; set; } = null!;
-    public string Author { get; set; } = null!;
+    public string? Author { get; set; }
     public int? AuthorId { get; set; }
-    public string Genre { get; set; } = null!;
+    public string? Genre { get; set; }
     public int? GenreId { get; set; }
     public string? Description { get; set; }
+    public bool IsDeleted { get; set; }
+    
+    public decimal StartingPrice { get; set; }
+    public int TotalStockQuantity { get; set; }
+
+    public string? Isbn { get; set; }
     public decimal Price { get; set; }
     public int StockQuantity { get; set; }
     public int ReorderLevel { get; set; }
-    public bool IsDeleted { get; set; }
     public string? CoverImageUrl { get; set; }
+
+    public List<BookEditionModel> Editions { get; set; } = new List<BookEditionModel>();
+}
+
+public class BookEditionModel
+{
+    public int BookEditionId { get; set; }
+    public int BookId { get; set; }
+    public int EditionId { get; set; }
+    public string EditionName { get; set; } = null!;
+    public string? Isbn { get; set; }
+    public decimal Price { get; set; }
+    public int StockQuantity { get; set; }
+    public int ReorderLevel { get; set; }
+    public string? CoverImageUrl { get; set; }
+    public bool IsDeleted { get; set; }
 }

@@ -19,6 +19,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<TblBook> TblBooks { get; set; }
 
+    public virtual DbSet<TblBookEdition> TblBookEditions { get; set; }
+
+    public virtual DbSet<TblEdition> TblEditions { get; set; }
+
     public virtual DbSet<TblGenre> TblGenres { get; set; }
 
     public virtual DbSet<TblOrder> TblOrders { get; set; }
@@ -51,29 +55,60 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("TblBook");
 
-            entity.HasIndex(e => e.Isbn, "idx_ISBN")
-                .IsUnique()
-                .HasFilter("([ISBN] IS NOT NULL)");
-
-            entity.Property(e => e.Author).HasMaxLength(150);
-            entity.Property(e => e.CoverImageUrl).HasMaxLength(150);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
-            entity.Property(e => e.Genre).HasMaxLength(50);
-            entity.Property(e => e.Isbn)
-                .HasMaxLength(50)
-                .HasColumnName("ISBN");
-            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.ReorderLevel).HasDefaultValue(5, "DEFAULT_TblBook_ReorderLevel");
             entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.AuthorNavigation).WithMany(p => p.TblBooks)
+            entity.HasOne(d => d.Author).WithMany(p => p.TblBooks)
                 .HasForeignKey(d => d.AuthorId)
                 .HasConstraintName("Fk_Author");
 
-            entity.HasOne(d => d.GenreNavigation).WithMany(p => p.TblBooks)
+            entity.HasOne(d => d.Genre).WithMany(p => p.TblBooks)
                 .HasForeignKey(d => d.GenreId)
                 .HasConstraintName("Fk_Genre");
+        });
+
+        modelBuilder.Entity<TblBookEdition>(entity =>
+        {
+            entity.HasKey(e => e.BookEditionId).HasName("PK__TblBookE__5481987368DCE806");
+
+            entity.ToTable("TblBookEdition");
+
+            entity.HasIndex(e => e.Isbn, "Idx_TblEdition_ISBN")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.Property(e => e.CoverImageUrl).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.Isbn)
+                .HasMaxLength(20)
+                .HasColumnName("ISBN");
+            entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ReorderLevel).HasDefaultValue(5);
+
+            entity.HasOne(d => d.Book).WithMany(p => p.TblBookEditions)
+                .HasForeignKey(d => d.BookId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookEdition_Book");
+
+            entity.HasOne(d => d.Edition).WithMany(p => p.TblBookEditions)
+                .HasForeignKey(d => d.EditionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookEdition_Edition");
+        });
+
+        modelBuilder.Entity<TblEdition>(entity =>
+        {
+            entity.HasKey(e => e.EditionId).HasName("PK__TblEditi__C7622363CFD08036");
+
+            entity.ToTable("TblEdition");
+
+            entity.HasIndex(e => e.EditionName, "Idx_EditionName_Active")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.EditionName).HasMaxLength(50);
         });
 
         modelBuilder.Entity<TblGenre>(entity =>

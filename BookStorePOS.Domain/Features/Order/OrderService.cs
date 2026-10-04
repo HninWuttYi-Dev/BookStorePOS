@@ -147,6 +147,7 @@ public class OrderService : IOrderService
                 }
 
                 var book = await _db.TblBooks
+                    .Include(b => b.TblBookEditions)
                     .FirstOrDefaultAsync(b => b.BookId == item.BookId && !b.IsDeleted);
 
                 if (book == null)
@@ -158,12 +159,22 @@ public class OrderService : IOrderService
                     };
                 }
 
-                if (book.StockQuantity < item.Quantity)
+                var edition = book.TblBookEditions.FirstOrDefault(e => !e.IsDeleted);
+                if (edition == null)
                 {
                     return new OrderCreateResponseModel
                     {
                         isSuccess = false,
-                        Message = $"Insufficient stock for '{book.Title}'. Available: {book.StockQuantity}"
+                        Message = $"No active editions found for '{book.Title}'."
+                    };
+                }
+
+                if (edition.StockQuantity < item.Quantity)
+                {
+                    return new OrderCreateResponseModel
+                    {
+                        isSuccess = false,
+                        Message = $"Insufficient stock for '{book.Title}'. Available: {edition.StockQuantity}"
                     };
                 }
             }
@@ -185,11 +196,18 @@ public class OrderService : IOrderService
             foreach (var item in requestModel.Items)
             {
                 var book = await _db.TblBooks
+                    .Include(b => b.TblBookEditions)
                     .FirstOrDefaultAsync(b => b.BookId == item.BookId && !b.IsDeleted);
 
-                book.StockQuantity -= item.Quantity;
+                var edition = book.TblBookEditions.FirstOrDefault(e => !e.IsDeleted);
+                if (edition != null)
+                {
+                    edition.StockQuantity -= item.Quantity;
+                    _db.Entry(edition).State = EntityState.Modified;
+                }
 
-                decimal subtotal = book.Price * item.Quantity;
+                decimal price = edition?.Price ?? 0;
+                decimal subtotal = price * item.Quantity;
                 orderTotal += subtotal;
                 orderQuantity += item.Quantity;
                 
@@ -199,7 +217,7 @@ public class OrderService : IOrderService
                     OrderId = order.OrderId,
                     BookId = item.BookId,
                     Quantity = item.Quantity,
-                    UnitPrice = book.Price,
+                    UnitPrice = price,
                     Subtotal = subtotal
                 };
 
@@ -210,7 +228,7 @@ public class OrderService : IOrderService
                     BookId = item.BookId,
                     BookTitle = book.Title,
                     Quantity = item.Quantity,
-                    UnitPrice = book.Price,
+                    UnitPrice = price,
                     Subtotal = subtotal
                 });
             }

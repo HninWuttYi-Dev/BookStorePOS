@@ -9,6 +9,9 @@ public class BookCreateRequestModel
     public string? Genre { get; set; }
     public int? GenreId { get; set; }
     public string? Description { get; set; }
+    
+    // First Edition details
+    public string EditionName { get; set; } = "1st Edition";
     public decimal Price { get; set; }
     public int StockQuantity { get; set; }
     public int ReorderLevel { get; set; } = 5;
