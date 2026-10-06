@@ -464,6 +464,18 @@ public class BookService : IBookService
 
             if (requestModel.Description != null) item.Description = requestModel.Description;
 
+            var firstEdition = await _db.TblBookEditions.Where(e => e.BookId == item.BookId && !e.IsDeleted).OrderBy(e => e.BookEditionId).FirstOrDefaultAsync();
+            if (firstEdition != null)
+            {
+                if (requestModel.Price.HasValue) firstEdition.Price = requestModel.Price.Value;
+                if (requestModel.StockQuantity.HasValue) firstEdition.StockQuantity = requestModel.StockQuantity.Value;
+                if (requestModel.ReorderLevel.HasValue) firstEdition.ReorderLevel = requestModel.ReorderLevel.Value;
+                if (requestModel.Isbn != null) firstEdition.Isbn = requestModel.Isbn;
+                if (requestModel.CoverImageUrl != null) firstEdition.CoverImageUrl = requestModel.CoverImageUrl;
+                firstEdition.UpdatedAt = DateTime.Now;
+                _db.Entry(firstEdition).State = EntityState.Modified;
+            }
+
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;
             await _db.SaveChangesAsync();
@@ -598,6 +610,103 @@ public class BookService : IBookService
             {
                 isSuccess = false,
                 Message = "Failed to fetch low stock books: " + ex.Message
+            };
+        }
+    }
+
+    public async Task<BookEditionCreateResponseModel> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel)
+    {
+        _logger.LogInformation("Create Book Edition Async => Creating book edition for BookId {BookId}", requestModel.BookId);
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var book = await _db.TblBooks.FirstOrDefaultAsync(b => b.BookId == requestModel.BookId && !b.IsDeleted);
+            if (book == null)
+            {
+                return new BookEditionCreateResponseModel { isSuccess = false, Message = "Book not found." };
+            }
+
+            if (string.IsNullOrWhiteSpace(requestModel.EditionName))
+            {
+                return new BookEditionCreateResponseModel { isSuccess = false, Message = "Edition Name is required." };
+            }
+            if (requestModel.Price <= 0)
+            {
+                return new BookEditionCreateResponseModel { isSuccess = false, Message = "Price must be greater than 0." };
+            }
+            if (requestModel.StockQuantity < 0)
+            {
+                return new BookEditionCreateResponseModel { isSuccess = false, Message = "StockQuantity cannot be negative." };
+            }
+
+            // Handle ISBN
+            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+            {
+                var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
+                if (isbn.Length != 10 && isbn.Length != 13)
+                    return new BookEditionCreateResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." };
+
+                bool isbnExists = await _db.TblBookEditions.AnyAsync(e => e.Isbn == requestModel.Isbn && !e.IsDeleted);
+                if (isbnExists)
+                    return new BookEditionCreateResponseModel { isSuccess = false, Message = "A book edition with this ISBN already exists." };
+            }
+
+            // Create or get Edition Type
+            var editionName = requestModel.EditionName;
+            var editionType = await _db.TblEditions.FirstOrDefaultAsync(e => e.EditionName.ToLower() == editionName.ToLower());
+            if (editionType == null)
+            {
+                editionType = new TblEdition { EditionName = editionName, CreatedAt = DateTime.Now, IsDeleted = false };
+                _db.TblEditions.Add(editionType);
+                await _db.SaveChangesAsync();
+            }
+
+            // Create Book Edition
+            TblBookEdition bookEdition = new TblBookEdition
+            {
+                BookId = requestModel.BookId,
+                EditionId = editionType.EditionId,
+                Isbn = requestModel.Isbn,
+                Price = requestModel.Price,
+                StockQuantity = requestModel.StockQuantity,
+                ReorderLevel = requestModel.ReorderLevel,
+                CoverImageUrl = requestModel.CoverImageUrl,
+                IsDeleted = false,
+                CreatedAt = DateTime.Now
+            };
+            _db.TblBookEditions.Add(bookEdition);
+            await _db.SaveChangesAsync();
+            
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Create Book Edition Async => Book Edition is created successfully");
+            return new BookEditionCreateResponseModel
+            {
+                isSuccess = true,
+                Message = "Created new book edition successfully",
+                Data = new BookEditionModel
+                {
+                    BookEditionId = bookEdition.BookEditionId,
+                    BookId = bookEdition.BookId,
+                    EditionId = bookEdition.EditionId,
+                    EditionName = editionType.EditionName,
+                    Isbn = bookEdition.Isbn,
+                    Price = bookEdition.Price,
+                    StockQuantity = bookEdition.StockQuantity,
+                    ReorderLevel = bookEdition.ReorderLevel,
+                    CoverImageUrl = bookEdition.CoverImageUrl,
+                    IsDeleted = bookEdition.IsDeleted
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogWarning("Create Book Edition Async => Failed to create book edition {Message}", ex.Message);
+            return new BookEditionCreateResponseModel
+            {
+                isSuccess = false,
+                Message = "Failed to create book edition: " + ex.Message
             };
         }
     }

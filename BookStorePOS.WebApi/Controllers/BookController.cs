@@ -135,7 +135,10 @@ public class BookController : ControllerBase
             if (photo != null && photo.Length > 0)
             {
                 var url = await _fileStorageService.UploadImageAsync(photo);
-                // Image uploading for book cover is now handled at the Edition level
+                if (url != null)
+                {
+                    requestModel.CoverImageUrl = url;
+                }
             }
 
             var response = await _bookService.UpdateBookAsync(requestModel);
@@ -175,6 +178,40 @@ public class BookController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "DeleteBookAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/edition")]
+    public async Task<IActionResult> CreateBookEditionAsync(int id, [FromForm] BookEditionCreateRequestModel requestModel, IFormFile? photo)
+    {
+        try
+        {
+            _logger.LogInformation("Create Book Edition Async => Creating edition for BookId {BookId}", id);
+            requestModel.BookId = id;
+            
+            if (photo != null && photo.Length > 0)
+            {
+                var url = await _fileStorageService.UploadImageAsync(photo);
+                if (url != null)
+                {
+                    requestModel.CoverImageUrl = url;
+                }
+            }
+
+            var response = await _bookService.CreateBookEditionAsync(requestModel);
+            if (!response.isSuccess)
+            {
+                _logger.LogWarning("Create Book Edition Async => Failed to create book edition {Message}", response.Message);
+                return BadRequest(response);
+            }
+            _logger.LogInformation("Create Book Edition Async => Book Edition created successfully");
+            return Ok(response);
+    
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "CreateBookEditionAsync => Exception occurred");
             return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }

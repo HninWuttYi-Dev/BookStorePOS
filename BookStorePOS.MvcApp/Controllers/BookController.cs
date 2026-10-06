@@ -153,6 +153,8 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
                 content.Add(new StringContent(requestModel.Price.ToString()), "Price");
                 content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
+                content.Add(new StringContent(requestModel.ReorderLevel.ToString()), "ReorderLevel");
+                if (requestModel.EditionName != null) content.Add(new StringContent(requestModel.EditionName), "EditionName");
                 if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
 
                 if (photo != null && photo.Length > 0)
@@ -210,6 +212,16 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["Author"] = model.Data.Author;
                 ViewData["Genre"] = model.Data.Genre;
                 ViewData["Description"] = model.Data.Description;
+                
+                var firstEdition = model.Data.Editions?.FirstOrDefault();
+                if (firstEdition != null)
+                {
+                    ViewData["Isbn"] = firstEdition.Isbn;
+                    ViewData["Price"] = firstEdition.Price;
+                    ViewData["StockQuantity"] = firstEdition.StockQuantity;
+                    ViewData["ReorderLevel"] = firstEdition.ReorderLevel;
+                    ViewData["CoverImageUrl"] = firstEdition.CoverImageUrl;
+                }
 
                 return View("BookEdit", model.Data);
         
@@ -246,6 +258,11 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
                 if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
                 if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
+                
+                if (requestModel.Price.HasValue) content.Add(new StringContent(requestModel.Price.Value.ToString()), "Price");
+                if (requestModel.StockQuantity.HasValue) content.Add(new StringContent(requestModel.StockQuantity.Value.ToString()), "StockQuantity");
+                if (requestModel.ReorderLevel.HasValue) content.Add(new StringContent(requestModel.ReorderLevel.Value.ToString()), "ReorderLevel");
+                if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
 
                 if (photo != null && photo.Length > 0)
                 {
@@ -324,5 +341,68 @@ namespace BookStorePOS.MvcApp.Controllers
             return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
+
+    [HttpPost]
+    [ActionName("CreateEdition")]
+    public async Task<IActionResult> CreateEditionAsync(int id, BookEditionCreateRequestModel requestModel, IFormFile? photo)
+    {
+        try
+        {
+            _logger.LogInformation($"Book Create Edition Async => Creating edition for book {id}");
+            requestModel.BookId = id;
+            if (string.IsNullOrWhiteSpace(requestModel.EditionName))
+            {
+                return Json(new { isSuccess = false, Message = "Edition Name is required." });
+            }
+            if (requestModel.Price <= 0)
+            {
+                return Json(new { isSuccess = false, Message = "Price must be greater than zero." });
+            }
+
+            var client = _httpClientFactory.CreateClient("WebAPI");
+            using var content = new MultipartFormDataContent();
+
+            content.Add(new StringContent(id.ToString()), "BookId");
+            content.Add(new StringContent(requestModel.EditionName), "EditionName");
+            if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
+            content.Add(new StringContent(requestModel.Price.ToString()), "Price");
+            content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
+            content.Add(new StringContent(requestModel.ReorderLevel.ToString()), "ReorderLevel");
+
+            if (photo != null && photo.Length > 0)
+            {
+                var streamContent = new StreamContent(photo.OpenReadStream());
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                content.Add(streamContent, "photo", photo.FileName);
+            }
+
+            var httpResponse = await client.PostAsync($"api/book/{id}/edition", content);
+            var jsonString = await httpResponse.Content.ReadAsStringAsync();
+            var model = JsonConvert.DeserializeObject<BookEditionCreateResponseModel>(jsonString) ?? new BookEditionCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+        
+            if (model != null && model.isSuccess)
+            {
+                _logger.LogInformation("Book Create Edition Async => Edition created successfully");
+                TempData["Message"] = model.Message ?? "Edition created successfully.";
+                TempData["isSuccess"] = true;
+            }
+            else
+            {
+                _logger.LogWarning($"Book Create Edition Async => Failed to create edition: {model?.Message}");
+            }
+
+            return Json(model);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "CreateEditionAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+        }
+        [HttpGet]
+        public IActionResult GetBookEditionModal(int bookId)
+        {
+            return PartialView("_BookEdition", bookId);
+        }
     }
 }

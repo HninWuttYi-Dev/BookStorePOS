@@ -100,11 +100,23 @@
                         var reorderLevel = book.Editions?.FirstOrDefault()?.ReorderLevel ?? 0;
                         var stockBg = book.TotalStockQuantity == 0 ? "bg-red-100 text-red-800 border-red-200" : (book.TotalStockQuantity <= reorderLevel ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-emerald-100 text-emerald-800 border-emerald-200");
                         
-                        <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0">
+                        <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0 cursor-pointer" onclick="document.getElementById('editions-@book.BookId').classList.toggle('hidden')">
                             <td class="px-4 py-4 font-medium text-slate-500 text-center rounded-l-xl">@(++count)</td>
-                            <td class="px-4 py-4 text-slate-500">@(book.Editions?.FirstOrDefault()?.Isbn ?? "-")</td>
+                            <td class="px-4 py-4 text-slate-500">
+                                @if (book.Editions != null && book.Editions.Count > 1)
+                                {
+                                    <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-medium">
+                                        @book.Editions.Count Editions
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </span>
+                                }
+                                else
+                                {
+                                    @(book.Editions?.FirstOrDefault()?.Isbn ?? "-")
+                                }
+                            </td>
                             <td class="px-4 py-4 font-semibold max-w-[200px] truncate" title="@book.Title">
-                                <a href="/Book/Detail/@book.BookId" class="text-teal-700 hover:text-teal-900 transition-colors">@book.Title</a>
+                                <a href="/Book/Detail/@book.BookId" class="text-teal-700 hover:text-teal-900 transition-colors" onclick="event.stopPropagation();">@book.Title</a>
                             </td>
                             <td class="px-4 py-4 text-slate-700 font-medium max-w-[150px] truncate" title="@book.Author">@book.Author</td>
                             <td class="px-4 py-4 text-slate-500 max-w-[150px] truncate" title="@book.Genre">@book.Genre</td>
@@ -116,15 +128,50 @@
                             </td>
                             <td class="px-4 py-4 rounded-r-xl">
                                 <div class="flex items-center gap-2">
-                                    <a href="/Book/Edit/@book.BookId" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit">
+                                    <a href="/Book/Edit/@book.BookId" onclick="event.stopPropagation();" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </a>
-                                    <button type="button" data-id="@book.BookId" class="btnDelete p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete">
+                                    <button type="button" data-id="@book.BookId" onclick="event.stopPropagation();" class="btnDelete p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
                             </td>
                         </tr>
+                        @if (book.Editions != null && book.Editions.Count > 1)
+                        {
+                            <tr id="editions-@book.BookId" class="hidden bg-slate-50/80 border-b border-slate-100">
+                                <td></td>
+                                <td colspan="7" class="p-4">
+                                    <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                                        <table class="w-full text-sm text-left">
+                                            <thead class="bg-slate-50 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                                                <tr>
+                                                    <th class="px-4 py-3">Edition Name</th>
+                                                    <th class="px-4 py-3">ISBN</th>
+                                                    <th class="px-4 py-3">Price</th>
+                                                    <th class="px-4 py-3 text-center">Stock</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100">
+                                                @foreach (var edition in book.Editions)
+                                                {
+                                                    <tr class="hover:bg-slate-50 transition-colors">
+                                                        <td class="px-4 py-3 font-medium text-slate-700">@edition.EditionName</td>
+                                                        <td class="px-4 py-3 text-slate-500">@edition.Isbn</td>
+                                                        <td class="px-4 py-3 text-slate-700">@edition.Price.ToString("#,##0")</td>
+                                                        <td class="px-4 py-3 text-center">
+                                                            <span class="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold @(edition.StockQuantity <= edition.ReorderLevel ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")">
+                                                                @edition.StockQuantity
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     }
                 }
             </tbody>

@@ -10,4 +10,5 @@ public interface IBookService
     Task<BookListResponseModel> GetBooksAsync(BookListRequestModel requestModel);
     Task<BookListResponseModel> GetLowStockBooksAsync();
     Task<BookPatchResponseModel> UpdateBookAsync(BookPatchRequestModel requestModel);
+    Task<BookEditionCreateResponseModel> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel);
 }
