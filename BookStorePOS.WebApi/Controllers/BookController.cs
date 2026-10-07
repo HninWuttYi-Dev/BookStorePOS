@@ -215,4 +215,64 @@ public class BookController : ControllerBase
             return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
+
+    [HttpPatch("{id}/edition/{editionId}")]
+    public async Task<IActionResult> UpdateBookEditionAsync(int id, int editionId, [FromForm] BookEditionPatchRequestModel requestModel, IFormFile? photo)
+    {
+        try
+        {
+            _logger.LogInformation("Update Book Edition Async => Updating edition {EditionId} for BookId {BookId}", editionId, id);
+            requestModel.BookId = id;
+            requestModel.BookEditionId = editionId;
+            
+            if (photo != null && photo.Length > 0)
+            {
+                var url = await _fileStorageService.UploadImageAsync(photo);
+                if (url != null)
+                {
+                    requestModel.CoverImageUrl = url;
+                }
+            }
+
+            var response = await _bookService.UpdateBookEditionAsync(requestModel);
+            if (!response.isSuccess)
+            {
+                _logger.LogWarning("Update Book Edition Async => Failed to update book edition {Message}", response.Message);
+                return BadRequest(response);
+            }
+            _logger.LogInformation("Update Book Edition Async => Book Edition updated successfully");
+            return Ok(response);
+    
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "UpdateBookEditionAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
+
+    [HttpDelete("{id}/edition/{editionId}")]
+    public async Task<IActionResult> DeleteBookEditionAsync(int id, int editionId)
+    {
+        try
+        {
+            _logger.LogInformation("Delete Book Edition Async => Deleting edition {EditionId} for BookId {BookId}", editionId, id);
+            
+            var requestModel = new BookEditionDeleteRequestModel { BookEditionId = editionId };
+            var response = await _bookService.DeleteBookEditionAsync(requestModel);
+            if (!response.isSuccess)
+            {
+                _logger.LogWarning("Delete Book Edition Async => Failed to delete book edition {Message}", response.Message);
+                return BadRequest(response);
+            }
+            _logger.LogInformation("Delete Book Edition Async => Book Edition deleted successfully");
+            return Ok(response);
+    
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeleteBookEditionAsync => Exception occurred");
+            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+        }
+    }
 }

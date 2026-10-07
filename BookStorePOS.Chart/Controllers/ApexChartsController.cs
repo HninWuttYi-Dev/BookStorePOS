@@ -21,7 +21,7 @@ public class ApexChartsController : Controller
         var bookResponse = await _bookService.GetBooksAsync(new BookListRequestModel());
         var books = bookResponse.isSuccess ? bookResponse.Data : new List<BookModel>();
         
-        List<int> series = books.Select(x => x.StockQuantity).ToList();
+        List<int> series = books.Select(x => x.TotalStockQuantity).ToList();
         List<string> labels = books.Select(x => x.Title).ToList();
         
         ViewData["Series"] = series;

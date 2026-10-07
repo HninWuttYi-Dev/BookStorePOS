@@ -54,7 +54,7 @@ namespace BookStorePOS.MvcApp.Controllers
     }
 
         [ActionName("Detail")]
-        public async Task<IActionResult> BookDetailAsync(int id)
+        public async Task<IActionResult> BookDetailAsync(int id, int? editionId = null)
         {
         try
         {
@@ -70,6 +70,15 @@ namespace BookStorePOS.MvcApp.Controllers
                     TempData["Message"] = "Book not found.";
                     TempData["isSuccess"] = false;
                     return RedirectToAction("Index");
+                }
+
+                if (editionId.HasValue && response.Data.Editions != null)
+                {
+                    var selectedEdition = response.Data.Editions.FirstOrDefault(e => e.BookEditionId == editionId.Value);
+                    if (selectedEdition != null)
+                    {
+                        ViewData["SelectedEdition"] = selectedEdition;
+                    }
                 }
 
                 ViewData["Book"] = response.Data;
@@ -211,6 +220,8 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["BookTitle"] = model.Data.Title;
                 ViewData["Author"] = model.Data.Author;
                 ViewData["Genre"] = model.Data.Genre;
+                ViewData["AuthorId"] = model.Data.AuthorId;
+                ViewData["GenreId"] = model.Data.GenreId;
                 ViewData["Description"] = model.Data.Description;
                 
                 var firstEdition = model.Data.Editions?.FirstOrDefault();
@@ -343,8 +354,8 @@ namespace BookStorePOS.MvcApp.Controllers
     }
 
     [HttpPost]
-    [ActionName("CreateEdition")]
-    public async Task<IActionResult> CreateEditionAsync(int id, BookEditionCreateRequestModel requestModel, IFormFile? photo)
+    [ActionName("EditionSave")]
+    public async Task<IActionResult> EditionSaveAsync(int id, BookEditionCreateRequestModel requestModel, IFormFile? photo)
     {
         try
         {
@@ -398,11 +409,167 @@ namespace BookStorePOS.MvcApp.Controllers
             _logger.LogError(ex, "CreateEditionAsync => Exception occurred");
             return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
-        }
-        [HttpGet]
-        public IActionResult GetBookEditionModal(int bookId)
+    }
+        [ActionName("CreateEdition")]
+        public async Task<IActionResult> CreateEditionAsync(int id)
         {
-            return PartialView("_BookEdition", bookId);
+            try
+            {
+                _logger.LogInformation($"Book Create Edition Async => Fetching book {id}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.GetAsync($"api/book/{id}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
+            
+                if (model == null || !model.isSuccess)
+                {
+                    _logger.LogWarning($"Book Create Edition Async => Failed to fetch book {id}: {model?.Message}");
+                    TempData["isSuccess"] = false;
+                    TempData["Message"] = model?.Message;
+                    return Redirect("/Book");
+                }
+
+                ViewData["Id"] = model.Data.BookId;
+                ViewData["BookTitle"] = model.Data.Title;
+                ViewData["Author"] = model.Data.Author;
+                ViewData["Genre"] = model.Data.Genre;
+                ViewData["Description"] = model.Data.Description;
+                
+                return View("BookCreateEdition", model.Data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BookCreateEditionAsync => Exception occurred");
+                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
+        }
+        [ActionName("EditEdition")]
+        public async Task<IActionResult> EditEditionAsync(int id, int editionId)
+        {
+            try
+            {
+                _logger.LogInformation($"Book Edit Edition Async => Fetching book {id}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.GetAsync($"api/book/{id}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
+            
+                if (model == null || !model.isSuccess)
+                {
+                    _logger.LogWarning($"Book Edit Edition Async => Failed to fetch book {id}: {model?.Message}");
+                    TempData["isSuccess"] = false;
+                    TempData["Message"] = model?.Message;
+                    return Redirect("/Book");
+                }
+
+                var edition = model.Data?.Editions?.FirstOrDefault(e => e.BookEditionId == editionId);
+                if (edition == null)
+                {
+                    TempData["isSuccess"] = false;
+                    TempData["Message"] = "Edition not found.";
+                    return Redirect("/Book");
+                }
+
+                ViewData["Id"] = model.Data!.BookId;
+                ViewData["BookTitle"] = model.Data.Title;
+                ViewData["Author"] = model.Data.Author;
+                ViewData["Genre"] = model.Data.Genre;
+                ViewData["Description"] = model.Data.Description;
+                
+                ViewData["EditionId"] = edition.BookEditionId;
+                ViewData["EditionName"] = edition.EditionName;
+                ViewData["Isbn"] = edition.Isbn;
+                ViewData["Price"] = edition.Price;
+                ViewData["StockQuantity"] = edition.StockQuantity;
+                ViewData["ReorderLevel"] = edition.ReorderLevel;
+                ViewData["CoverImageUrl"] = edition.CoverImageUrl;
+                
+                return View("BookEditEdition", model.Data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BookEditEditionAsync => Exception occurred");
+                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ActionName("UpdateEditionSave")]
+        public async Task<IActionResult> UpdateEditionSaveAsync(int id, int editionId, BookEditionPatchRequestModel requestModel, IFormFile? photo)
+        {
+            try
+            {
+                _logger.LogInformation($"Book Update Edition Async => Updating edition {editionId} for book {id}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+
+                using var content = new MultipartFormDataContent();
+                content.Add(new StringContent(requestModel.EditionName ?? ""), "EditionName");
+                content.Add(new StringContent(requestModel.Isbn ?? ""), "Isbn");
+                content.Add(new StringContent(requestModel.Price.ToString()), "Price");
+                content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
+                content.Add(new StringContent(requestModel.ReorderLevel.ToString()), "ReorderLevel");
+
+                if (photo != null && photo.Length > 0)
+                {
+                    var streamContent = new StreamContent(photo.OpenReadStream());
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                    content.Add(streamContent, "photo", photo.FileName);
+                }
+
+                var httpResponse = await client.PatchAsync($"api/book/{id}/edition/{editionId}", content);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookEditionPatchResponseModel>(jsonString) ?? new BookEditionPatchResponseModel { isSuccess = false, Message = "Unknown error" };
+            
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Book Update Edition Async => Edition updated successfully");
+                    TempData["Message"] = model.Message ?? "Edition updated successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Book Update Edition Async => Failed to update edition: {model?.Message}");
+                }
+
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "UpdateEditionSaveAsync => Exception occurred");
+                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
+        }
+        [HttpPost]
+        [ActionName("DeleteEdition")]
+        public async Task<IActionResult> DeleteEditionAsync(int id, int editionId)
+        {
+            try
+            {
+                _logger.LogInformation($"Book Delete Edition Async => Deleting edition {editionId} for book {id}");
+                var client = _httpClientFactory.CreateClient("WebAPI");
+
+                var httpResponse = await client.DeleteAsync($"api/book/{id}/edition/{editionId}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<BookEditionDeleteResponseModel>(jsonString) ?? new BookEditionDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+            
+                if (model != null && model.isSuccess)
+                {
+                    _logger.LogInformation("Book Delete Edition Async => Edition deleted successfully");
+                    TempData["Message"] = model.Message ?? "Edition deleted successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Book Delete Edition Async => Failed to delete edition: {model?.Message}");
+                }
+
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DeleteEditionAsync => Exception occurred");
+                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
         }
     }
 }

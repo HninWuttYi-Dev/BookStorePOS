@@ -9,8 +9,20 @@
     string title = ViewData["BookTitle"]?.ToString() ?? "";
     string author = ViewData["Author"]?.ToString() ?? "";
     string genre = ViewData["Genre"]?.ToString() ?? "";
-    string isbn = ViewData["Isbn"]?.ToString() ?? "";
+    int authorId = 0;
+    if (ViewData["AuthorId"] != null)
+    {
+        authorId = Convert.ToInt32(ViewData["AuthorId"]);
+    }
+    int genreId = 0;
+    if (ViewData["GenreId"] != null)
+    {
+        genreId = Convert.ToInt32(ViewData["GenreId"]);
+    }
     string description = ViewData["Description"]?.ToString() ?? "";
+    
+    // We don't edit edition info on the parent page anymore, but these might still be needed if there is residual code
+    string isbn = ViewData["Isbn"]?.ToString() ?? "";
     string coverImageUrl = ViewData["CoverImageUrl"]?.ToString() ?? "";
     decimal price = 0;
     if (ViewData["Price"] != null)
@@ -53,7 +65,7 @@
                 <span id="authorSelectText" class="truncate text-slate-900">@(string.IsNullOrEmpty(author) ? "Choose an author..." : author)</span>
                 <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
-            <input type="hidden" id="authorId" value="0">
+            <input type="hidden" id="authorId" value="@authorId">
             <input type="hidden" id="author" value="@author">
             
             <div id="authorDropdownMenu" class="hidden absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden flex flex-col">
@@ -72,7 +84,7 @@
                 <span id="genreSelectText" class="truncate text-slate-900">@(string.IsNullOrEmpty(genre) ? "Choose a genre..." : genre)</span>
                 <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
-            <input type="hidden" id="genreId" value="0">
+            <input type="hidden" id="genreId" value="@genreId">
             <input type="hidden" id="genre" value="@genre">
             
             <div id="genreDropdownMenu" class="hidden absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden flex flex-col">
@@ -84,47 +96,6 @@
                 </ul>
             </div>
             <span class="text-red-500 text-xs mt-1 hidden error-msg" id="genreError">Genre is required.</span>
-        </div>
-        <div>
-            <label for="isbn" class="block text-sm font-semibold text-slate-700 mb-2">ISBN</label>
-            <input type="text" id="isbn" value="@isbn" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all" placeholder="e.g. 9780743273565">
-            <span class="text-red-500 text-xs mt-1 hidden error-msg" id="isbnError">ISBN must be 10 or 13 digits.</span>
-        </div>
-        <div>
-            <label for="price" class="block text-sm font-semibold text-slate-700 mb-2">Price (MMK) <span class="text-red-500">*</span></label>
-            <input type="number" id="price" value="@price" min="100" step="100" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all" placeholder="e.g. 15000">
-            <span class="text-red-500 text-xs mt-1 hidden error-msg" id="priceError">Price must be greater than zero.</span>
-        </div>
-        <div>
-            <label for="stockQuantity" class="block text-sm font-semibold text-slate-700 mb-2">Stock Quantity <span class="text-red-500">*</span></label>
-            <input type="number" id="stockQuantity" value="@stockQuantity" min="0" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all" placeholder="e.g. 50">
-            <span class="text-red-500 text-xs mt-1 hidden error-msg" id="stockError">Stock must be valid.</span>
-        </div>
-        <div>
-            <label for="reorderLevel" class="block text-sm font-semibold text-slate-700 mb-2">Reorder Level</label>
-            <input type="number" id="reorderLevel" value="@reorderLevel" min="0" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all">
-        </div>
-    </div>
-    
-    <div class="mb-6">
-        <label for="photo" class="block text-sm font-semibold text-slate-700 mb-2">Update Cover Image (Optional)</label>
-        
-        @if (!string.IsNullOrEmpty(coverImageUrl))
-        {
-            <div class="mb-3 flex items-center gap-4 p-3 border border-slate-100 rounded-xl bg-slate-50">
-                <img src="@coverImageUrl" alt="Current Cover" class="w-12 h-16 object-cover rounded shadow-sm border border-slate-200">
-                <div>
-                    <p class="text-sm font-medium text-slate-700">Current Image Exists</p>
-                    <p class="text-xs text-slate-500">Uploading a new file will replace this image.</p>
-                </div>
-            </div>
-        }
-        
-        <div class="flex items-center gap-4">
-            <input type="file" id="photo" accept="image/*" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all bg-slate-50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
-            <button type="button" id="btnClearPhoto" class="hidden px-4 py-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors shadow-sm">
-                Clear
-            </button>
         </div>
     </div>
 
@@ -168,6 +139,15 @@
             $(this).siblings('.error-msg').addClass('hidden');
             $(this).parent().siblings('.error-msg').addClass('hidden');
         });
+
+        const initialValues = {
+            title: $('#title').val().trim(),
+            author: $('#author').val().trim(),
+            authorId: $('#authorId').val(),
+            genre: $('#genre').val().trim(),
+            genreId: $('#genreId').val(),
+            description: $('#description').val()
+        };
 
         // Author Select Logic
         const $authorBtn = $('#authorSelectBtn');
@@ -353,19 +333,7 @@
             }
         });
 
-        // Photo file selection logic
-        $('#photo').on('change', function() {
-            if (this.files && this.files.length > 0) {
-                $('#btnClearPhoto').removeClass('hidden');
-            } else {
-                $('#btnClearPhoto').addClass('hidden');
-            }
-        });
-
-        $('#btnClearPhoto').on('click', function() {
-            $('#photo').val(''); // Clear the file input
-            $(this).addClass('hidden');
-        });
+        // No photo file logic needed anymore
 
         let isSubmitting = false;
 
@@ -376,30 +344,29 @@
             $('input').removeClass('border-red-500 focus:ring-red-500/50 focus:border-red-500');
 
             let isValid = true;
-            
             const title = $('#title').val().trim();
             const author = $('#author').val().trim();
             const genre = $('#genre').val().trim();
-            const price = parseFloat($('#price').val() || 0);
-            const stock = parseInt($('#stockQuantity').val() || 0);
-            const isbn = $('#isbn').val().trim();
+            const authorId = $('#authorId').val();
+            const genreId = $('#genreId').val();
+            const description = $('#description').val();
 
             if (!title) { $('#titleError').removeClass('hidden'); $('#title').addClass('border-red-500 focus:ring-red-500/50 focus:border-red-500'); isValid = false; }
             if (!author) { $('#authorError').removeClass('hidden'); $authorBtn.addClass('border-red-500 focus:ring-red-500/50 focus:border-red-500'); isValid = false; }
             if (!genre) { $('#genreError').removeClass('hidden'); $genreBtn.addClass('border-red-500 focus:ring-red-500/50 focus:border-red-500'); isValid = false; }
-            if (price <= 0) { $('#priceError').removeClass('hidden'); $('#price').addClass('border-red-500 focus:ring-red-500/50 focus:border-red-500'); isValid = false; }
-            if (stock < 0 || $('#stockQuantity').val() === '') { $('#stockError').removeClass('hidden'); $('#stockQuantity').addClass('border-red-500 focus:ring-red-500/50 focus:border-red-500'); isValid = false; }
-            
-            if (isbn) {
-                const cleanIsbn = isbn.replace(/-/g, '').replace(/ /g, '');
-                if (cleanIsbn.length !== 10 && cleanIsbn.length !== 13) {
-                    $('#isbnError').removeClass('hidden'); 
-                    $('#isbn').addClass('border-red-500 focus:ring-red-500/50 focus:border-red-500'); 
-                    isValid = false;
-                }
-            }
 
             if (!isValid) return;
+
+            // Check if anything actually changed
+            if (title === initialValues.title && 
+                author === initialValues.author && 
+                authorId === initialValues.authorId && 
+                genre === initialValues.genre && 
+                genreId === initialValues.genreId && 
+                description === initialValues.description) {
+                showToast('Please update at least one field to update book.');
+                return;
+            }
 
             const $btn = $(this);
             $btn.prop('disabled', true).text('Updating...');
@@ -407,19 +374,10 @@
             const formData = new FormData();
             formData.append("Title", title);
             formData.append("Author", author);
-            formData.append("AuthorId", $('#authorId').val());
+            formData.append("AuthorId", authorId);
             formData.append("Genre", genre);
-            formData.append("GenreId", $('#genreId').val());
-            formData.append("Isbn", isbn);
-            formData.append("Price", price);
-            formData.append("StockQuantity", stock);
-            formData.append("ReorderLevel", $('#reorderLevel').val() || 0);
-            formData.append("Description", $('#description').val());
-
-            const photoFile = $('#photo')[0].files[0];
-            if (photoFile) {
-                formData.append("photo", photoFile);
-            }
+            formData.append("GenreId", genreId);
+            formData.append("Description", description);
 
             isSubmitting = true;
             $.ajax({

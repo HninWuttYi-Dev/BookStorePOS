@@ -21,7 +21,7 @@ public class CanvasJsController : Controller
         var bookResponse = await _bookService.GetBooksAsync(new BookListRequestModel());
         var books = bookResponse.isSuccess ? bookResponse.Data : new List<BookModel>();
         
-        var dataPoints = books.Select(x => new { label = x.Title, y = x.Price }).ToList();
+        var dataPoints = books.Select(x => new { label = x.Title, y = x.StartingPrice }).ToList();
         
         ViewData["DataPoints"] = dataPoints;
 

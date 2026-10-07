@@ -75,11 +75,10 @@
             <thead class="text-slate-500 bg-slate-50/50 rounded-lg">
                 <tr>
                     <th class="px-4 py-3 font-semibold w-12 text-center">No.</th>
-                    <th class="px-4 py-3 font-semibold">ISBN</th>
                     <th class="px-4 py-3 font-semibold">Title</th>
                     <th class="px-4 py-3 font-semibold">Author</th>
                     <th class="px-4 py-3 font-semibold">Genre</th>
-                    <th class="px-4 py-3 font-semibold">Price (MMK)</th>
+                    <th class="px-4 py-3 font-semibold text-center">Editions</th>
                     <th class="px-4 py-3 font-semibold text-center">Stock</th>
                     <th class="px-4 py-3 font-semibold rounded-r-lg">Actions</th>
                 </tr>
@@ -102,25 +101,24 @@
                         
                         <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0 cursor-pointer" onclick="document.getElementById('editions-@book.BookId').classList.toggle('hidden')">
                             <td class="px-4 py-4 font-medium text-slate-500 text-center rounded-l-xl">@(++count)</td>
-                            <td class="px-4 py-4 text-slate-500">
-                                @if (book.Editions != null && book.Editions.Count > 1)
+                            <td class="px-4 py-4 font-semibold max-w-[200px] truncate" title="@book.Title">
+                                @book.Title
+                            </td>
+                            <td class="px-4 py-4 text-slate-700 font-medium max-w-[150px] truncate" title="@book.Author">@book.Author</td>
+                            <td class="px-4 py-4 text-slate-500 max-w-[150px] truncate" title="@book.Genre">@book.Genre</td>
+                            <td class="px-4 py-4 text-center">
+                                @if (book.Editions != null && book.Editions.Count > 0)
                                 {
                                     <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-medium">
-                                        @book.Editions.Count Editions
+                                        @book.Editions.Count @(book.Editions.Count == 1 ? "Edition" : "Editions")
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                     </span>
                                 }
                                 else
                                 {
-                                    @(book.Editions?.FirstOrDefault()?.Isbn ?? "-")
+                                    <span class="text-slate-400">-</span>
                                 }
                             </td>
-                            <td class="px-4 py-4 font-semibold max-w-[200px] truncate" title="@book.Title">
-                                <a href="/Book/Detail/@book.BookId" class="text-teal-700 hover:text-teal-900 transition-colors" onclick="event.stopPropagation();">@book.Title</a>
-                            </td>
-                            <td class="px-4 py-4 text-slate-700 font-medium max-w-[150px] truncate" title="@book.Author">@book.Author</td>
-                            <td class="px-4 py-4 text-slate-500 max-w-[150px] truncate" title="@book.Genre">@book.Genre</td>
-                            <td class="px-4 py-4 font-semibold text-slate-900">@book.StartingPrice.ToString("#,##0")</td>
                             <td class="px-4 py-4 text-center">
                                 <span class="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 rounded-full text-xs font-bold border @stockBg">
                                     @book.TotalStockQuantity
@@ -131,38 +129,55 @@
                                     <a href="/Book/Edit/@book.BookId" onclick="event.stopPropagation();" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </a>
+                                    <!-- Add Edition Button -->
+                                    <a href="/Book/CreateEdition/@book.BookId" class="p-1.5 text-slate-400 hover:text-indigo-600 border border-slate-200 rounded hover:border-indigo-200 hover:bg-indigo-50 transition-colors" title="Add Edition" onclick="event.stopPropagation();">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    </a>
                                     <button type="button" data-id="@book.BookId" onclick="event.stopPropagation();" class="btnDelete p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                        @if (book.Editions != null && book.Editions.Count > 1)
+                        @if (book.Editions != null && book.Editions.Count > 0)
                         {
                             <tr id="editions-@book.BookId" class="hidden bg-slate-50/80 border-b border-slate-100">
                                 <td></td>
-                                <td colspan="7" class="p-4">
+                                <td colspan="6" class="p-4">
                                     <div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                                         <table class="w-full text-sm text-left">
-                                            <thead class="bg-slate-50 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                                            <thead class="bg-slate-50 text-slate-500 font-semibold">
                                                 <tr>
                                                     <th class="px-4 py-3">Edition Name</th>
                                                     <th class="px-4 py-3">ISBN</th>
-                                                    <th class="px-4 py-3">Price</th>
+                                                    <th class="px-4 py-3">Price (MMK)</th>
                                                     <th class="px-4 py-3 text-center">Stock</th>
+                                                    <th class="px-4 py-3">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-slate-100">
-                                                @foreach (var edition in book.Editions)
+                                                @foreach (var edition in book.Editions.OrderByDescending(e => e.BookEditionId))
                                                 {
                                                     <tr class="hover:bg-slate-50 transition-colors">
-                                                        <td class="px-4 py-3 font-medium text-slate-700">@edition.EditionName</td>
+                                                        <td class="px-4 py-3 font-medium max-w-[200px] truncate" title="@edition.EditionName">
+                                                            <a href="/Book/Detail/@book.BookId?editionId=@edition.BookEditionId" class="text-teal-700 hover:text-teal-900 transition-colors block truncate" onclick="event.stopPropagation();">@edition.EditionName</a>
+                                                        </td>
                                                         <td class="px-4 py-3 text-slate-500">@edition.Isbn</td>
                                                         <td class="px-4 py-3 text-slate-700">@edition.Price.ToString("#,##0")</td>
                                                         <td class="px-4 py-3 text-center">
                                                             <span class="inline-flex items-center justify-center min-w-[2rem] px-2 py-0.5 rounded-full text-xs font-bold @(edition.StockQuantity <= edition.ReorderLevel ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700")">
                                                                 @edition.StockQuantity
                                                             </span>
+                                                        </td>
+                                                        <td class="px-4 py-3">
+                                                            <div class="flex items-center gap-2">
+                                                                <a href="/Book/EditEdition/@book.BookId?editionId=@edition.BookEditionId" onclick="event.stopPropagation();" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit Edition">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                                </a>
+                                                                <button type="button" data-id="@edition.BookEditionId" data-book-id="@book.BookId" onclick="event.stopPropagation();" class="btnDeleteEdition p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete Edition">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 }
@@ -240,7 +255,7 @@
             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         </div>
         <h3 class="text-lg font-bold text-slate-900 mb-2">Delete Book</h3>
-        <p class="text-sm text-slate-500 mb-6">Are you sure you want to delete this book? This action cannot be undone.</p>
+        <p class="text-sm text-red-600 mb-6 font-medium">Warning: Deleting this parent book will also erase all of its editions. Are you sure you want to proceed? This action cannot be undone.</p>
         
         <div class="flex gap-3 w-full">
             <button type="button" id="btnCancelDelete" class="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">
@@ -252,6 +267,31 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Edition Confirmation Modal -->
+<div id="deleteEditionModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" id="deleteEditionModalBackdrop"></div>
+    
+    <!-- Modal Panel -->
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 overflow-hidden transform transition-all flex flex-col items-center text-center">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-2">Delete Edition</h3>
+        <p class="text-sm text-slate-500 mb-6">Are you sure you want to delete this edition? This action cannot be undone.</p>
+        
+        <div class="flex gap-3 w-full">
+            <button type="button" id="btnCancelDeleteEdition" class="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors">
+                Cancel
+            </button>
+            <button type="button" id="btnConfirmDeleteEdition" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors shadow-sm">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
 
 @section Scripts {
     <script>
@@ -318,6 +358,55 @@
                         alert("Server Error: " + xhr.statusText);
                         $btn.prop('disabled', false).text('Delete');
                         closeDeleteModal();
+                    }
+                });
+            });
+
+
+
+            // Delete Edition Logic
+            let editionIdToDelete = null;
+            let bookIdForEdition = null;
+            const $deleteEditionModal = $('#deleteEditionModal');
+
+            function closeDeleteEditionModal() {
+                $deleteEditionModal.addClass('hidden');
+                editionIdToDelete = null;
+                bookIdForEdition = null;
+            }
+
+            $('.btnDeleteEdition').on('click', function() {
+                editionIdToDelete = $(this).data('id');
+                bookIdForEdition = $(this).data('book-id');
+                $deleteEditionModal.removeClass('hidden');
+            });
+
+            $('#btnCancelDeleteEdition, #deleteEditionModalBackdrop').on('click', function() {
+                closeDeleteEditionModal();
+            });
+
+            $('#btnConfirmDeleteEdition').on('click', function() {
+                if (!editionIdToDelete || !bookIdForEdition) return;
+                
+                const $btn = $(this);
+                $btn.prop('disabled', true).text('Deleting...');
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Book/DeleteEdition/' + bookIdForEdition + '?editionId=' + editionIdToDelete,
+                    success: function(response) {
+                        if (response.isSuccess) {
+                            window.location.reload();
+                        } else {
+                            alert(response.message || response.Message || "Failed to delete edition.");
+                            $btn.prop('disabled', false).text('Delete');
+                            closeDeleteEditionModal();
+                        }
+                    },
+                    error: function(xhr) {
+                        alert("Server Error: " + xhr.statusText);
+                        $btn.prop('disabled', false).text('Delete');
+                        closeDeleteEditionModal();
                     }
                 });
             });
