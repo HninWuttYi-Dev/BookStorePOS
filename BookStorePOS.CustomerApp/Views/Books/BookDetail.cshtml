@@ -37,24 +37,18 @@ else
                 <div class="group relative w-64 h-96 sm:w-80 sm:h-[32rem] transform-style-[preserve-3d] cursor-pointer book-animation-intro">
                     
                     <!-- Inside Pages / Back Cover -->
-                    <div class="absolute inset-0 bg-[#3a2818] border-2 border-[#5c4033] rounded-r-3xl rounded-l-md shadow-2xl transform-[translateZ(-25px)]">
+                    <div class="absolute inset-0 bg-white border-2 border-slate-200 rounded-r-3xl rounded-l-md shadow-xl transform-[translateZ(-25px)]">
                         <!-- Simulated pages -->
-                        <div class="absolute inset-y-1.5 right-1 left-2 shadow-[inset_4px_0_15px_rgba(0,0,0,0.5)] rounded-r-2xl border-l border-[#2a1b10] overflow-hidden flex flex-col justify-evenly py-6 px-1 old-paper-texture">
+                        <div class="absolute inset-y-1.5 right-1 left-2 shadow-[inset_4px_0_10px_rgba(0,0,0,0.1)] rounded-r-2xl border-l border-slate-100 overflow-hidden flex flex-col justify-evenly py-6 px-1 bg-[#fdfcf9]">
                             @for(int i=0; i<30; i++) {
-                                <div class="w-full h-px bg-[#8c6f45]/10"></div>
+                                <div class="w-full h-px bg-slate-200/50"></div>
                             }
                             
-                            <!-- Aged border overlay for dark, burned edges -->
-                            <div class="absolute inset-0 shadow-[inset_0_0_40px_rgba(92,64,51,0.9),inset_0_0_80px_rgba(101,67,33,0.4)] pointer-events-none rounded-r-2xl mix-blend-multiply"></div>
-                            
-                            <!-- Stains overlay -->
-                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(139,69,19,0.15)_0%,transparent_20%),radial-gradient(circle_at_80%_80%,rgba(101,67,33,0.2)_0%,transparent_30%)] pointer-events-none mix-blend-multiply"></div>
-
                             <!-- Inside text snippet (readable) -->
-                            <div class="absolute inset-8 flex items-center justify-center opacity-80 font-heading text-xl text-[#2a1b10] italic text-center z-10" style="text-shadow: 1px 1px 0px rgba(255,255,255,0.1);">
+                            <div class="absolute inset-8 flex items-center justify-center font-heading text-xl text-slate-800 text-center z-10">
                                 <div>
                                     <h3 class="text-3xl font-bold mb-4 font-serif">@book.Title</h3>
-                                    <p class="text-lg">~ @book.Author ~</p>
+                                    <p class="text-lg text-slate-500">@book.Author</p>
                                 </div>
                             </div>
                         </div>
@@ -64,26 +58,34 @@ else
                     <div class="front-cover absolute inset-0 origin-left transition-transform ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:[transform:rotateY(-145deg)] transform-style-[preserve-3d] rounded-r-3xl rounded-l-md shadow-[10px_15px_35px_rgba(0,0,0,0.3)]" style="transition-duration: 10s;">
                         
                         <!-- Inside of Front Cover -->
-                        <div class="absolute inset-0 old-paper-texture rounded-r-3xl rounded-l-md [transform:rotateY(180deg)] [backface-visibility:hidden] border-l border-y border-[#5c4033] shadow-[inset_-4px_0_25px_rgba(0,0,0,0.4)] overflow-hidden">
-                            <!-- Aged border overlay for dark, burned edges (Inside Cover) -->
-                            <div class="absolute inset-0 shadow-[inset_0_0_40px_rgba(92,64,51,0.9),inset_0_0_80px_rgba(101,67,33,0.4)] pointer-events-none rounded-r-3xl mix-blend-multiply"></div>
-                            <div class="absolute inset-3 border border-brand-accent/20 rounded-2xl border-dashed"></div>
+                        <div class="absolute inset-0 bg-slate-50 rounded-r-3xl rounded-l-md [transform:rotateY(180deg)] [backface-visibility:hidden] border-l border-y border-slate-200 shadow-[inset_-4px_0_15px_rgba(0,0,0,0.05)] overflow-hidden">
+                            <div class="absolute inset-3 border border-slate-200 rounded-2xl border-solid"></div>
                         </div>
 
                         <!-- Outside of Front Cover -->
                         <div class="absolute inset-0 bg-brand-ink rounded-r-3xl rounded-l-md [backface-visibility:hidden] overflow-hidden flex flex-col items-center justify-center text-center">
                             @if(!string.IsNullOrEmpty(book.Editions?.FirstOrDefault()?.CoverImageUrl))
                             {
-                                <img src="@(book.Editions?.FirstOrDefault()?.CoverImageUrl)" alt="@book.Title" class="w-full h-full object-cover">
+                                <img id="display-cover" src="@(book.Editions?.FirstOrDefault()?.CoverImageUrl)" alt="@book.Title" class="w-full h-full object-cover">
+                                <div id="display-fallback-cover" class="hidden absolute inset-0 bg-gradient-to-br from-brand-ink via-brand-ink to-brand-accent/20 rounded-r-3xl rounded-l-md [backface-visibility:hidden] overflow-hidden flex flex-col items-center justify-center text-center shadow-inner">
+                                    <div class="p-8 z-10 w-full">
+                                        <div class="border-y-2 border-brand-accent/40 py-6">
+                                            <h2 class="font-heading text-brand-surface font-bold text-3xl mb-6 leading-snug drop-shadow-lg px-2">@book.Title</h2>
+                                            <p class="text-brand-accent font-medium font-body uppercase tracking-widest text-sm drop-shadow-md">@book.Author</p>
+                                        </div>
+                                    </div>
+                                </div>
                             }
                             else
                             {
+                                <img id="display-cover" src="" alt="@book.Title" class="hidden w-full h-full object-cover">
                                 <!-- Beautiful Fallback Cover -->
-                                <div class="absolute inset-0 bg-texture opacity-30"></div>
-                                <div class="p-8 z-10 w-full">
-                                    <div class="border-y-2 border-brand-accent/40 py-6">
-                                        <h2 class="font-heading text-brand-surface font-bold text-3xl mb-6 leading-snug drop-shadow-lg px-2">@book.Title</h2>
-                                        <p class="text-brand-accent font-medium font-body uppercase tracking-widest text-sm drop-shadow-md">@book.Author</p>
+                                <div id="display-fallback-cover" class="absolute inset-0 bg-gradient-to-br from-brand-ink via-brand-ink to-brand-accent/20 rounded-r-3xl rounded-l-md [backface-visibility:hidden] overflow-hidden flex flex-col items-center justify-center text-center shadow-inner">
+                                    <div class="p-8 z-10 w-full">
+                                        <div class="border-y-2 border-brand-accent/40 py-6">
+                                            <h2 class="font-heading text-brand-surface font-bold text-3xl mb-6 leading-snug drop-shadow-lg px-2">@book.Title</h2>
+                                            <p class="text-brand-accent font-medium font-body uppercase tracking-widest text-sm drop-shadow-md">@book.Author</p>
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -104,7 +106,7 @@ else
             <div class="w-full lg:w-7/12 animate-fade-in-up flex flex-col pt-4">
                 
                 <div class="mb-6">
-                    <div class="flex items-center gap-3 mb-5">
+                    <div id="display-stock-status" class="flex items-center gap-3 mb-5">
                         <span class="px-4 py-1.5 bg-brand-accent/10 text-brand-accent font-semibold text-xs tracking-widest uppercase rounded-full border border-brand-accent/20">
                             @book.Genre
                         </span>
@@ -135,8 +137,52 @@ else
                 <div class="w-24 h-1 bg-brand-accent mb-8 rounded-full"></div>
 
                 <div class="prose prose-brand prose-lg text-brand-ink/90 mb-10 max-w-none font-body leading-relaxed">
-                    <p class="whitespace-pre-wrap">@(string.IsNullOrWhiteSpace(book.Description) ? "No description available for this timeless piece. Please contact the library for more details." : book.Description)</p>
+                    <h3 class="text-xl font-bold font-heading mb-3 text-brand-ink">Plot Summary</h3>
+                    <p class="whitespace-pre-wrap">@(string.IsNullOrWhiteSpace(book.Description) ? "No plot summary available for this timeless piece. Please contact the library for more details." : book.Description)</p>
                 </div>
+
+                <!-- Edition Note Section (Dynamically updated) -->
+                <div id="edition-notes-section" class="hidden bg-brand-surface p-6 rounded-2xl border border-brand-border/60 shadow-sm mb-10">
+                    <h3 class="text-lg font-bold font-heading mb-2 text-brand-ink flex items-center gap-2">
+                        <svg class="w-5 h-5 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        About this Edition
+                    </h3>
+                    <p id="display-edition-note" class="text-brand-ink/80 text-md whitespace-pre-wrap font-body"></p>
+                    <div class="mt-4 pt-4 border-t border-brand-border/50 flex flex-wrap gap-4 text-sm">
+                        <div class="flex items-center gap-1.5 hidden" id="display-publish-date-container">
+                            <svg class="w-4 h-4 text-brand-inkLight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="text-brand-inkLight font-medium">Published: <span id="display-publish-date" class="text-brand-ink"></span></span>
+                        </div>
+                        <div class="flex items-center gap-1.5 hidden" id="display-page-count-container">
+                            <svg class="w-4 h-4 text-brand-inkLight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            <span class="text-brand-inkLight font-medium">Pages: <span id="display-page-count" class="text-brand-ink"></span></span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (book.Editions != null && book.Editions.Any())
+                {
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold text-brand-inkLight/70 uppercase tracking-widest mb-3">Select Edition</label>
+                        <div class="flex flex-wrap gap-3" id="edition-selector-container">
+                            @foreach(var edition in book.Editions.Where(e => !e.IsDeleted))
+                            {
+                                <button type="button" class="edition-selector px-4 py-2 border-2 rounded-xl transition-all font-medium flex flex-col items-start gap-1 bg-brand-surface border-brand-border/60 hover:border-brand-accent/50 text-left"
+                                        data-edition-id="@edition.BookEditionId"
+                                        data-price="@edition.Price.ToString("N0")"
+                                        data-isbn="@(edition.Isbn ?? "N/A")"
+                                        data-stock="@edition.StockQuantity"
+                                        data-image="@edition.CoverImageUrl"
+                                        data-note="@edition.EditionNote"
+                                        data-publish-date="@edition.PublishDate.ToString("MMMM dd, yyyy")"
+                                        data-page-count="@edition.PageCount">
+                                    <span class="text-brand-ink">@edition.EditionName</span>
+                                    <span class="text-brand-inkLight text-sm font-bold">@edition.Price.ToString("N0") MMK</span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
                     <div class="bg-brand-surface p-5 rounded-2xl border border-brand-border/60 shadow-sm flex items-center gap-4">
@@ -145,7 +191,7 @@ else
                         </div>
                         <div>
                             <span class="block text-xs font-bold text-brand-inkLight/70 uppercase tracking-widest mb-0.5">Price</span>
-                            <span class="text-2xl font-bold text-brand-ink font-heading">@book.StartingPrice.ToString("N0") <span class="text-sm font-medium">MMK</span></span>
+                            <span id="display-price" class="text-2xl font-bold text-brand-ink font-heading">@book.StartingPrice.ToString("N0") <span class="text-sm font-medium">MMK</span></span>
                         </div>
                     </div>
                     
@@ -155,14 +201,15 @@ else
                         </div>
                         <div>
                             <span class="block text-xs font-bold text-brand-inkLight/70 uppercase tracking-widest mb-0.5">ISBN</span>
-                            <span class="text-lg font-semibold text-brand-ink font-mono">@(book.Editions?.FirstOrDefault()?.Isbn ?? "N/A")</span>
+                            <span id="display-isbn" class="text-lg font-semibold text-brand-ink font-mono">@(book.Editions?.FirstOrDefault()?.Isbn ?? "N/A")</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-auto">
-                    <form action="/Cart/Add/@book.BookId" method="post" class="flex flex-col sm:flex-row gap-4">
-                        <button type="submit" @(book.TotalStockQuantity <= 0 ? "disabled" : "") class="flex-1 bg-brand-ink hover:bg-brand-accent disabled:bg-brand-border disabled:text-brand-inkLight disabled:cursor-not-allowed text-brand-bg px-8 py-5 rounded-2xl font-bold text-lg transition-all shadow-[0_10px_25px_-5px_rgba(44,38,33,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(140,111,69,0.4)] hover:-translate-y-1 flex items-center justify-center gap-3">
+                    <form action="/Cart/Add/@book.BookId" method="post" id="add-to-cart-form" class="flex flex-col sm:flex-row gap-4">
+                        <input type="hidden" name="BookEditionId" id="selected-edition-id" value="" />
+                        <button type="submit" id="add-to-cart-btn" @(book.TotalStockQuantity <= 0 ? "disabled" : "") class="flex-1 bg-brand-ink hover:bg-brand-accent disabled:bg-brand-border disabled:text-brand-inkLight disabled:cursor-not-allowed text-brand-bg px-8 py-5 rounded-2xl font-bold text-lg transition-all shadow-[0_10px_25px_-5px_rgba(44,38,33,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(140,111,69,0.4)] hover:-translate-y-1 flex items-center justify-center gap-3">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                             @(book.TotalStockQuantity <= 0 ? "Out of Stock" : "Add to Cart")
                         </button>
@@ -184,15 +231,7 @@ else
             transform: translateZ(-25px);
         }
         
-        /* Realistic old paper texture */
-        .old-paper-texture {
-            background-color: #d6b18e;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(214, 177, 142, 1) 0%, rgba(194, 153, 109, 1) 100%),
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
-            background-blend-mode: overlay;
-        }
-        
+
         /* Attention-grabbing intro animation */
         @@keyframes bookNudge {
             0% { transform: rotateY(0); }
@@ -224,4 +263,131 @@ else
             animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editionSelectors = document.querySelectorAll('.edition-selector');
+            if (editionSelectors.length === 0) return;
+
+            const priceEl = document.getElementById('display-price');
+            const isbnEl = document.getElementById('display-isbn');
+            const coverEl = document.getElementById('display-cover');
+            const fallbackCoverEl = document.getElementById('display-fallback-cover');
+            const stockStatusEl = document.getElementById('display-stock-status');
+            const addToCartBtn = document.getElementById('add-to-cart-btn');
+            const editionInput = document.getElementById('selected-edition-id');
+            const editionNotesSection = document.getElementById('edition-notes-section');
+            const displayEditionNote = document.getElementById('display-edition-note');
+            const displayPublishDateContainer = document.getElementById('display-publish-date-container');
+            const displayPublishDate = document.getElementById('display-publish-date');
+            const displayPageCountContainer = document.getElementById('display-page-count-container');
+            const displayPageCount = document.getElementById('display-page-count');
+            const genreText = '@book.Genre'; // preserve genre
+
+            function selectEdition(btn) {
+                // Update active state
+                editionSelectors.forEach(b => {
+                    b.classList.remove('border-brand-accent', 'bg-brand-accent/5', 'ring-2', 'ring-brand-accent/20');
+                    b.classList.add('border-brand-border/60', 'bg-brand-surface', 'hover:border-brand-accent/50');
+                });
+                btn.classList.add('border-brand-accent', 'bg-brand-accent/5', 'ring-2', 'ring-brand-accent/20');
+                btn.classList.remove('border-brand-border/60', 'bg-brand-surface', 'hover:border-brand-accent/50');
+
+                // Update details
+                if (priceEl) priceEl.innerHTML = btn.dataset.price + ' <span class="text-sm font-medium">MMK</span>';
+                if (isbnEl) isbnEl.textContent = btn.dataset.isbn;
+                
+                // Update new fields (EditionNote, PublishDate, PageCount)
+                let hasNoteOrDetails = false;
+
+                if (btn.dataset.note && btn.dataset.note.trim() !== '') {
+                    displayEditionNote.textContent = btn.dataset.note;
+                    displayEditionNote.classList.remove('hidden');
+                    hasNoteOrDetails = true;
+                } else {
+                    displayEditionNote.classList.add('hidden');
+                }
+
+                if (btn.dataset.publishDate && btn.dataset.publishDate !== '0001-01-01') {
+                    displayPublishDate.textContent = btn.dataset.publishDate;
+                    displayPublishDateContainer.classList.remove('hidden');
+                    hasNoteOrDetails = true;
+                } else {
+                    displayPublishDateContainer.classList.add('hidden');
+                }
+
+                if (btn.dataset.pageCount && btn.dataset.pageCount !== '') {
+                    displayPageCount.textContent = btn.dataset.pageCount;
+                    displayPageCountContainer.classList.remove('hidden');
+                    hasNoteOrDetails = true;
+                } else {
+                    displayPageCountContainer.classList.add('hidden');
+                }
+
+                if (hasNoteOrDetails) {
+                    editionNotesSection.classList.remove('hidden');
+                } else {
+                    editionNotesSection.classList.add('hidden');
+                }
+                
+                // Update image
+                if (btn.dataset.image) {
+                    if (coverEl) {
+                        coverEl.src = btn.dataset.image;
+                        coverEl.classList.remove('hidden');
+                    }
+                    if (fallbackCoverEl) fallbackCoverEl.classList.add('hidden');
+                } else {
+                    if (coverEl) coverEl.classList.add('hidden');
+                    if (fallbackCoverEl) fallbackCoverEl.classList.remove('hidden');
+                }
+
+                // Update stock and button
+                const stock = parseInt(btn.dataset.stock, 10);
+                if (stock > 0) {
+                    if (stockStatusEl) {
+                        stockStatusEl.innerHTML = `
+                            <span class="px-4 py-1.5 bg-brand-accent/10 text-brand-accent font-semibold text-xs tracking-widest uppercase rounded-full border border-brand-accent/20">
+                                ${genreText}
+                            </span>
+                            <span class="px-3 py-1 bg-green-500/10 text-green-700 text-xs font-semibold uppercase tracking-wider rounded-full border border-green-500/20 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> In Stock
+                            </span>`;
+                    }
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg> Add to Cart';
+                } else {
+                    if (stockStatusEl) {
+                        stockStatusEl.innerHTML = `
+                            <span class="px-4 py-1.5 bg-brand-accent/10 text-brand-accent font-semibold text-xs tracking-widest uppercase rounded-full border border-brand-accent/20">
+                                ${genreText}
+                            </span>
+                            <span class="px-3 py-1 bg-red-500/10 text-red-700 text-xs font-semibold uppercase tracking-wider rounded-full border border-red-500/20 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Out of Stock
+                            </span>`;
+                    }
+                    addToCartBtn.disabled = true;
+                    addToCartBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg> Out of Stock';
+                }
+
+                // Update form
+                if (editionInput) editionInput.value = btn.dataset.editionId;
+            }
+
+            // Bind events
+            editionSelectors.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    selectEdition(this);
+                });
+            });
+
+            // Initialize first available
+            let firstAvailable = Array.from(editionSelectors).find(b => parseInt(b.dataset.stock, 10) > 0);
+            if (firstAvailable) {
+                selectEdition(firstAvailable);
+            } else if (editionSelectors.length > 0) {
+                selectEdition(editionSelectors[0]);
+            }
+        });
+    </script>
 }

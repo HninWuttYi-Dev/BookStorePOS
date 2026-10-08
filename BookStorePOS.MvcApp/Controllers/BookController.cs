@@ -165,6 +165,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 content.Add(new StringContent(requestModel.ReorderLevel.ToString()), "ReorderLevel");
                 if (requestModel.EditionName != null) content.Add(new StringContent(requestModel.EditionName), "EditionName");
                 if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
+                if (requestModel.EditionNote != null) content.Add(new StringContent(requestModel.EditionNote), "EditionNote");
+                if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("O")), "PublishDate");
+                if (requestModel.PageCount.HasValue) content.Add(new StringContent(requestModel.PageCount.Value.ToString()), "PageCount");
 
                 if (photo != null && photo.Length > 0)
                 {
@@ -379,6 +382,9 @@ namespace BookStorePOS.MvcApp.Controllers
             content.Add(new StringContent(requestModel.Price.ToString()), "Price");
             content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
             content.Add(new StringContent(requestModel.ReorderLevel.ToString()), "ReorderLevel");
+            if (requestModel.EditionNote != null) content.Add(new StringContent(requestModel.EditionNote), "EditionNote");
+            if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("O")), "PublishDate");
+            if (requestModel.PageCount.HasValue) content.Add(new StringContent(requestModel.PageCount.Value.ToString()), "PageCount");
 
             if (photo != null && photo.Length > 0)
             {
@@ -483,6 +489,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["StockQuantity"] = edition.StockQuantity;
                 ViewData["ReorderLevel"] = edition.ReorderLevel;
                 ViewData["CoverImageUrl"] = edition.CoverImageUrl;
+                ViewData["PublishDate"] = edition.PublishDate;
+                ViewData["PageCount"] = edition.PageCount;
+                ViewData["EditionNote"] = edition.EditionNote;
                 
                 return View("BookEditEdition", model.Data);
             }
@@ -508,6 +517,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 content.Add(new StringContent(requestModel.Price.ToString()), "Price");
                 content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
                 content.Add(new StringContent(requestModel.ReorderLevel.ToString()), "ReorderLevel");
+                if (requestModel.EditionNote != null) content.Add(new StringContent(requestModel.EditionNote), "EditionNote");
+                if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("O")), "PublishDate");
+                if (requestModel.PageCount.HasValue) content.Add(new StringContent(requestModel.PageCount.Value.ToString()), "PageCount");
 
                 if (photo != null && photo.Length > 0)
                 {
@@ -519,7 +531,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.PatchAsync($"api/book/{id}/edition/{editionId}", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<BookEditionPatchResponseModel>(jsonString) ?? new BookEditionPatchResponseModel { isSuccess = false, Message = "Unknown error" };
-            
+
                 if (model != null && model.isSuccess)
                 {
                     _logger.LogInformation("Book Update Edition Async => Edition updated successfully");
@@ -536,7 +548,8 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UpdateEditionSaveAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex?.InnerException?.Message });
+            
             }
         }
         [HttpPost]

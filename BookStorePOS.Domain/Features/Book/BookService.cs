@@ -98,6 +98,9 @@ public class BookService : IBookService
                         Isbn = e.Isbn,
                         Price = e.Price,
                         StockQuantity = e.StockQuantity,
+                        EditionNote = e.EditionNote,
+                        PublishDate = e.PublishDate,
+                        PageCount = e.PageCount,
                         ReorderLevel = e.ReorderLevel,
                         CoverImageUrl = e.CoverImageUrl,
                         IsDeleted = e.IsDeleted
@@ -178,6 +181,9 @@ public class BookService : IBookService
                         Isbn = e.Isbn,
                         Price = e.Price,
                         StockQuantity = e.StockQuantity,
+                        EditionNote = e.EditionNote,
+                        PublishDate = e.PublishDate,
+                        PageCount = e.PageCount,
                         ReorderLevel = e.ReorderLevel,
                         CoverImageUrl = e.CoverImageUrl,
                         IsDeleted = e.IsDeleted
@@ -323,10 +329,13 @@ public class BookService : IBookService
             {
                 BookId = book.BookId,
                 EditionId = editionType.EditionId,
-                Isbn = requestModel.Isbn,
+                Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn,
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
                 ReorderLevel = requestModel.ReorderLevel,
+                EditionNote = requestModel.EditionNote,
+                PublishDate = requestModel.PublishDate ?? DateTime.Now,
+                PageCount = requestModel.PageCount,
                 CoverImageUrl = requestModel.CoverImageUrl,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
@@ -362,6 +371,9 @@ public class BookService : IBookService
                             Isbn = bookEdition.Isbn,
                             Price = bookEdition.Price,
                             StockQuantity = bookEdition.StockQuantity,
+                            EditionNote = bookEdition.EditionNote,
+                            PublishDate = bookEdition.PublishDate,
+                            PageCount = bookEdition.PageCount,
                             ReorderLevel = bookEdition.ReorderLevel,
                             CoverImageUrl = bookEdition.CoverImageUrl,
                             IsDeleted = bookEdition.IsDeleted
@@ -373,11 +385,11 @@ public class BookService : IBookService
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogWarning("Create Book Async => Failed to create book {Message}", ex.Message);
+            _logger.LogWarning("Create Book Async => Failed to create book {Message}", ex?.InnerException?.Message);
             return new BookCreateResponseModel
             {
                 isSuccess = false,
-                Message = "Failed to create book: " + ex.Message
+                Message = "Failed to create book: " + ex?.InnerException?.Message
             };
         }
     }
@@ -575,6 +587,9 @@ public class BookService : IBookService
                         Isbn = e.Isbn,
                         Price = e.Price,
                         StockQuantity = e.StockQuantity,
+                        EditionNote = e.EditionNote,
+                        PublishDate = e.PublishDate,
+                        PageCount = e.PageCount,
                         ReorderLevel = e.ReorderLevel,
                         CoverImageUrl = e.CoverImageUrl,
                         IsDeleted = e.IsDeleted
@@ -663,9 +678,12 @@ public class BookService : IBookService
             {
                 BookId = requestModel.BookId,
                 EditionId = editionType.EditionId,
-                Isbn = requestModel.Isbn,
+                Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn,
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
+                EditionNote = requestModel.EditionNote,
+                PublishDate = requestModel.PublishDate ?? DateTime.Now,
+                PageCount = requestModel.PageCount,
                 ReorderLevel = requestModel.ReorderLevel,
                 CoverImageUrl = requestModel.CoverImageUrl,
                 IsDeleted = false,
@@ -690,6 +708,9 @@ public class BookService : IBookService
                     Isbn = bookEdition.Isbn,
                     Price = bookEdition.Price,
                     StockQuantity = bookEdition.StockQuantity,
+                    EditionNote = bookEdition.EditionNote,
+                    PublishDate = bookEdition.PublishDate,
+                    PageCount = bookEdition.PageCount,
                     ReorderLevel = bookEdition.ReorderLevel,
                     CoverImageUrl = bookEdition.CoverImageUrl,
                     IsDeleted = bookEdition.IsDeleted
@@ -769,8 +790,14 @@ public class BookService : IBookService
 
             bookEdition.Price = requestModel.Price;
             bookEdition.StockQuantity = requestModel.StockQuantity;
+            bookEdition.EditionNote = requestModel.EditionNote;
+            if (requestModel.PublishDate.HasValue)
+            {
+                bookEdition.PublishDate = requestModel.PublishDate.Value;
+            }
+            bookEdition.PageCount = requestModel.PageCount;
             bookEdition.ReorderLevel = requestModel.ReorderLevel;
-            bookEdition.Isbn = requestModel.Isbn;
+            bookEdition.Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn;
             if (requestModel.CoverImageUrl != null)
             {
                 bookEdition.CoverImageUrl = requestModel.CoverImageUrl;
@@ -791,6 +818,9 @@ public class BookService : IBookService
                         Isbn = bookEdition.Isbn,
                         Price = bookEdition.Price,
                         StockQuantity = bookEdition.StockQuantity,
+                        EditionNote = bookEdition.EditionNote,
+                        PublishDate = bookEdition.PublishDate,
+                        PageCount = bookEdition.PageCount,
                         ReorderLevel = bookEdition.ReorderLevel,
                         CoverImageUrl = bookEdition.CoverImageUrl,
                         IsDeleted = bookEdition.IsDeleted
@@ -816,6 +846,9 @@ public class BookService : IBookService
                     Isbn = bookEdition.Isbn,
                     Price = bookEdition.Price,
                     StockQuantity = bookEdition.StockQuantity,
+                    EditionNote = bookEdition.EditionNote,
+                    PublishDate = bookEdition.PublishDate,
+                    PageCount = bookEdition.PageCount,
                     ReorderLevel = bookEdition.ReorderLevel,
                     CoverImageUrl = bookEdition.CoverImageUrl,
                     IsDeleted = bookEdition.IsDeleted

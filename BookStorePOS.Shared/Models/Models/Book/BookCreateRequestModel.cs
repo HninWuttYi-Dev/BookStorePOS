@@ -1,3 +1,5 @@
+using System;
+
 namespace BookStorePOS.Shared.Models.Book;
 
 public class BookCreateRequestModel
@@ -14,6 +16,9 @@ public class BookCreateRequestModel
     public string EditionName { get; set; } = "1st Edition";
     public decimal Price { get; set; }
     public int StockQuantity { get; set; }
+    public string? EditionNote { get; set; }
+    public DateTime? PublishDate { get; set; }
+    public int? PageCount { get; set; }
     public int ReorderLevel { get; set; } = 5;
     public string? CoverImageUrl { get; set; }
 }

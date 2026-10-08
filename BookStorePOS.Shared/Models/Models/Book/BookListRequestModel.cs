@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace BookStorePOS.Shared.Models.Book;
@@ -53,6 +54,9 @@ public class BookEditionModel
     public string? Isbn { get; set; }
     public decimal Price { get; set; }
     public int StockQuantity { get; set; }
+    public string? EditionNote { get; set; }
+    public DateTime PublishDate { get; set; }
+    public int? PageCount { get; set; }
     public int ReorderLevel { get; set; }
     public string? CoverImageUrl { get; set; }
     public bool IsDeleted { get; set; }

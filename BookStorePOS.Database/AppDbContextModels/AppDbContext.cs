@@ -70,7 +70,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<TblBookEdition>(entity =>
         {
-            entity.HasKey(e => e.BookEditionId).HasName("PK__TblBookE__5481987368DCE806");
+            entity.HasKey(e => e.BookEditionId).HasName("PK__tmp_ms_x__54819873A1D9433B");
 
             entity.ToTable("TblBookEdition");
 
@@ -84,6 +84,7 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(20)
                 .HasColumnName("ISBN");
             entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PublishDate).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.ReorderLevel).HasDefaultValue(5);
 
             entity.HasOne(d => d.Book).WithMany(p => p.TblBookEditions)
