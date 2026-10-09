@@ -36,12 +36,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="productsGrid">
                         @foreach (var book in books)
                         {
-                            <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col hover:border-teal-300 hover:shadow-md transition-all cursor-pointer product-card" 
-                                 data-id="@book.BookId" 
-                                 data-title="@book.Title" 
-                                 data-price="@book.StartingPrice" 
-                                 data-stock="@book.TotalStockQuantity"
-                                 onclick="addToCart(this)">
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col hover:border-teal-300 hover:shadow-md transition-all product-card">
                                 
                                 <div class="aspect-[3/4] w-full bg-slate-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
                                     @if (!string.IsNullOrEmpty(book.Editions?.FirstOrDefault()?.CoverImageUrl))
@@ -60,13 +55,32 @@
                                     }
                                 </div>
                                 <h3 class="font-semibold text-slate-900 text-sm line-clamp-2 leading-tight mb-2 product-title" title="@book.Title">@book.Title</h3>
-                                <div class="mt-auto flex flex-col gap-1">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-teal-700 font-bold">@book.StartingPrice.ToString("#,##0") <span class="text-xs text-slate-500 font-normal">MMK</span></span>
-                                    </div>
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs text-slate-400">Stock: <span class="font-medium text-slate-600">@book.TotalStockQuantity</span></span>
-                                    </div>
+                                <div class="mt-auto flex flex-col gap-2">
+                                    @if (book.Editions != null && book.Editions.Count == 1)
+                                    {
+                                        var edition = book.Editions.First();
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-teal-700 font-bold">@edition.Price.ToString("#,##0") <span class="text-xs text-slate-500 font-normal">MMK</span></span>
+                                            <span class="text-xs text-slate-400">Stock: <span class="font-medium text-slate-600">@edition.StockQuantity</span></span>
+                                        </div>
+                                        <button type="button" onclick="addToCart(@edition.BookEditionId, '@Html.Raw(book.Title.Replace("'", "\\'"))', '@Html.Raw(edition.EditionName.Replace("'", "\\'"))', @edition.Price, @edition.StockQuantity)" class="w-full py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold rounded-lg text-sm transition-colors mt-1">Add to Cart</button>
+                                    }
+                                    else if (book.Editions != null && book.Editions.Count > 1)
+                                    {
+                                        <select class="w-full text-sm border-slate-200 rounded-lg p-1.5 focus:ring-teal-500 outline-none border mb-1" id="editionSelect_@book.BookId">
+                                            @foreach (var edition in book.Editions)
+                                            {
+                                                <option value="@edition.BookEditionId" data-price="@edition.Price" data-stock="@edition.StockQuantity" data-name="@edition.EditionName">
+                                                    @edition.EditionName - @edition.Price.ToString("#,##0") MMK (@edition.StockQuantity left)
+                                                </option>
+                                            }
+                                        </select>
+                                        <button type="button" onclick="addSelectedEditionToCart(@book.BookId, '@Html.Raw(book.Title.Replace("'", "\\'"))')" class="w-full py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold rounded-lg text-sm transition-colors">Add to Cart</button>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-xs text-red-500 text-center font-semibold mt-2 py-2">No active editions</div>
+                                    }
                                 </div>
                             </div>
                         }
@@ -223,18 +237,13 @@
             renderCart();
         });
 
-        function addToCart(element) {
-            const id = parseInt($(element).data('id'));
-            const title = $(element).data('title');
-            const price = parseFloat($(element).data('price'));
-            const stock = parseInt($(element).data('stock'));
-
+        function addToCart(editionId, title, editionName, price, stock) {
             if (stock <= 0) {
                 showToast("This item is out of stock", false);
                 return;
             }
 
-            const existingItem = cart.find(item => item.bookId === id);
+            const existingItem = cart.find(item => item.bookEditionId === editionId);
             
             if (existingItem) {
                 if (existingItem.quantity < stock) {
@@ -245,8 +254,9 @@
                 }
             } else {
                 cart.push({
-                    bookId: id,
+                    bookEditionId: editionId,
                     title: title,
+                    editionName: editionName,
                     price: price,
                     quantity: 1,
                     maxStock: stock
@@ -257,8 +267,20 @@
             renderCart();
         }
 
+        function addSelectedEditionToCart(bookId, title) {
+            const select = document.getElementById(`editionSelect_${bookId}`);
+            if (!select) return;
+            const selectedOption = select.options[select.selectedIndex];
+            const editionId = parseInt(selectedOption.value);
+            const price = parseFloat(selectedOption.dataset.price);
+            const stock = parseInt(selectedOption.dataset.stock);
+            const editionName = selectedOption.dataset.name;
+            
+            addToCart(editionId, title, editionName, price, stock);
+        }
+
         function updateQuantity(id, delta) {
-            const item = cart.find(i => i.bookId === id);
+            const item = cart.find(i => i.bookEditionId === id);
             if (!item) return;
 
             const newQty = item.quantity + delta;
@@ -269,7 +291,7 @@
             }
             
             if (newQty <= 0) {
-                cart = cart.filter(i => i.bookId !== id);
+                cart = cart.filter(i => i.bookEditionId !== id);
             } else {
                 item.quantity = newQty;
             }
@@ -304,16 +326,19 @@
                     $list.append(`
                         <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col gap-2">
                             <div class="flex justify-between items-start">
-                                <h4 class="font-semibold text-slate-900 text-sm leading-tight pr-4">${item.title}</h4>
-                                <button type="button" onclick="updateQuantity(${item.bookId}, -${item.quantity})" class="text-slate-400 hover:text-red-500 transition-colors">
+                                <div>
+                                    <h4 class="font-semibold text-slate-900 text-sm leading-tight pr-4">${item.title}</h4>
+                                    <span class="text-xs text-slate-500">${item.editionName}</span>
+                                </div>
+                                <button type="button" onclick="updateQuantity(${item.bookEditionId}, -${item.quantity})" class="text-slate-400 hover:text-red-500 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                 </button>
                             </div>
                             <div class="flex justify-between items-center mt-1">
                                 <div class="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-200">
-                                    <button type="button" onclick="updateQuantity(${item.bookId}, -1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all border border-slate-200">-</button>
+                                    <button type="button" onclick="updateQuantity(${item.bookEditionId}, -1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all border border-slate-200">-</button>
                                     <span class="text-sm font-bold text-slate-900 min-w-[20px] text-center">${item.quantity}</span>
-                                    <button type="button" onclick="updateQuantity(${item.bookId}, 1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all border border-slate-200">+</button>
+                                    <button type="button" onclick="updateQuantity(${item.bookEditionId}, 1)" class="w-6 h-6 flex items-center justify-center rounded-md bg-white shadow-sm text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all border border-slate-200">+</button>
                                 </div>
                                 <span class="font-bold text-teal-700">${itemTotal.toLocaleString()} <span class="text-[10px] text-slate-500 font-normal">MMK</span></span>
                             </div>
@@ -352,7 +377,8 @@
             $btn.prop('disabled', true).html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...');
 
             const requestModel = {
-                Items: cart.map(i => ({ BookId: i.bookId, Quantity: i.quantity }))
+                OrderSource: "POS",
+                Items: cart.map(i => ({ BookEditionId: i.bookEditionId, Quantity: i.quantity }))
             };
 
             isSubmitting = true;
