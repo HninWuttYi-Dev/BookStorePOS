@@ -177,10 +177,51 @@
                 <span class="text-2xl font-bold text-teal-700" id="totalDisplay">0 <span class="text-sm text-slate-500">MMK</span></span>
             </div>
             
-            <button id="btnCheckout" class="w-full py-3.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-lg shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <button id="btnCheckout" onclick="openPaymentModal()" class="w-full py-3.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-lg shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Complete Checkout
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closePaymentModal()"></div>
+    
+    <!-- Modal Panel -->
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md relative z-10 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <h3 class="text-lg font-bold text-slate-900">Complete Payment</h3>
+            <button type="button" class="text-slate-400 hover:text-slate-600 transition-colors" onclick="closePaymentModal()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-teal-50 rounded-xl p-4 flex flex-col items-center justify-center mb-6 border border-teal-100">
+                <span class="text-sm font-semibold text-teal-800 mb-1">Amount Due</span>
+                <span class="text-3xl font-bold text-teal-700" id="modalTotalDisplay">0 MMK</span>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Cash Received</label>
+                <div class="relative">
+                    <input type="number" id="cashReceived" class="w-full pl-4 pr-12 py-3 bg-white border border-slate-200 rounded-xl text-lg font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all placeholder:font-normal placeholder:text-slate-400" placeholder="0" oninput="calculateChange()">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">MMK</span>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center py-3 border-t border-slate-100">
+                <span class="font-semibold text-slate-600">Change Due</span>
+                <span class="text-xl font-bold text-slate-900" id="changeDueDisplay">0 MMK</span>
+            </div>
+        </div>
+        
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex gap-3">
+            <button type="button" onclick="closePaymentModal()" class="flex-1 py-2.5 px-4 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition-colors">Cancel</button>
+            <button type="button" id="btnConfirmPayment" class="flex-1 py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">Confirm Payment</button>
         </div>
     </div>
 </div>
@@ -368,13 +409,43 @@
         }
 
         let isSubmitting = false;
+        let currentOrderTotal = 0;
 
-        $('#btnCheckout').on('click', function() {
+        function openPaymentModal() {
+            if (cart.length === 0) return;
+            currentOrderTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            $('#modalTotalDisplay').text(currentOrderTotal.toLocaleString() + ' MMK');
+            $('#cashReceived').val('');
+            $('#changeDueDisplay').text('0 MMK').removeClass('text-red-500 text-teal-600');
+            $('#btnConfirmPayment').prop('disabled', true);
+            $('#paymentModal').removeClass('hidden');
+            setTimeout(() => $('#cashReceived').focus(), 100);
+        }
+
+        function closePaymentModal() {
+            $('#paymentModal').addClass('hidden');
+        }
+
+        function calculateChange() {
+            const cash = parseFloat($('#cashReceived').val()) || 0;
+            const change = cash - currentOrderTotal;
+            
+            if (cash >= currentOrderTotal) {
+                $('#changeDueDisplay').text(change.toLocaleString() + ' MMK').removeClass('text-red-500').addClass('text-teal-600');
+                $('#btnConfirmPayment').prop('disabled', false);
+            } else {
+                $('#changeDueDisplay').text('Insufficient Cash').removeClass('text-teal-600').addClass('text-red-500');
+                $('#btnConfirmPayment').prop('disabled', true);
+            }
+        }
+
+        $('#btnConfirmPayment').on('click', function() {
             if (isSubmitting) return;
             if (cart.length === 0) return;
 
             const $btn = $(this);
-            $btn.prop('disabled', true).html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...');
+            const originalText = $btn.text();
+            $btn.prop('disabled', true).html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...');
 
             const requestModel = {
                 OrderSource: "POS",
@@ -389,23 +460,24 @@
                 data: JSON.stringify(requestModel),
                 success: function(response) {
                     if (response.isSuccess) {
-                        showToast("Order created successfully!", true);
-                        // Clear the cart on successful checkout
+                        showToast("Payment successful! Generating receipt...", true);
                         cart = [];
                         saveCart();
                         setTimeout(() => {
                             window.location.href = '/Orders/OrderDetail/' + response.data.orderId;
                         }, 1000);
                     } else {
-                        showToast(response.message || "Failed to create order");
+                        showToast(response.message || "Failed to process payment");
                         isSubmitting = false;
-                        $btn.prop('disabled', false).html('<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Complete Checkout');
+                        $btn.prop('disabled', false).text(originalText);
+                        closePaymentModal();
                     }
                 },
                 error: function() {
-                    showToast("Server Error: Failed to process order");
+                    showToast("Server Error: Failed to process payment");
                     isSubmitting = false;
-                    $btn.prop('disabled', false).html('<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Complete Checkout');
+                    $btn.prop('disabled', false).text(originalText);
+                    closePaymentModal();
                 }
             });
         });

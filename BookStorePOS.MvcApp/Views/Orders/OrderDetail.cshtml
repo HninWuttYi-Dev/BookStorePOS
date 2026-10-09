@@ -120,6 +120,14 @@
                 <span class="uppercase tracking-wider">TIME</span>
                 <span class="font-bold">@FormatOrderTimeOnly(order.OrderDate)</span>
             </div>
+            <div class="flex justify-between text-sm my-2">
+                <span class="uppercase tracking-wider">SOURCE</span>
+                <span class="font-bold">@order.OrderSource</span>
+            </div>
+            <div class="flex justify-between text-sm my-2">
+                <span class="uppercase tracking-wider">STATUS</span>
+                <span class="font-bold">@order.OrderStatus.ToString()</span>
+            </div>
             
             <div class="dashed-line my-5"></div>
             
@@ -146,8 +154,12 @@
                         var item = order.Items[i];
                         <div class="flex text-sm items-start gap-1">
                             <div class="text-[#d49f3e] font-bold w-6 shrink-0 pt-0.5">@((i+1).ToString("D2"))</div>
-                            <div class="flex-1 font-bold leading-tight pr-2">
-                                @item.BookTitle
+                            <div class="flex-1 leading-tight pr-2 flex flex-col justify-center">
+                                <span class="font-bold">@item.BookTitle</span>
+                                @if (!string.IsNullOrEmpty(item.EditionName))
+                                {
+                                    <span class="text-[10px] text-gray-500 font-normal mt-0.5">@item.EditionName</span>
+                                }
                             </div>
                             <div class="w-10 text-center pt-0.5 font-medium">@item.Quantity</div>
                             <div class="w-[70px] text-right pt-0.5 text-xs">@item.UnitPrice.ToString("#,##0")</div>
@@ -170,8 +182,17 @@
             </div>
             
             <!-- Stamp effect -->
-            <div class="absolute bottom-32 right-6 border-4 border-[#e07a5f] text-[#e07a5f] p-2 rotate-[-15deg] font-bold text-xl uppercase tracking-widest opacity-80 rounded-md">
-                COMPLETED
+            @{
+                var stampColor = order.OrderStatus switch {
+                    OrderStatus.Completed => "#e07a5f",
+                    OrderStatus.Pending => "#3b82f6",
+                    OrderStatus.Cancelled => "#ef4444",
+                    OrderStatus.Rejected => "#64748b",
+                    _ => "#000000"
+                };
+            }
+            <div class="absolute top-32 right-6 border-4 p-2 rotate-[-15deg] font-bold text-xl uppercase tracking-widest opacity-80 rounded-md pointer-events-none" style="color: @stampColor; border-color: @stampColor;">
+                @order.OrderStatus.ToString()
             </div>
             
         </div>

@@ -97,6 +97,7 @@
                     <th class="px-4 py-3 font-semibold">Time</th>
                     <th class="px-4 py-3 font-semibold">Items</th>
                     <th class="px-4 py-3 font-semibold">Total</th>
+                    <th class="px-4 py-3 font-semibold">Source</th>
                     <th class="px-4 py-3 font-semibold rounded-r-lg">Status</th>
                 </tr>
             </thead>
@@ -124,11 +125,36 @@
                             <td class="px-4 py-4 text-slate-500">@FormatOrderTimeOnly(order.OrderDate)</td>
                             <td class="px-4 py-4 text-slate-600 font-medium">@order.TotalQuantity</td>
                             <td class="px-4 py-4 font-semibold text-slate-900">@order.TotalPrice.ToString("#,##0") <span class="text-xs text-slate-400 font-bold ml-0.5">MMK</span></td>
+                            <td class="px-4 py-4 text-slate-600 font-medium">@order.OrderSource</td>
                             <td class="px-4 py-4 rounded-r-xl">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
-                                    Completed
-                                </span>
+                                @if (order.OrderStatus == OrderStatus.Completed)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                                        Completed
+                                    </span>
+                                }
+                                else if (order.OrderStatus == OrderStatus.Pending)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100/80 text-blue-800 border border-blue-200/50">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>
+                                        Pending
+                                    </span>
+                                }
+                                else if (order.OrderStatus == OrderStatus.Cancelled)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100/80 text-red-800 border border-red-200/50">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>
+                                        Cancelled
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100/80 text-slate-800 border border-slate-200/50">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-500 mr-1.5"></span>
+                                        @order.OrderStatus.ToString()
+                                    </span>
+                                }
                             </td>
                         </tr>
                     }
