@@ -26,6 +26,4 @@ public partial class TblBook
     public virtual TblGenre? Genre { get; set; }
 
     public virtual ICollection<TblBookEdition> TblBookEditions { get; set; } = new List<TblBookEdition>();
-
-    public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();
 }

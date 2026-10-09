@@ -36,4 +36,6 @@ public partial class TblBookEdition
     public virtual TblBook Book { get; set; } = null!;
 
     public virtual TblEdition Edition { get; set; } = null!;
+
+    public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();
 }

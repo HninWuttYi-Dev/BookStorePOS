@@ -34,7 +34,9 @@ public class OrderService : IOrderService
                 {
                     OrderId = item.OrderId,
                     OrderDate = item.OrderDate,
-                    TotalPrice = item.TotalPrice
+                    TotalPrice = item.TotalPrice,
+                    OrderStatus = (OrderStatus)item.OrderStatus,
+                    OrderSource = item.OrderSource
                 });
             }
 
@@ -65,7 +67,11 @@ public class OrderService : IOrderService
             var item = await _db.TblOrders
                 .AsNoTracking()
                 .Include(o => o.TblOrderItems)
-                .ThenInclude(oi => oi.Book)
+                .ThenInclude(oi => oi.BookEdition!)
+                .ThenInclude(be => be.Book)
+                .Include(o => o.TblOrderItems)
+                .ThenInclude(oi => oi.BookEdition!)
+                .ThenInclude(be => be.Edition)
                 .FirstOrDefaultAsync(x => x.OrderId == requestModel.OrderId);
 
             if (item is null)
@@ -83,7 +89,9 @@ public class OrderService : IOrderService
                 OrderId = item.OrderId,
                 OrderDate = item.OrderDate,
                 TotalPrice = item.TotalPrice,
-                TotalQuantity = item.TotalQuantity > 0 ? item.TotalQuantity : item.TblOrderItems.Sum(oi => oi.Quantity)
+                TotalQuantity = item.TotalQuantity > 0 ? item.TotalQuantity : item.TblOrderItems.Sum(oi => oi.Quantity),
+                OrderStatus = (OrderStatus)item.OrderStatus,
+                OrderSource = item.OrderSource
             };
 
             foreach (var oi in item.TblOrderItems)
@@ -92,8 +100,9 @@ public class OrderService : IOrderService
                 {
                     OrderItemId = oi.OrderItemId,
                     OrderId = oi.OrderId,
-                    BookId = oi.BookId,
-                    BookTitle = oi.Book.Title,
+                    BookEditionId = oi.BookEditionId ?? 0,
+                    BookTitle = oi.BookEdition?.Book?.Title,
+                    EditionName = oi.BookEdition?.Edition?.EditionName,
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
                     Subtotal = oi.Subtotal ?? 0
@@ -123,6 +132,7 @@ public class OrderService : IOrderService
     {
         _logger.LogInformation("Create Order Async => Creating order");
 
+        using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
             if (requestModel.Items == null || !requestModel.Items.Any())
@@ -146,26 +156,17 @@ public class OrderService : IOrderService
                     };
                 }
 
-                var book = await _db.TblBooks
-                    .Include(b => b.TblBookEditions)
-                    .FirstOrDefaultAsync(b => b.BookId == item.BookId && !b.IsDeleted);
+                var edition = await _db.TblBookEditions
+                    .Include(e => e.Book)
+                    .Include(e => e.Edition)
+                    .FirstOrDefaultAsync(e => e.BookEditionId == item.BookEditionId && !e.IsDeleted);
 
-                if (book == null)
-                {
-                    return new OrderCreateResponseModel
-                    {
-                        isSuccess = false,
-                        Message = $"Book with ID {item.BookId} not found or is deleted."
-                    };
-                }
-
-                var edition = book.TblBookEditions.FirstOrDefault(e => !e.IsDeleted);
                 if (edition == null)
                 {
                     return new OrderCreateResponseModel
                     {
                         isSuccess = false,
-                        Message = $"No active editions found for '{book.Title}'."
+                        Message = $"Book Edition with ID {item.BookEditionId} not found or is deleted."
                     };
                 }
 
@@ -174,7 +175,7 @@ public class OrderService : IOrderService
                     return new OrderCreateResponseModel
                     {
                         isSuccess = false,
-                        Message = $"Insufficient stock for '{book.Title}'. Available: {edition.StockQuantity}"
+                        Message = $"Insufficient stock for '{edition.Book.Title} ({edition.Edition.EditionName})'. Available: {edition.StockQuantity}"
                     };
                 }
             }
@@ -183,7 +184,14 @@ public class OrderService : IOrderService
             {
                 OrderDate = DateTime.Now,
                 TotalPrice = 0,
-                TotalQuantity = 0
+                TotalQuantity = 0,
+                OrderStatus = (byte)OrderStatus.Completed,
+                OrderSource = requestModel.OrderSource ?? "POS",
+                CustomerId = requestModel.CustomerId,
+                CustomerName = requestModel.CustomerName,
+                CustomerPhone = requestModel.CustomerPhone,
+                Notes = requestModel.Notes,
+                CreatedAt = DateTime.Now
             };
 
             _db.TblOrders.Add(order);
@@ -195,11 +203,11 @@ public class OrderService : IOrderService
 
             foreach (var item in requestModel.Items)
             {
-                var book = await _db.TblBooks
-                    .Include(b => b.TblBookEditions)
-                    .FirstOrDefaultAsync(b => b.BookId == item.BookId && !b.IsDeleted);
+                var edition = await _db.TblBookEditions
+                    .Include(e => e.Book)
+                    .Include(e => e.Edition)
+                    .FirstOrDefaultAsync(e => e.BookEditionId == item.BookEditionId && !e.IsDeleted);
 
-                var edition = book.TblBookEditions.FirstOrDefault(e => !e.IsDeleted);
                 if (edition != null)
                 {
                     edition.StockQuantity -= item.Quantity;
@@ -215,7 +223,7 @@ public class OrderService : IOrderService
                 var orderItem = new TblOrderItem
                 {
                     OrderId = order.OrderId,
-                    BookId = item.BookId,
+                    BookEditionId = item.BookEditionId,
                     Quantity = item.Quantity,
                     UnitPrice = price,
                     Subtotal = subtotal
@@ -225,8 +233,9 @@ public class OrderService : IOrderService
 
                 orderModelItems.Add(new OrderItemModel
                 {
-                    BookId = item.BookId,
-                    BookTitle = book.Title,
+                    BookEditionId = item.BookEditionId,
+                    BookTitle = edition?.Book?.Title,
+                    EditionName = edition?.Edition?.EditionName,
                     Quantity = item.Quantity,
                     UnitPrice = price,
                     Subtotal = subtotal
@@ -236,8 +245,7 @@ public class OrderService : IOrderService
             order.TotalPrice = orderTotal;
             order.TotalQuantity = orderQuantity;
             await _db.SaveChangesAsync();
-
-            // optional: fill OrderItemId if you need it
+            await transaction.CommitAsync();
 
             _logger.LogInformation("Create Order Async => Order is created successfully");
             return new OrderCreateResponseModel
@@ -250,12 +258,15 @@ public class OrderService : IOrderService
                     OrderDate = order.OrderDate,
                     TotalPrice = order.TotalPrice,
                     TotalQuantity = order.TotalQuantity,
+                    OrderStatus = (OrderStatus)order.OrderStatus,
+                    OrderSource = order.OrderSource,
                     Items = orderModelItems
                 }
             };
         }
         catch (Exception ex)
         {
+            await transaction.RollbackAsync();
             _logger.LogWarning(ex, "Create Order Async => Failed to create order");
             return new OrderCreateResponseModel
             {
@@ -353,7 +364,9 @@ public class OrderService : IOrderService
                     OrderId = o.OrderId,
                     OrderDate = o.OrderDate,
                     TotalPrice = o.TotalPrice,
-                    TotalQuantity = o.TblOrderItems.Sum(oi => oi.Quantity)
+                    TotalQuantity = o.TblOrderItems.Sum(oi => oi.Quantity),
+                    OrderStatus = (OrderStatus)o.OrderStatus,
+                    OrderSource = o.OrderSource
                 })
                 .ToListAsync();
 

@@ -13,5 +13,23 @@ public partial class TblOrder
 
     public int TotalQuantity { get; set; }
 
+    public byte OrderStatus { get; set; }
+
+    public string OrderSource { get; set; } = null!;
+
+    public int? CustomerId { get; set; }
+
+    public string? CustomerName { get; set; }
+
+    public string? CustomerPhone { get; set; }
+
+    public string? Notes { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public virtual TblUser? Customer { get; set; }
+
     public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();
 }
