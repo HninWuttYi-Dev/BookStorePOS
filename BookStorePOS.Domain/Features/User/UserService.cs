@@ -124,14 +124,28 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<UserListResponseModel> GetUsersAsync()
+    public async Task<UserListResponseModel> GetUsersAsync(UserListRequestModel requestModel)
     {
         _logger.LogInformation("Get Users Async => Fetching all users");
         try
         {
-            var users = await _db.TblUsers
+            var query = _db.TblUsers
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted)
+                .Where(x => !x.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(requestModel.Username))
+            {
+                query = query.Where(x => x.Username.Contains(requestModel.Username));
+            }
+
+            int count = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(count / (double)requestModel.Limit);
+            if (totalPages == 0) totalPages = 1;
+
+            var users = await query
+                .OrderByDescending(x => x.UserId)
+                .Skip((requestModel.Page - 1) * requestModel.Limit)
+                .Take(requestModel.Limit)
                 .Select(x => new UserModel
                 {
                     UserId = x.UserId,
@@ -150,7 +164,11 @@ public class UserService : IUserService
             {
                 isSuccess = true,
                 Message = "Users retrieved successfully.",
-                Data = users
+                Data = users,
+                Page = requestModel.Page,
+                Limit = requestModel.Limit,
+                Count = count,
+                TotalPages = totalPages
             };
         }
         catch (Exception ex)
