@@ -1,0 +1,17 @@
+using System.Collections.Generic;
+
+namespace BookStorePOS.Shared.Models.RolePermission;
+
+public class RoleUpdateRequestModel
+{
+    public int RoleId { get; set; }
+    public string RoleName { get; set; } = string.Empty;
+    public List<int> PermissionIds { get; set; } = new();
+}
+
+public class RoleUpdateResponseModel
+{
+    public bool isSuccess { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public RoleModel? Data { get; set; }
+}

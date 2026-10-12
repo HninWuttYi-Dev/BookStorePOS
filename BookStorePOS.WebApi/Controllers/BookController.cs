@@ -1,13 +1,16 @@
 using System;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Book;
 using BookStorePOS.Shared.Models.Book;
+using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class BookController : ControllerBase
 {
     private readonly IBookService _bookService;
@@ -23,6 +26,7 @@ public class BookController : ControllerBase
 
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetBooksAsync([FromQuery] BookListRequestModel requestModel)
     {
         try
@@ -46,6 +50,7 @@ public class BookController : ControllerBase
     }
 
     [HttpGet("low-stock")]
+    [Permission("Book.View")]
     public async Task<IActionResult> GetLowStockBooksAsync()
     {
         try
@@ -69,6 +74,7 @@ public class BookController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetBookByIdAsync(int id)
     {
         try
@@ -92,6 +98,7 @@ public class BookController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Book.Create")]
     public async Task<IActionResult> CreateBookAsync([FromForm] BookCreateRequestModel requestModel, IFormFile? photo)
     {
         try
@@ -125,6 +132,7 @@ public class BookController : ControllerBase
     }
 
     [HttpPatch("{id}")]
+    [Permission("Book.Update")]
     public async Task<IActionResult> UpdateBookAsync(int id, [FromForm] BookPatchRequestModel requestModel, IFormFile? photo)
     {
         try
@@ -159,6 +167,7 @@ public class BookController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("Book.Delete")]
     public async Task<IActionResult> DeleteBookAsync(int id)
     {
         try
@@ -183,6 +192,7 @@ public class BookController : ControllerBase
     }
 
     [HttpPost("{id}/edition")]
+    [Permission("Book.Create")]
     public async Task<IActionResult> CreateBookEditionAsync(int id, [FromForm] BookEditionCreateRequestModel requestModel, IFormFile? photo)
     {
         try
@@ -217,6 +227,7 @@ public class BookController : ControllerBase
     }
 
     [HttpPatch("{id}/edition/{editionId}")]
+    [Permission("Book.Update")]
     public async Task<IActionResult> UpdateBookEditionAsync(int id, int editionId, [FromForm] BookEditionPatchRequestModel requestModel, IFormFile? photo)
     {
         try
@@ -252,6 +263,7 @@ public class BookController : ControllerBase
     }
 
     [HttpDelete("{id}/edition/{editionId}")]
+    [Permission("Book.Delete")]
     public async Task<IActionResult> DeleteBookEditionAsync(int id, int editionId)
     {
         try

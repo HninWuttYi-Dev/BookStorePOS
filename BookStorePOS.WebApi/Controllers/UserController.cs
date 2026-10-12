@@ -1,12 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.User;
 using BookStorePOS.Shared.Models.User;
+using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UserController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -19,6 +22,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("User.View")]
     public async Task<IActionResult> GetUsersAsync([FromQuery] UserListRequestModel requestModel)
     {
         try
@@ -42,6 +46,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Permission("User.View")]
     public async Task<IActionResult> GetUserByIdAsync(int id)
     {
         try
@@ -65,6 +70,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("User.Create")]
     public async Task<IActionResult> CreateUserAsync([FromBody] UserCreateRequestModel requestModel)
     {
         try
@@ -88,6 +94,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPatch("{id}")]
+    [Permission("User.Update")]
     public async Task<IActionResult> UpdateUserAsync(int id, [FromBody] UserUpdateRequestModel requestModel)
     {
         try
@@ -112,6 +119,7 @@ public class UserController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("User.Delete")]
     public async Task<IActionResult> DeleteUserAsync(int id)
     {
         try

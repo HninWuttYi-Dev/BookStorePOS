@@ -1,12 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Edition;
 using BookStorePOS.Shared.Models.Edition;
+using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class EditionController : ControllerBase
 {
     private readonly IEditionService _editionService;
@@ -19,6 +22,7 @@ public class EditionController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("Edition.View")]
     public async Task<IActionResult> GetEditionsAsync([FromQuery] EditionListRequestModel requestModel)
     {
         try
@@ -42,6 +46,7 @@ public class EditionController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Permission("Edition.View")]
     public async Task<IActionResult> GetEditionByIdAsync(int id)
     {
         try
@@ -65,6 +70,7 @@ public class EditionController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Edition.Create")]
     public async Task<IActionResult> CreateEditionAsync([FromBody] EditionCreateRequestModel requestModel)
     {
         try
@@ -88,6 +94,7 @@ public class EditionController : ControllerBase
     }
 
     [HttpPatch("{id}")]
+    [Permission("Edition.Update")]
     public async Task<IActionResult> UpdateEditionAsync(int id, [FromBody] EditionPatchRequestModel requestModel)
     {
         try
@@ -112,6 +119,7 @@ public class EditionController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("Edition.Delete")]
     public async Task<IActionResult> DeleteEditionAsync(int id)
     {
         try

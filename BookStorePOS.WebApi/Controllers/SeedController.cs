@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BookStorePOS.Database.AppDbContextModels;
@@ -10,6 +11,7 @@ namespace BookStorePOS.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [AllowAnonymous]
     public class SeedController : ControllerBase
     {
         private readonly AppDbContext _db;
@@ -138,6 +140,174 @@ namespace BookStorePOS.WebApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("AuthData")]
+        public async Task<IActionResult> SeedAuthData()
+        {
+            try
+            {
+                // 1. Roles
+                var roleNames = new[] { "Admin", "Staff", "Customer" };
+                var roles = new Dictionary<string, TblRole>();
+
+                foreach (var rName in roleNames)
+                {
+                    var existingRole = await _db.TblRoles.FirstOrDefaultAsync(r => r.RoleName == rName && !r.IsDeleted);
+                    if (existingRole == null)
+                    {
+                        existingRole = new TblRole
+                        {
+                            RoleName = rName,
+                            IsDeleted = false,
+                            CreateAt = DateTime.Now
+                        };
+                        _db.TblRoles.Add(existingRole);
+                        await _db.SaveChangesAsync();
+                    }
+                    roles[rName] = existingRole;
+                }
+
+                // 2. All Permissions
+                var allPermissions = new[]
+                {
+                    "Book.View", "Book.Create", "Book.Update", "Book.Delete",
+                    "Order.View", "Order.Create",
+                    "Dashboard.View",
+                    "User.View", "User.Create", "User.Update", "User.Delete",
+                    "Genre.View", "Genre.Create", "Genre.Update", "Genre.Delete",
+                    "Author.View", "Author.Create", "Author.Update", "Author.Delete",
+                    "Edition.View", "Edition.Create", "Edition.Update", "Edition.Delete"
+                };
+
+                var perms = new Dictionary<string, TblPermission>();
+                foreach (var pName in allPermissions)
+                {
+                    var existingPerm = await _db.TblPermissions.FirstOrDefaultAsync(p => p.PermissionName == pName && !p.IsDeleted);
+                    if (existingPerm == null)
+                    {
+                        existingPerm = new TblPermission
+                        {
+                            PermissionName = pName,
+                            IsDeleted = false,
+                            CreateAt = DateTime.Now
+                        };
+                        _db.TblPermissions.Add(existingPerm);
+                        await _db.SaveChangesAsync();
+                    }
+                    perms[pName] = existingPerm;
+                }
+
+                // 3. Assign Permissions to Roles
+                // Admin: gets all
+                foreach (var p in perms.Values)
+                {
+                    bool hasLink = await _db.TblRolePermissions.AnyAsync(rp => rp.RoleId == roles["Admin"].RoleId && rp.PermissionId == p.PermissionId);
+                    if (!hasLink)
+                    {
+                        _db.TblRolePermissions.Add(new TblRolePermission
+                        {
+                            RoleId = roles["Admin"].RoleId,
+                            PermissionId = p.PermissionId
+                        });
+                    }
+                }
+
+                // Staff: gets View + Book Create/Update + Order View/Create + Dashboard View
+                var staffPerms = new[]
+                {
+                    "Book.View", "Book.Create", "Book.Update",
+                    "Order.View", "Order.Create",
+                    "Dashboard.View",
+                    "Genre.View", "Author.View", "Edition.View"
+                };
+                foreach (var pName in staffPerms)
+                {
+                    if (perms.TryGetValue(pName, out var p))
+                    {
+                        bool hasLink = await _db.TblRolePermissions.AnyAsync(rp => rp.RoleId == roles["Staff"].RoleId && rp.PermissionId == p.PermissionId);
+                        if (!hasLink)
+                        {
+                            _db.TblRolePermissions.Add(new TblRolePermission
+                            {
+                                RoleId = roles["Staff"].RoleId,
+                                PermissionId = p.PermissionId
+                            });
+                        }
+                    }
+                }
+
+                // Customer: Book.View, Order.Create, Order.View
+                var customerPerms = new[] { "Book.View", "Order.Create", "Order.View" };
+                foreach (var pName in customerPerms)
+                {
+                    if (perms.TryGetValue(pName, out var p))
+                    {
+                        bool hasLink = await _db.TblRolePermissions.AnyAsync(rp => rp.RoleId == roles["Customer"].RoleId && rp.PermissionId == p.PermissionId);
+                        if (!hasLink)
+                        {
+                            _db.TblRolePermissions.Add(new TblRolePermission
+                            {
+                                RoleId = roles["Customer"].RoleId,
+                                PermissionId = p.PermissionId
+                            });
+                        }
+                    }
+                }
+                await _db.SaveChangesAsync();
+
+                // 4. Default Users
+                var adminUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.Username == "admin" && !u.IsDeleted);
+                if (adminUser == null)
+                {
+                    _db.TblUsers.Add(new TblUser
+                    {
+                        Username = "admin",
+                        FullName = "System Administrator",
+                        Phone = "09789456123",
+                        Email = "admin@bookstore.com",
+                        PasswordHash = "123",
+                        RoleId = roles["Admin"].RoleId,
+                        IsDeleted = false,
+                        CreatedAt = DateTime.Now
+                    });
+                }
+
+                var staffUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.Username == "staff" && !u.IsDeleted);
+                if (staffUser == null)
+                {
+                    _db.TblUsers.Add(new TblUser
+                    {
+                        Username = "staff",
+                        FullName = "Store Staff",
+                        Phone = "09789456124",
+                        Email = "staff@bookstore.com",
+                        PasswordHash = "123",
+                        RoleId = roles["Staff"].RoleId,
+                        IsDeleted = false,
+                        CreatedAt = DateTime.Now
+                    });
+                }
+
+                await _db.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    isSuccess = true,
+                    Message = "Roles, Permissions, and Default Users seeded successfully!",
+                    Roles = roles.Keys.ToList(),
+                    TotalPermissions = allPermissions.Length,
+                    DefaultUsers = new[]
+                    {
+                        new { Username = "admin", Password = "123", Role = "Admin" },
+                        new { Username = "staff", Password = "123", Role = "Staff" }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { isSuccess = false, Message = ex.Message });
             }
         }
     }

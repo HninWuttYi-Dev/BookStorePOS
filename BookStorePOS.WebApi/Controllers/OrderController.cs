@@ -1,13 +1,16 @@
 using System;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Order;
 using BookStorePOS.Shared.Models.Order;
+using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class OrderController : ControllerBase
 {
     private readonly IOrderService _orderService;
@@ -20,6 +23,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("summary")]
+    [Permission("Dashboard.View")]
     public async Task<IActionResult> GetOrderSummaryAsync()
     {
         try
@@ -43,6 +47,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("history")]
+    [Permission("Order.View")]
     public async Task<IActionResult> GetOrderHistoryAsync([FromQuery] OrderHistoryRequestModel requestModel)
     {
         try
@@ -66,6 +71,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet]
+    [Permission("Order.View")]
     public async Task<IActionResult> GetOrdersAsync([FromQuery] OrderListRequestModel requestModel)
     {
         try
@@ -89,6 +95,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Permission("Order.View")]
     public async Task<IActionResult> GetOrderAsync(int id)
     {
         try
@@ -112,6 +119,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Order.Create")]
     public async Task<IActionResult> CreateOrderAsync([FromBody] OrderCreateRequestModel requestModel)
     {
         try

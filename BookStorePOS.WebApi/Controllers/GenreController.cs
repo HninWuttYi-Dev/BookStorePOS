@@ -1,12 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Genre;
 using BookStorePOS.Shared.Models.Genre;
+using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class GenreController : ControllerBase
 {
     private readonly IGenreService _genreService;
@@ -19,6 +22,7 @@ public class GenreController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetGenresAsync([FromQuery] GenreListRequestModel requestModel)
     {
         try
@@ -42,6 +46,7 @@ public class GenreController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetGenreByIdAsync(int id)
     {
         try
@@ -65,6 +70,7 @@ public class GenreController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Genre.Create")]
     public async Task<IActionResult> CreateGenreAsync([FromBody] GenreCreateRequestModel requestModel)
     {
         try
@@ -88,6 +94,7 @@ public class GenreController : ControllerBase
     }
 
     [HttpPatch("{id}")]
+    [Permission("Genre.Update")]
     public async Task<IActionResult> UpdateGenreAsync(int id, [FromBody] GenrePatchRequestModel requestModel)
     {
         try
@@ -112,6 +119,7 @@ public class GenreController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("Genre.Delete")]
     public async Task<IActionResult> DeleteGenreAsync(int id)
     {
         try

@@ -29,6 +29,12 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<TblOrderItem> TblOrderItems { get; set; }
 
+    public virtual DbSet<TblPermission> TblPermissions { get; set; }
+
+    public virtual DbSet<TblRole> TblRoles { get; set; }
+
+    public virtual DbSet<TblRolePermission> TblRolePermissions { get; set; }
+
     public virtual DbSet<TblUser> TblUsers { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -176,6 +182,54 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK_OrderItems_Orders");
         });
 
+        modelBuilder.Entity<TblPermission>(entity =>
+        {
+            entity.HasKey(e => e.PermissionId).HasName("PK__TblPermi__EFA6FB2F4B1BABFD");
+
+            entity.ToTable("TblPermission");
+
+            entity.HasIndex(e => e.PermissionName, "Idx_TblPermission_Name")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.Property(e => e.CreateAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.PermissionName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<TblRole>(entity =>
+        {
+            entity.HasKey(e => e.RoleId).HasName("PK__TblRole__8AFACE1AE37EAEC5");
+
+            entity.ToTable("TblRole");
+
+            entity.HasIndex(e => e.RoleName, "Idx_TblRole_RoleName")
+                .IsUnique()
+                .HasFilter("([IsDeleted]=(0))");
+
+            entity.Property(e => e.CreateAt).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.RoleName).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<TblRolePermission>(entity =>
+        {
+            entity.HasKey(e => e.RolePermissionId).HasName("PK__TblRoleP__120F46BA3E796D41");
+
+            entity.ToTable("TblRolePermission");
+
+            entity.HasIndex(e => new { e.RoleId, e.PermissionId }, "Idx_TblRolePermission_Role_Permission").IsUnique();
+
+            entity.HasOne(d => d.Permission).WithMany(p => p.TblRolePermissions)
+                .HasForeignKey(d => d.PermissionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RolePermission_Permission");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.TblRolePermissions)
+                .HasForeignKey(d => d.RoleId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RolePermission_Role");
+        });
+
         modelBuilder.Entity<TblUser>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PK__TblUser__1788CC4C06ADC7F1");
@@ -200,6 +254,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PasswordHash).HasMaxLength(255);
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.Property(e => e.Username).HasMaxLength(20);
+
+            entity.HasOne(d => d.Role).WithMany(p => p.TblUsers)
+                .HasForeignKey(d => d.RoleId)
+                .HasConstraintName("FK_TblUser_TblRole");
         });
 
         OnModelCreatingPartial(modelBuilder);

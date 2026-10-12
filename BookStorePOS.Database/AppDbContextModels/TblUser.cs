@@ -23,5 +23,9 @@ public partial class TblUser
 
     public DateTime? UpdatedAt { get; set; }
 
+    public int? RoleId { get; set; }
+
+    public virtual TblRole? Role { get; set; }
+
     public virtual ICollection<TblOrder> TblOrders { get; set; } = new List<TblOrder>();
 }

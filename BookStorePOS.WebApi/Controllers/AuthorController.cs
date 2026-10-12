@@ -1,12 +1,15 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Author;
 using BookStorePOS.Shared.Models.Author;
+using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AuthorController : ControllerBase
 {
     private readonly IAuthorService _authorService;
@@ -19,6 +22,7 @@ public class AuthorController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAuthorsAsync([FromQuery] AuthorListRequestModel requestModel)
     {
         try
@@ -42,6 +46,7 @@ public class AuthorController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAuthorByIdAsync(int id)
     {
         try
@@ -65,6 +70,7 @@ public class AuthorController : ControllerBase
     }
 
     [HttpPost]
+    [Permission("Author.Create")]
     public async Task<IActionResult> CreateAuthorAsync([FromBody] AuthorCreateRequestModel requestModel)
     {
         try
@@ -88,6 +94,7 @@ public class AuthorController : ControllerBase
     }
 
     [HttpPatch("{id}")]
+    [Permission("Author.Update")]
     public async Task<IActionResult> UpdateAuthorAsync(int id, [FromBody] AuthorPatchRequestModel requestModel)
     {
         try
@@ -112,6 +119,7 @@ public class AuthorController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Permission("Author.Delete")]
     public async Task<IActionResult> DeleteAuthorAsync(int id)
     {
         try
