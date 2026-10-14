@@ -12,7 +12,7 @@
             <h2 class="text-3xl font-heading text-brand-ink mb-2">Book Not Found</h2>
             <p class="text-brand-inkLight mb-6">The book you are looking for might have been removed or doesn't exist.</p>
             <a href="/Books" class="inline-flex items-center gap-2 bg-brand-accent hover:bg-brand-accentHover text-white px-6 py-3 rounded-xl transition-colors font-medium">
-                Return to Library
+                Return to Bookstore
             </a>
         </div>
     </div>
@@ -138,7 +138,7 @@ else
 
                 <div class="prose prose-brand prose-lg text-brand-ink/90 mb-10 max-w-none font-body leading-relaxed">
                     <h3 class="text-xl font-bold font-heading mb-3 text-brand-ink">Plot Summary</h3>
-                    <p class="whitespace-pre-wrap">@(string.IsNullOrWhiteSpace(book.Description) ? "No plot summary available for this timeless piece. Please contact the library for more details." : book.Description)</p>
+                    <p class="whitespace-pre-wrap">@(string.IsNullOrWhiteSpace(book.Description) ? "No plot summary available for this timeless piece. Please contact our bookstore for more details." : book.Description)</p>
                 </div>
 
                 <!-- Edition Note Section (Dynamically updated) -->
@@ -387,6 +387,18 @@ else
                 selectEdition(firstAvailable);
             } else if (editionSelectors.length > 0) {
                 selectEdition(editionSelectors[0]);
+            }
+
+            // Check customer login before submitting add to cart form
+            const addToCartForm = document.getElementById('add-to-cart-form');
+            if (addToCartForm) {
+                addToCartForm.addEventListener('submit', function(e) {
+                    if (!window.isCustomerLoggedIn()) {
+                        e.preventDefault();
+                        window.openLoginRequiredModal(window.location.pathname);
+                        return false;
+                    }
+                });
             }
         });
     </script>

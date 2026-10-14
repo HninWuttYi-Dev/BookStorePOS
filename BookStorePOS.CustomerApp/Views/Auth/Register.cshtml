@@ -1,0 +1,291 @@
+@{
+    ViewData["Title"] = "Customer Registration";
+}
+
+<div class="min-h-[75vh] flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-lg w-full">
+        <!-- Brand Header -->
+        <div class="text-center mb-8">
+            <a href="/" class="inline-flex items-center gap-2 text-brand-ink mb-3 group">
+                <svg class="w-8 h-8 text-brand-accent transition-transform group-hover:scale-105" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                <span class="font-heading font-bold text-3xl tracking-wide">BABYLON</span>
+            </a>
+            <h1 class="font-heading text-2xl font-semibold text-brand-ink mt-2">Create Your Account</h1>
+            <p class="text-sm text-brand-inkLight mt-1">Create your customer account to browse books and place orders easily</p>
+        </div>
+
+        <!-- Card Container -->
+        <div class="bg-brand-surface border border-brand-border rounded-2xl p-8 shadow-sm">
+            <!-- Alert Banner -->
+            <div id="registerAlert" class="hidden mb-6 p-4 rounded-xl text-sm border flex items-start gap-3 bg-red-50 border-red-200 text-red-800" role="alert">
+                <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="registerAlertText"></span>
+            </div>
+
+            <form id="customerRegisterForm" novalidate class="space-y-4">
+                <!-- Full Name -->
+                <div>
+                    <label for="fullNameInput" class="block text-xs font-semibold uppercase tracking-wider text-brand-inkLight mb-1.5">
+                        Full Name <span class="text-red-600">*</span>
+                    </label>
+                    <input type="text" id="fullNameInput" name="FullName" autocomplete="name" required
+                           placeholder="e.g. Aung Kyaw Thu or Su Myat Noe"
+                           class="w-full px-4 py-2.5 bg-brand-bg border border-brand-border rounded-xl text-brand-ink text-sm placeholder-brand-inkLight/40 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                    <span id="fullNameError" class="hidden text-xs text-red-600 mt-1 block">Full name is required.</span>
+                </div>
+
+                <!-- Phone Number & Username Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Phone Number -->
+                    <div>
+                        <label for="phoneInput" class="block text-xs font-semibold uppercase tracking-wider text-brand-inkLight mb-1.5">
+                            Phone Number <span class="text-red-600">*</span>
+                        </label>
+                        <input type="tel" id="phoneInput" name="Phone" autocomplete="tel" required
+                               placeholder="09789456123"
+                               class="w-full px-4 py-2.5 bg-brand-bg border border-brand-border rounded-xl text-brand-ink text-sm placeholder-brand-inkLight/40 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                        <span id="phoneError" class="hidden text-xs text-red-600 mt-1 block">Valid Myanmar phone number is required (09...).</span>
+                    </div>
+
+                    <!-- Username -->
+                    <div>
+                        <label for="usernameInput" class="block text-xs font-semibold uppercase tracking-wider text-brand-inkLight mb-1.5">
+                            Username <span class="text-red-600">*</span>
+                        </label>
+                        <input type="text" id="usernameInput" name="Username" autocomplete="username" required
+                           placeholder="e.g. aungkyaw or sumyat"
+                               class="w-full px-4 py-2.5 bg-brand-bg border border-brand-border rounded-xl text-brand-ink text-sm placeholder-brand-inkLight/40 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                        <span id="usernameError" class="hidden text-xs text-red-600 mt-1 block">Username is required.</span>
+                    </div>
+                </div>
+
+                <!-- Email (Optional) -->
+                <div>
+                    <label for="emailInput" class="block text-xs font-semibold uppercase tracking-wider text-brand-inkLight mb-1.5">
+                        Email Address <span class="text-xs text-brand-inkLight/50 lowercase font-normal">(optional)</span>
+                    </label>
+                    <input type="email" id="emailInput" name="Email" autocomplete="email"
+                           placeholder="aungkyaw@gmail.com"
+                           class="w-full px-4 py-2.5 bg-brand-bg border border-brand-border rounded-xl text-brand-ink text-sm placeholder-brand-inkLight/40 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                    <span id="emailError" class="hidden text-xs text-red-600 mt-1 block">Please enter a valid email address.</span>
+                </div>
+
+                <!-- Password & Confirm Password Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Password -->
+                    <div>
+                        <label for="passwordInput" class="block text-xs font-semibold uppercase tracking-wider text-brand-inkLight mb-1.5">
+                            Password <span class="text-red-600">*</span>
+                        </label>
+                        <input type="password" id="passwordInput" name="Password" autocomplete="new-password" required
+                               placeholder="••••••••"
+                               class="w-full px-4 py-2.5 bg-brand-bg border border-brand-border rounded-xl text-brand-ink text-sm placeholder-brand-inkLight/40 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                        <span id="passwordError" class="hidden text-xs text-red-600 mt-1 block">Password is required.</span>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div>
+                        <label for="confirmPasswordInput" class="block text-xs font-semibold uppercase tracking-wider text-brand-inkLight mb-1.5">
+                            Confirm Password <span class="text-red-600">*</span>
+                        </label>
+                        <input type="password" id="confirmPasswordInput" name="ConfirmPassword" autocomplete="new-password" required
+                               placeholder="••••••••"
+                               class="w-full px-4 py-2.5 bg-brand-bg border border-brand-border rounded-xl text-brand-ink text-sm placeholder-brand-inkLight/40 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-all" />
+                        <span id="confirmPasswordError" class="hidden text-xs text-red-600 mt-1 block">Passwords do not match.</span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btnRegisterSubmit"
+                        class="w-full bg-brand-ink hover:bg-brand-accent text-brand-bg font-medium py-3 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 font-body text-sm tracking-wide mt-4">
+                    <span>Create Account</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Sign In Link -->
+            <div class="mt-8 pt-6 border-t border-brand-border/60 text-center text-sm text-brand-inkLight">
+                Already have an account?
+                <a href="/Auth/Login" class="text-brand-accent hover:text-brand-accentHover font-semibold ml-1 underline decoration-brand-accent/30 underline-offset-4 transition-colors">
+                    Sign in here
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Myanmar phone normalization & validation
+            function normalizeMyanmarPhone(phone) {
+                let p = phone.trim().replace(/[\s-]/g, '');
+                if (p.startsWith('+959')) p = '09' + p.substring(4);
+                else if (p.startsWith('959')) p = '09' + p.substring(3);
+                else if (p.startsWith('9') && p.length === 10) p = '0' + p;
+                else if (p.length === 9 && !p.startsWith('0')) p = '09' + p;
+                return p;
+            }
+
+            function isValidMyanmarPhone(phone) {
+                const norm = normalizeMyanmarPhone(phone);
+                return /^09\d{9}$/.test(norm);
+            }
+
+            // Clear errors on input, and live check username spaces
+            $('input').on('input', function() {
+                if (this.id !== 'usernameInput') {
+                    $(this).removeClass('border-red-500 focus:ring-red-500/20');
+                    $(this).siblings('span.text-red-600').addClass('hidden');
+                }
+                $('#registerAlert').addClass('hidden');
+            });
+
+            $('#usernameInput').on('input', function() {
+                const val = $(this).val();
+                if (/\s/.test(val)) {
+                    $(this).addClass('border-red-500 focus:ring-red-500/20');
+                    $('#usernameError').text("Username cannot contain spaces. Use letters, numbers, '.', '_', or '-'.").removeClass('hidden');
+                } else {
+                    $(this).removeClass('border-red-500 focus:ring-red-500/20');
+                    $('#usernameError').addClass('hidden');
+                }
+            });
+
+            // Form Submit via AJAX to /Auth/Register
+            $('#customerRegisterForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const fullName = $('#fullNameInput').val().trim();
+                const phone = $('#phoneInput').val().trim();
+                const username = $('#usernameInput').val().trim();
+                const email = $('#emailInput').val().trim();
+                const password = $('#passwordInput').val();
+                const confirmPassword = $('#confirmPasswordInput').val();
+
+                let hasError = false;
+
+                if (!fullName) {
+                    $('#fullNameInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#fullNameError').removeClass('hidden');
+                    hasError = true;
+                }
+
+                if (!phone || !isValidMyanmarPhone(phone)) {
+                    $('#phoneInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#phoneError').removeClass('hidden');
+                    hasError = true;
+                }
+
+                // Username validation
+                function getUsernameValidationError(u) {
+                    if (!u) return "Username is required.";
+                    if (/\s/.test(u)) return "Username cannot contain spaces. Use letters, numbers, '.', '_', or '-'.";
+                    if (!/^[a-zA-Z0-9_.-]+$/.test(u)) return "Username can only contain letters, numbers, '.', '_', and '-'.";
+                    if (u.length < 3) return "Username must be at least 3 characters long.";
+                    if (u.length > 30) return "Username cannot exceed 30 characters.";
+                    return null;
+                }
+
+                const usernameValidationMsg = getUsernameValidationError(username);
+                if (usernameValidationMsg) {
+                    $('#usernameInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#usernameError').text(usernameValidationMsg).removeClass('hidden');
+                    hasError = true;
+                }
+
+                const atChar = String.fromCharCode(64);
+                const isValidEmail = email.includes(atChar) && email.indexOf(atChar) > 0 && email.lastIndexOf('.') > email.indexOf(atChar) + 1;
+                if (email && !isValidEmail) {
+                    $('#emailInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#emailError').removeClass('hidden');
+                    hasError = true;
+                }
+
+                if (!password) {
+                    $('#passwordInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#passwordError').removeClass('hidden');
+                    hasError = true;
+                }
+
+                if (password !== confirmPassword) {
+                    $('#confirmPasswordInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#confirmPasswordError').removeClass('hidden');
+                    hasError = true;
+                }
+
+                if (hasError) return;
+
+                const $btn = $('#btnRegisterSubmit');
+                $btn.prop('disabled', true).html(`
+                    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>Creating Account...</span>
+                `);
+
+                const normalizedPhone = normalizeMyanmarPhone(phone);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Auth/Register',
+                    data: {
+                        FullName: fullName,
+                        Phone: normalizedPhone,
+                        Username: username,
+                        Email: email || null,
+                        Password: password
+                    },
+                    success: function(response) {
+                        if (response.isSuccess) {
+                            // Store in client localStorage for auth headers
+                            localStorage.setItem('customer_token', response.accessToken || response.AccessToken);
+                            localStorage.setItem('customer_user', username);
+                            localStorage.setItem('customer_role', response.role || response.Role || 'Customer');
+
+                            // Redirect to bookstore home/browse
+                            window.location.href = '/Books';
+                        } else {
+                            $('#registerAlertText').text(response.message || response.Message || "Failed to register account.");
+                            $('#registerAlert').removeClass('hidden');
+
+                            // Clear password fields and refocus
+                            $('#passwordInput').val('').focus();
+                            $('#confirmPasswordInput').val('');
+
+                            $btn.prop('disabled', false).html(`
+                                <span>Create Account</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                            `);
+                        }
+                    },
+                    error: function(xhr) {
+                        const errMsg = (xhr.responseJSON && xhr.responseJSON.message) || "Network or server error occurred.";
+                        $('#registerAlertText').text(errMsg);
+                        $('#registerAlert').removeClass('hidden');
+
+                        // Clear password fields and refocus
+                        $('#passwordInput').val('').focus();
+                        $('#confirmPasswordInput').val('');
+
+                        $btn.prop('disabled', false).html(`
+                            <span>Create Account</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        `);
+                    }
+                });
+            });
+        });
+    </script>
+}

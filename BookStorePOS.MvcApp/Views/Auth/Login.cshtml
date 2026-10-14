@@ -1,0 +1,266 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Staff Login - BookStore POS";
+    var returnUrl = ViewData["ReturnUrl"]?.ToString() ?? "/Dashboard";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0f766e', // teal-700
+                        'primary-dark': '#1e293b', // slate-800
+                        success: '#059669', // emerald-600
+                        warning: '#f59e0b', // amber-500
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex items-center justify-center p-4 antialiased">
+
+    <div class="max-w-md w-full my-8">
+        <!-- Logo & Header -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center gap-3 mb-3">
+                <div class="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-700 shadow-sm">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <span class="text-2xl font-bold text-slate-900 tracking-tight">POS System</span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Staff & Admin Portal</h1>
+            <p class="text-slate-500 text-sm mt-1">Sign in to manage inventory, sales, and bookstore operations</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="bg-white rounded-3xl p-8 shadow-[0_4px_25px_-5px_rgba(0,0,0,0.05)] border border-slate-100">
+            <!-- Alert Banner -->
+            <div id="loginAlert" class="hidden mb-6 p-4 rounded-2xl text-sm border flex items-start gap-3 bg-red-50 border-red-200 text-red-800" role="alert">
+                <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span id="loginAlertText"></span>
+            </div>
+
+            <form id="staffLoginForm" novalidate class="space-y-5">
+                <!-- Username -->
+                <div>
+                    <label for="usernameInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5 ml-1">
+                        Username <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="usernameInput" name="Username" autocomplete="username" required
+                               placeholder="e.g. admin or staff"
+                               class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                    </div>
+                    <span id="usernameError" class="hidden text-xs text-red-500 mt-1 ml-1 block">Username is required.</span>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5 ml-1">
+                        <label for="passwordInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                            Password <span class="text-red-500">*</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <input type="password" id="passwordInput" name="Password" autocomplete="current-password" required
+                               placeholder="••••••••"
+                               class="w-full pl-11 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-500/20 transition-all" />
+                        <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-teal-700 transition-colors" aria-label="Toggle password visibility">
+                            <svg id="eyeIconOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg id="eyeIconClosed" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <span id="passwordError" class="hidden text-xs text-red-500 mt-1 ml-1 block">Password is required.</span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btnLoginSubmit"
+                        class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-sm hover:shadow flex items-center justify-center gap-2 text-sm mt-3">
+                    <span>Sign In to POS</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Quick Demo Accounts -->
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 text-center">Quick Fill Demo Accounts</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" id="quickAdminBtn" class="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-200 transition-colors text-left group">
+                        <span class="text-xs font-bold text-slate-800 group-hover:text-teal-800">Admin</span>
+                        <span class="text-[11px] text-slate-500">admin / 123</span>
+                    </button>
+                    <button type="button" id="quickStaffBtn" class="flex flex-col items-center p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-teal-50 hover:border-teal-200 transition-colors text-left group">
+                        <span class="text-xs font-bold text-slate-800 group-hover:text-teal-800">Staff</span>
+                        <span class="text-[11px] text-slate-500">staff / 123</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="text-center text-xs text-slate-400 mt-6">
+            &copy; 2026 BookStore POS System. All rights reserved.
+        </p>
+    </div>
+
+    <!-- jQuery for AJAX -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const returnUrl = '@Html.Raw(returnUrl)';
+
+            // Quick Fill Buttons
+            $('#quickAdminBtn').on('click', function() {
+                $('#usernameInput').val('admin').trigger('input');
+                $('#passwordInput').val('123').trigger('input');
+            });
+
+            $('#quickStaffBtn').on('click', function() {
+                $('#usernameInput').val('staff').trigger('input');
+                $('#passwordInput').val('123').trigger('input');
+            });
+
+            // Toggle password visibility
+            $('#togglePasswordBtn').on('click', function() {
+                const $input = $('#passwordInput');
+                const isPassword = $input.attr('type') === 'password';
+                $input.attr('type', isPassword ? 'text' : 'password');
+                $('#eyeIconOpen').toggleClass('hidden', isPassword);
+                $('#eyeIconClosed').toggleClass('hidden', !isPassword);
+            });
+
+            // Clear errors on input
+            $('#usernameInput').on('input', function() {
+                $(this).removeClass('border-red-500 focus:ring-red-500/20');
+                $('#usernameError').addClass('hidden');
+                $('#loginAlert').addClass('hidden');
+            });
+
+            $('#passwordInput').on('input', function() {
+                $(this).removeClass('border-red-500 focus:ring-red-500/20');
+                $('#passwordError').addClass('hidden');
+                $('#loginAlert').addClass('hidden');
+            });
+
+            // Form Submit via AJAX to /Auth/Login
+            $('#staffLoginForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const username = $('#usernameInput').val().trim();
+                const password = $('#passwordInput').val();
+                let hasError = false;
+
+                if (!username) {
+                    $('#usernameInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#usernameError').removeClass('hidden');
+                    hasError = true;
+                }
+
+                if (!password) {
+                    $('#passwordInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#passwordError').removeClass('hidden');
+                    hasError = true;
+                }
+
+                if (hasError) return;
+
+                const $btn = $('#btnLoginSubmit');
+                $btn.prop('disabled', true).html(`
+                    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>Signing in...</span>
+                `);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Auth/Login',
+                    data: {
+                        Username: username,
+                        Password: password
+                    },
+                    success: function(response) {
+                        if (response.isSuccess) {
+                            // Store in client localStorage for auth headers
+                            localStorage.setItem('pos_token', response.accessToken || response.AccessToken);
+                            localStorage.setItem('pos_user', username);
+                            localStorage.setItem('pos_role', response.role || response.Role || 'Staff');
+                            localStorage.setItem('pos_permissions', JSON.stringify(response.permissions || response.Permissions || []));
+
+                            // Redirect to dashboard or returnUrl
+                            window.location.href = returnUrl;
+                        } else {
+                            $('#loginAlertText').text(response.message || response.Message || "Invalid username or password.");
+                            $('#loginAlert').removeClass('hidden');
+
+                            // Clear password and refocus
+                            $('#passwordInput').val('').focus().addClass('border-red-500 focus:ring-red-500/20');
+
+                            $btn.prop('disabled', false).html(`
+                                <span>Sign In to POS</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                            `);
+                        }
+                    },
+                    error: function(xhr) {
+                        const errMsg = (xhr.responseJSON && xhr.responseJSON.message) || "Network or server error occurred.";
+                        $('#loginAlertText').text(errMsg);
+                        $('#loginAlert').removeClass('hidden');
+
+                        // Clear password and refocus
+                        $('#passwordInput').val('').focus().addClass('border-red-500 focus:ring-red-500/20');
+
+                        $btn.prop('disabled', false).html(`
+                            <span>Sign In to POS</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        `);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

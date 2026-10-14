@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - The Oxford Library</title>
+    <title>@ViewData["Title"] - Babylon BookStore</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Elegant Fonts (Oxford Vibe) -->
+    <!-- Elegant Typography -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     
     <script>
@@ -74,9 +74,27 @@
                     <span class="font-medium text-sm">Cart</span>
                 </a>
 
-                <a href="/Account/Login" class="text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-2 rounded-full transition-colors font-medium text-sm shadow-sm">
+                <!-- Guest State -->
+                <a href="/Auth/Login" id="navLoginBtn" class="text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-2.5 rounded-full transition-all font-medium text-sm shadow-sm hover:shadow">
                     Login
                 </a>
+
+                <!-- Logged In State (Upgraded Modern UI) -->
+                <div id="navUserMenu" class="hidden items-center gap-2.5">
+                    <div class="flex items-center gap-2 bg-brand-surface/90 border border-brand-border/80 px-3.5 py-1.5 rounded-full shadow-xs">
+                        <span class="w-7 h-7 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs shadow-xs tracking-wider" id="navUserInitials">CU</span>
+                        <span id="navUsername" class="font-medium text-xs text-brand-ink max-w-[120px] truncate">Customer</span>
+                    </div>
+                    <a href="/Auth/Logout" id="navLogoutBtn" 
+                       class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-full transition-all duration-200 shadow-xs hover:shadow-sm" 
+                       onclick="localStorage.removeItem('customer_token'); localStorage.removeItem('customer_user'); localStorage.removeItem('customer_role');" 
+                       title="Sign out of your account">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span>Logout</span>
+                    </a>
+                </div>
             </div>
 
             <!-- Mobile Cart & Toggle -->
@@ -95,16 +113,32 @@
         <!-- Mobile Drawer / Menu -->
         <div id="mobileMenu" class="hidden md:hidden bg-brand-surface border-t border-brand-border absolute w-full left-0 shadow-lg">
             <div class="flex flex-col px-6 py-4 gap-4">
-
-                
                 <a href="/Books" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Browse</a>
                 <a href="/Authors" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Authors</a>
                 <a href="/Genres" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Genres</a>
                 <a href="/Cart" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Cart</a>
                 
-                <a href="/Account/Login" class="text-center mt-2 text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-3 rounded-lg transition-colors font-medium text-base w-full">
+                <!-- Guest Mobile -->
+                <a href="/Auth/Login" id="mobileLoginBtn" class="text-center mt-2 text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-3 rounded-xl transition-colors font-medium text-base w-full shadow-sm">
                     Login
                 </a>
+
+                <!-- Logged In Mobile (Upgraded Modern UI) -->
+                <div id="mobileUserMenu" class="hidden flex-col gap-3 pt-3 border-t border-brand-border/60">
+                    <div class="flex items-center gap-3 bg-brand-bg border border-brand-border p-3 rounded-xl">
+                        <span class="w-10 h-10 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs tracking-wider shrink-0 shadow-xs" id="mobileUserInitials">CU</span>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[11px] text-brand-inkLight uppercase tracking-wider font-semibold">Signed in as</span>
+                            <span id="mobileUsername" class="text-sm font-bold text-brand-ink truncate"></span>
+                        </div>
+                    </div>
+                    <a href="/Auth/Logout" class="flex items-center justify-center gap-2 text-rose-700 bg-rose-50 hover:bg-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-xs" onclick="localStorage.removeItem('customer_token'); localStorage.removeItem('customer_user'); localStorage.removeItem('customer_role');">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span>Sign Out</span>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
@@ -139,26 +173,131 @@
             </div>
         </div>
         <div class="max-w-7xl mx-auto mt-12 pt-6 border-t border-brand-inkLight/30 text-center text-xs text-brand-border/60">
-            &copy; 2026 The Oxford Library. All rights reserved.
+            &copy; 2026 Babylon BookStore. All rights reserved.
         </div>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('mobileMenuBtn');
-            const menu = document.getElementById('mobileMenu');
-            const icon = document.getElementById('menuIcon');
+    <!-- Login Required Modal -->
+    <dialog id="loginRequiredModal" class="m-auto rounded-3xl p-0 border border-brand-border bg-brand-surface shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs max-w-md w-[92%] sm:w-full transition-all overflow-hidden">
+        <div class="p-6 sm:p-8 text-center relative">
+            <!-- Close Button -->
+            <button type="button" onclick="window.closeLoginRequiredModal()" class="absolute top-4 right-4 text-brand-inkLight/60 hover:text-brand-ink p-1 rounded-lg transition-colors" aria-label="Close modal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+
+            <!-- Icon -->
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-brand-accent/15 border border-brand-accent/30 text-brand-accent flex items-center justify-center shadow-xs">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+            </div>
             
-            btn.addEventListener('click', () => {
-                menu.classList.toggle('hidden');
+            <h3 class="font-heading text-2xl font-bold text-brand-ink mb-2">Sign in to Add to Cart</h3>
+            <p class="text-sm text-brand-inkLight leading-relaxed mb-6 font-body">
+                Please log in to your Babylon BookStore account or create a new account to add books to your shopping cart and place orders.
+            </p>
+
+            <div class="space-y-3">
+                <a id="modalLoginBtn" href="/Auth/Login" class="w-full inline-flex items-center justify-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg font-medium py-3 px-5 rounded-xl transition-all shadow-sm text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Sign In</span>
+                </a>
                 
-                // Toggle between hamburger and close icon
-                if (menu.classList.contains('hidden')) {
-                    icon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
-                } else {
-                    icon.setAttribute('d', 'M6 18L18 6M6 6l12 12');
-                }
-            });
+                <a id="modalRegisterBtn" href="/Auth/Register" class="w-full inline-flex items-center justify-center gap-2 bg-brand-bg hover:bg-brand-surface text-brand-ink font-medium py-3 px-5 rounded-xl border border-brand-border transition-all text-sm shadow-2xs">
+                    <span>Create a New Account</span>
+                </a>
+                
+                <button type="button" onclick="window.closeLoginRequiredModal()" class="w-full text-xs text-brand-inkLight/80 hover:text-brand-ink py-2 transition-colors">
+                    Continue Browsing Books
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        // Global Auth & Cart Modal Helpers
+        window.isCustomerLoggedIn = function() {
+            try {
+                const token = localStorage.getItem('customer_token');
+                const user = localStorage.getItem('customer_user');
+                if (token && user) return true;
+
+                const cookieToken = document.cookie
+                    .split(';')
+                    .map(c => c.trim())
+                    .find(c => c.startsWith('customer_token='));
+                if (cookieToken && cookieToken.split('=')[1]) return true;
+
+                return false;
+            } catch(e) {
+                return false;
+            }
+        };
+
+        window.openLoginRequiredModal = function(returnUrl) {
+            const modal = document.getElementById('loginRequiredModal');
+            if (!modal) return;
+            const loginBtn = document.getElementById('modalLoginBtn');
+            const targetUrl = returnUrl || window.location.pathname + window.location.search;
+            if (loginBtn) {
+                loginBtn.href = '/Auth/Login?returnUrl=' + encodeURIComponent(targetUrl);
+            }
+            if (typeof modal.showModal === 'function') {
+                modal.showModal();
+            } else {
+                modal.setAttribute('open', '');
+            }
+        };
+
+        window.closeLoginRequiredModal = function() {
+            const modal = document.getElementById('loginRequiredModal');
+            if (!modal) return;
+            if (typeof modal.close === 'function') {
+                modal.close();
+            } else {
+                modal.removeAttribute('open');
+            }
+        };
+
+        window.handleAddToCart = function(bookId, e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (!window.isCustomerLoggedIn()) {
+                window.openLoginRequiredModal(window.location.pathname + window.location.search);
+                return false;
+            }
+            if (bookId) {
+                window.location.href = '/Cart/Add/' + bookId;
+            } else {
+                window.location.href = '/Cart';
+            }
+            return true;
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mobile Menu Toggle
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const icon = document.getElementById('menuIcon');
+
+            if(mobileBtn && mobileMenu) {
+                mobileBtn.addEventListener('click', () => {
+                    const isExpanded = !mobileMenu.classList.contains('hidden');
+                    if(isExpanded) {
+                        mobileMenu.classList.add('hidden');
+                        icon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+                    } else {
+                        mobileMenu.classList.remove('hidden');
+                        icon.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+                    }
+                });
+            }
 
             // Debounce Search Logic
             let debounceTimer;
@@ -198,9 +337,76 @@
                     });
                 }
             });
+
+            // Customer Auth state check from localStorage or cookies
+            try {
+                let customerUser = localStorage.getItem('customer_user');
+                let customerToken = localStorage.getItem('customer_token');
+
+                if (!customerToken) {
+                    const cookieMatch = document.cookie.match(/customer_token=([^;]+)/);
+                    if (cookieMatch) customerToken = cookieMatch[1];
+                }
+                if (!customerUser) {
+                    const userMatch = document.cookie.match(/customer_user=([^;]+)/);
+                    if (userMatch) customerUser = decodeURIComponent(userMatch[1]);
+                }
+
+                if (customerToken && customerUser) {
+                    localStorage.setItem('customer_token', customerToken);
+                    localStorage.setItem('customer_user', customerUser);
+
+                    const navLoginBtn = document.getElementById('navLoginBtn');
+                    const navUserMenu = document.getElementById('navUserMenu');
+                    const navUsername = document.getElementById('navUsername');
+                    const navUserInitials = document.getElementById('navUserInitials');
+
+                    const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+                    const mobileUserMenu = document.getElementById('mobileUserMenu');
+                    const mobileUsername = document.getElementById('mobileUsername');
+                    const mobileUserInitials = document.getElementById('mobileUserInitials');
+
+                    if (navLoginBtn) navLoginBtn.classList.add('hidden');
+                    if (navUserMenu) {
+                        navUserMenu.classList.remove('hidden');
+                        navUserMenu.classList.add('flex');
+                    }
+                    if (navUsername) navUsername.textContent = customerUser;
+                    if (navUserInitials) navUserInitials.textContent = customerUser.substring(0, 2).toUpperCase();
+
+                    if (mobileLoginBtn) mobileLoginBtn.classList.add('hidden');
+                    if (mobileUserMenu) {
+                        mobileUserMenu.classList.remove('hidden');
+                        mobileUserMenu.classList.add('flex');
+                    }
+                    if (mobileUsername) mobileUsername.textContent = customerUser;
+                    if (mobileUserInitials) mobileUserInitials.textContent = customerUser.substring(0, 2).toUpperCase();
+                }
+            } catch(e) {}
+
+            // Close modal when clicking backdrop
+            const modal = document.getElementById('loginRequiredModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        window.closeLoginRequiredModal();
+                    }
+                });
+            }
+
+            // Intercept top-level Cart links when guest
+            document.querySelectorAll('a[href="/Cart"]').forEach(function(cartLink) {
+                cartLink.addEventListener('click', function(e) {
+                    if (!window.isCustomerLoggedIn()) {
+                        e.preventDefault();
+                        window.openLoginRequiredModal('/Cart');
+                    }
+                });
+            });
         });
     </script>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

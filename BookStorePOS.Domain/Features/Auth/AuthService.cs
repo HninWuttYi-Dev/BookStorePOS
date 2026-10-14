@@ -119,7 +119,26 @@ public class AuthService : IAuthService
             if (string.IsNullOrWhiteSpace(request.Password))
                 return new RegisterResponseModel { isSuccess = false, Message = "Password is required." };
 
-            string username = request.Username.Trim().Replace(" ", "");
+            if (request.Username.Contains(' ') || !Regex.IsMatch(request.Username.Trim(), @"^[a-zA-Z0-9_.-]+$"))
+            {
+                _logger.LogWarning("RegisterCustomerAsync => Username contains spaces or invalid characters: {Username}", request.Username);
+                return new RegisterResponseModel
+                {
+                    isSuccess = false,
+                    Message = "Username cannot contain spaces or special characters. Please use letters, numbers, '.', '_', or '-' only."
+                };
+            }
+
+            if (request.Username.Trim().Length < 3 || request.Username.Trim().Length > 30)
+            {
+                return new RegisterResponseModel
+                {
+                    isSuccess = false,
+                    Message = "Username must be between 3 and 30 characters long."
+                };
+            }
+
+            string username = request.Username.Trim();
             string phone = request.Phone.Trim().Replace(" ", "").Replace("-", "");
             string? email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
 
