@@ -1,0 +1,356 @@
+@model RoleListResponseModel
+@{
+    ViewData["Title"] = "Roles & Permissions";
+    var roles = ViewData["Roles"] as List<RoleModel> ?? new List<RoleModel>();
+    int currentPage = ViewData["CurrentPage"] != null ? Convert.ToInt32(ViewData["CurrentPage"]) : 1;
+    int totalPages = ViewData["TotalPages"] != null ? Convert.ToInt32(ViewData["TotalPages"]) : 1;
+    int totalCount = ViewData["TotalCount"] != null ? Convert.ToInt32(ViewData["TotalCount"]) : roles.Count;
+    
+    bool hasMessage = TempData["Message"] != null;
+    bool isSuccess = TempData["isSuccess"] != null ? Convert.ToBoolean(TempData["isSuccess"]) : false;
+    string message = TempData["Message"]?.ToString() ?? string.Empty;
+
+    int count = (currentPage - 1) * (ViewData["PageSize"] != null ? Convert.ToInt32(ViewData["PageSize"]) : 10);
+    string nameFilter = ViewData["RoleNameFilter"]?.ToString() ?? string.Empty;
+}
+
+<!-- Page Header -->
+<div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            Roles & Access Control
+        </h1>
+        <p class="text-slate-500 mt-1.5 text-sm font-medium">
+            Manage staff roles and customize dynamic permissions for POS operations, inventory, and management.
+        </p>
+    </div>
+    <a href="/Role/Create" id="btnNewRole" class="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span>Create New Role</span>
+    </a>
+</div>
+
+<!-- Toast Alert -->
+@if (hasMessage)
+{
+    <div id="toastMessage" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg flex items-center gap-3 transition-opacity duration-300 @(isSuccess ? "bg-emerald-600 text-white" : "bg-red-600 text-white")">
+        @if (isSuccess)
+        {
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        }
+        else
+        {
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        }
+        <span class="font-medium text-sm">@message</span>
+        <button onclick="document.getElementById('toastMessage').remove()" class="ml-2 hover:opacity-75 focus:outline-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+}
+
+<!-- Search Form -->
+<form method="get" action="/Role" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+    <div class="flex flex-col flex-1 w-full">
+        <label for="roleName" class="text-xs font-semibold text-slate-500 mb-1.5 ml-1">Role Name</label>
+        <input type="text" id="roleName" name="RoleName" value="@nameFilter" placeholder="Search by role name (e.g. Cashier, Manager)" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all w-full" />
+    </div>
+    <div class="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
+        <a href="/Role" class="flex-1 md:flex-none px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors text-center">
+            Clear
+        </a>
+    </div>
+</form>
+
+<!-- Roles Table Card -->
+<div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col">
+    <div class="overflow-x-auto p-2">
+        <table class="w-full text-left text-sm">
+            <thead class="text-slate-500 bg-slate-50/70 rounded-xl">
+                <tr>
+                    <th class="px-4 py-3.5 font-semibold w-14 text-left rounded-l-xl">No.</th>
+                    <th class="px-4 py-3.5 font-semibold text-left w-72">Role Name</th>
+                    <th class="px-4 py-3.5 font-semibold text-left w-52">Permissions Level</th>
+                    <th class="px-4 py-3.5 font-semibold text-left">Assigned Modules</th>
+                    <th class="px-4 py-3.5 font-semibold w-24 text-left rounded-r-xl">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="text-slate-700 divide-y divide-slate-100">
+                @if (roles == null || roles.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="px-4 py-12 text-center text-slate-500 font-medium">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                    <svg class="w-6 h-6 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                </div>
+                                <span>No roles found matching your filter criteria.</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var role in roles)
+                    {
+                        var isAdmin = role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+                        var permCount = role.Permissions?.Count ?? 0;
+                        var modules = role.Permissions?
+                            .Select(p => p.Category)
+                            .Distinct()
+                            .Take(3)
+                            .ToList() ?? new List<string>();
+
+                        <tr class="hover:bg-slate-50/80 transition-colors group">
+                            <!-- Index -->
+                            <td class="px-4 py-3.5 font-medium text-slate-400 text-left rounded-l-xl">
+                                @(++count)
+                            </td>
+
+                            <!-- Role Name -->
+                            <td class="px-4 py-3.5 text-left">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105 @(isAdmin ? "bg-amber-50 text-amber-600 border border-amber-200" : "bg-teal-50 text-teal-600 border border-teal-200")">
+                                        @if (isAdmin)
+                                        {
+                                            <!-- Lucide ShieldCheck Icon -->
+                                            <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                                <path d="m9 12 2 2 4-4"/>
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <!-- Lucide Users Icon -->
+                                            <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                                <circle cx="9" cy="7" r="4"/>
+                                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                            </svg>
+                                        }
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-slate-900 text-sm">@role.RoleName</span>
+                                            @if (isAdmin)
+                                            {
+                                                <span class="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-800 rounded-full border border-amber-200">
+                                                    System Owner
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Permission Count -->
+                            <td class="px-4 py-3.5 text-left">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold @(permCount > 15 ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : (permCount > 0 ? "bg-teal-50 text-teal-700 border border-teal-200" : "bg-slate-100 text-slate-600"))">
+                                        @permCount @(permCount == 1 ? "Permission" : "Permissions")
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Module Tags -->
+                            <td class="px-4 py-3.5 text-left">
+                                <div class="flex flex-wrap gap-1.5 max-w-md">
+                                    @if (isAdmin)
+                                    {
+                                        <span class="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-700 rounded-md">
+                                            All Modules (Full Control)
+                                        </span>
+                                    }
+                                    else if (modules.Count > 0)
+                                    {
+                                        foreach (var m in modules)
+                                        {
+                                            <span class="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-700 rounded-md">
+                                                @m
+                                            </span>
+                                        }
+                                        if (role.Permissions != null && role.Permissions.Select(p => p.Category).Distinct().Count() > 3)
+                                        {
+                                            <span class="px-2 py-0.5 text-xs text-slate-500">
+                                                +@(role.Permissions.Select(p => p.Category).Distinct().Count() - 3) more
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-slate-400 italic">No permissions assigned</span>
+                                    }
+                                </div>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-4 py-3.5 text-left rounded-r-xl">
+                                <div class="flex items-center gap-2">
+                                    <a href="/Role/Edit/@role.RoleId" class="p-2 text-slate-500 hover:text-teal-600 border border-slate-200 rounded-lg hover:border-teal-200 hover:bg-teal-50 transition-all hover:scale-105" title="Configure Permissions">
+                                        <svg class="w-4 h-4 transition-transform duration-200 hover:rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                            <path d="m15 5 4 4"/>
+                                        </svg>
+                                    </a>
+                                    
+                                    @if (isAdmin)
+                                    {
+                                        <button type="button" disabled class="p-2 text-slate-300 border border-slate-100 rounded-lg cursor-not-allowed" title="System Admin role cannot be deleted">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                            </svg>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" data-id="@role.RoleId" data-name="@role.RoleName" class="btnDelete p-2 text-slate-500 hover:text-red-600 border border-slate-200 rounded-lg hover:border-red-200 hover:bg-red-50 transition-all hover:scale-105" title="Delete Role">
+                                            <svg class="w-4 h-4 transition-transform duration-200 hover:rotate-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3 6h18"/>
+                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                                                <line x1="10" y1="11" x2="10" y2="17"/>
+                                                <line x1="14" y1="11" x2="14" y2="17"/>
+                                            </svg>
+                                        </button>
+                                    }
+                                </div>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    @if (totalPages > 1)
+    {
+        <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-xs text-slate-500">
+                Page <span class="font-semibold text-slate-800">@currentPage</span> of <span class="font-semibold text-slate-800">@totalPages</span>
+            </span>
+            <div class="flex items-center gap-1">
+                @if (currentPage > 1)
+                {
+                    <a href="/Role?PageNumber=@(currentPage - 1)&RoleName=@Uri.EscapeDataString(nameFilter)" class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50">
+                        Previous
+                    </a>
+                }
+                @if (currentPage < totalPages)
+                {
+                    <a href="/Role?PageNumber=@(currentPage + 1)&RoleName=@Uri.EscapeDataString(nameFilter)" class="px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50">
+                        Next
+                    </a>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div id="deleteModalBackdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"></div>
+    <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl z-10 border border-slate-100">
+        <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 mx-auto">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 text-center mb-1">Delete Role</h3>
+        <p class="text-sm text-slate-500 text-center mb-6">
+            Are you sure you want to delete role <span id="deleteRoleName" class="font-bold text-slate-800"></span>? Users assigned to this role will lose their custom access.
+        </p>
+        <div class="flex gap-3">
+            <button type="button" id="btnCancelDelete" class="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-colors">
+                Cancel
+            </button>
+            <button type="button" id="btnConfirmDelete" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 text-sm transition-colors shadow-sm">
+                Confirm Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Live Search Debounce
+            let debounceTimer;
+            const filterForm = document.querySelector('form[action="/Role"]');
+            if (filterForm) {
+                const inputs = filterForm.querySelectorAll('input[type="text"]');
+                inputs.forEach(input => {
+                    input.addEventListener('input', function() {
+                        clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(() => {
+                            filterForm.submit();
+                        }, 500);
+                    });
+                });
+            }
+
+            // Toast auto-hide
+            const toast = document.getElementById('toastMessage');
+            if (toast) {
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }
+
+            // Delete Modal Logic
+            let roleIdToDelete = null;
+            const $deleteModal = $('#deleteModal');
+
+            function closeDeleteModal() {
+                $deleteModal.addClass('hidden');
+                roleIdToDelete = null;
+            }
+
+            $('.btnDelete').on('click', function() {
+                roleIdToDelete = $(this).data('id');
+                const roleName = $(this).data('name');
+                $('#deleteRoleName').text('"' + roleName + '"');
+                $deleteModal.removeClass('hidden');
+            });
+
+            $('#btnCancelDelete, #deleteModalBackdrop').on('click', closeDeleteModal);
+
+            $('#btnConfirmDelete').on('click', function() {
+                if (!roleIdToDelete) return;
+
+                const $btn = $(this);
+                $btn.prop('disabled', true).text('Deleting...');
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Role/Delete',
+                    data: { RoleId: roleIdToDelete },
+                    success: function(response) {
+                        if (response.isSuccess) {
+                            window.location.reload();
+                        } else {
+                            alert(response.message || response.Message || "Failed to delete role.");
+                            $btn.prop('disabled', false).text('Confirm Delete');
+                            closeDeleteModal();
+                        }
+                    },
+                    error: function(xhr) {
+                        alert("Server Error: " + (xhr.statusText || "Unable to delete role."));
+                        $btn.prop('disabled', false).text('Confirm Delete');
+                        closeDeleteModal();
+                    }
+                });
+            });
+        });
+    </script>
+}

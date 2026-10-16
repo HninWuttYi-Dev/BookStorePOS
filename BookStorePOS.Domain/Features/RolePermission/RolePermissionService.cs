@@ -44,6 +44,16 @@ public class RolePermissionService : IRolePermissionService
             }
 
             var query = RolesWithPermissions.AsNoTracking();
+
+            // Hide Customer system role from staff POS role management
+            query = query.Where(r => r.RoleName.ToLower() != "customer");
+
+            if (!string.IsNullOrWhiteSpace(request?.RoleName))
+            {
+                var roleSearch = request.RoleName.Trim().ToLower();
+                query = query.Where(r => r.RoleName.ToLower().Contains(roleSearch));
+            }
+
             var totalCount = await query.CountAsync();
 
             var roleEntities = await query
@@ -194,6 +204,15 @@ public class RolePermissionService : IRolePermissionService
                 };
             }
 
+            if (IsCustomer(role))
+            {
+                return new RoleUpdateResponseModel
+                {
+                    isSuccess = false,
+                    Message = "The system Customer role cannot be modified via the staff portal."
+                };
+            }
+
             if (IsAdmin(role) && (request.RoleName.Trim() != role.RoleName || await StripsAdminPermissions(role, request.PermissionIds)))
             {
                 return new RoleUpdateResponseModel
@@ -247,12 +266,12 @@ public class RolePermissionService : IRolePermissionService
                 };
             }
 
-            if (IsAdmin(role))
+            if (IsAdmin(role) || IsCustomer(role))
             {
                 return new RoleDeleteResponseModel
                 {
                     isSuccess = false,
-                    Message = "The system Admin role cannot be deleted."
+                    Message = $"The system {role.RoleName} role cannot be deleted."
                 };
             }
 
@@ -293,7 +312,7 @@ public class RolePermissionService : IRolePermissionService
         try
         {
             var pageNumber = request?.PageNumber ?? 1;
-            var pageSize = request?.PageSize ?? 10;
+            var pageSize = (request != null && request.PageSize > 0) ? request.PageSize : 100;
 
             if (pageNumber < 1 || pageSize < 1 || ((long)pageNumber - 1) * pageSize > int.MaxValue)
             {
@@ -418,6 +437,17 @@ public class RolePermissionService : IRolePermissionService
             return "Role name is required and must not exceed 50 characters.";
 
         var normalized = name.Trim().ToUpperInvariant();
+
+        // Prevent creating or renaming to reserved system names
+        if (roleId == null && (normalized == "CUSTOMER" || normalized == "ADMIN"))
+        {
+            return $"The role name '{name.Trim()}' is reserved by the system.";
+        }
+        if (roleId != null && normalized == "CUSTOMER")
+        {
+            return "The role name 'Customer' is reserved by the system.";
+        }
+
         bool nameExists = await _db.TblRoles.AnyAsync(r =>
             r.RoleId != roleId &&
             !r.IsDeleted &&
@@ -456,6 +486,11 @@ public class RolePermissionService : IRolePermissionService
     private static bool IsAdmin(TblRole role)
     {
         return role.RoleId == 1 || string.Equals(role.RoleName, "Admin", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsCustomer(TblRole role)
+    {
+        return string.Equals(role.RoleName, "Customer", StringComparison.OrdinalIgnoreCase);
     }
 
     private void ReplacePermissions(TblRole role, List<int>? ids)

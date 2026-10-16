@@ -4,10 +4,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<BookStorePOS.MvcApp.Handlers.AuthHeaderHandler>();
+
 builder.Services.AddHttpClient("WebAPI", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5201/");
-});
+})
+.AddHttpMessageHandler<BookStorePOS.MvcApp.Handlers.AuthHeaderHandler>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

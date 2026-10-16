@@ -96,4 +96,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+await BookStorePOS.WebApi.Data.AuthDataSeeder.EnsureSeedDataAsync(app.Services);
+
 app.Run();
+

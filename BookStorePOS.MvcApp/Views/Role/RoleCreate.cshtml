@@ -1,0 +1,318 @@
+@{
+    ViewData["Title"] = "Create New Role";
+    var allPermissions = ViewData["AllPermissions"] as List<PermissionModel> ?? new List<PermissionModel>();
+    var groupedPermissions = allPermissions.GroupBy(p => p.Category).OrderBy(g => g.Key).ToList();
+    int totalPerms = allPermissions.Count;
+}
+
+<div class="max-w-5xl mx-auto pb-16">
+    <!-- Breadcrumb & Title -->
+    <div class="mb-8">
+        <a href="/Role" class="group inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition-colors mb-2">
+            <svg class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 19-7-7 7-7"/>
+                <path d="M19 12H5"/>
+            </svg>
+            Back to Roles
+        </a>
+        <h1 class="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+            <span class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center border border-teal-100 shadow-2xs">
+                <svg class="w-5 h-5 transition-transform duration-300 hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <path d="M12 8v8"/>
+                    <path d="M8 12h8"/>
+                </svg>
+            </span>
+            Create New Staff Role
+        </h1>
+        <p class="text-slate-500 mt-1.5 text-sm font-medium">
+            Define a custom role and assign specific permissions grouped by system modules.
+        </p>
+    </div>
+
+    <!-- Alert Banner -->
+    <div id="roleAlert" class="hidden mb-6 p-4 rounded-2xl text-sm border flex items-start gap-3 bg-red-50 border-red-200 text-red-800" role="alert">
+        <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span id="roleAlertText"></span>
+    </div>
+
+    <form id="createRoleForm" novalidate class="space-y-8">
+        <!-- Role Information Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+            <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">1</span>
+                Role Information
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="roleNameInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+                        Role Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="roleNameInput" name="RoleName" required
+                           placeholder="e.g. Cashier, Inventory Clerk, Supervisor"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium" />
+                    <span id="roleNameError" class="hidden text-xs text-red-600 mt-1 block">Role name is required.</span>
+                </div>
+                <div class="flex items-end">
+                    <div class="p-3.5 bg-teal-50/70 border border-teal-100 rounded-xl text-xs text-teal-900 leading-relaxed w-full flex items-start gap-2.5">
+                        <svg class="w-4 h-4 text-teal-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <strong class="font-semibold text-teal-950">Dynamic Access:</strong> A user assigned to this role will only see sidebar tabs and actions matching the permissions granted below.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions Section -->
+        <div class="space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">2</span>
+                        Permissions Configuration
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5 ml-9">
+                        Selected: <span id="selectedCountBadge" class="font-bold text-teal-700">0</span> of @totalPerms total permissions
+                    </p>
+                </div>
+                <!-- Quick Global Toggles -->
+                <div class="flex items-center gap-2 ml-9 sm:ml-0">
+                    <button type="button" id="btnSelectAllGlobal" class="px-3.5 py-1.5 text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100/80 border border-teal-200 rounded-lg transition-colors">
+                        Select All
+                    </button>
+                    <button type="button" id="btnClearAllGlobal" class="px-3.5 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 rounded-lg transition-colors">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grouped Category Cards -->
+            @foreach (var group in groupedPermissions)
+            {
+                var categoryName = group.Key;
+                var categoryId = "cat_" + Math.Abs(categoryName.GetHashCode());
+
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] overflow-hidden">
+                    <!-- Category Header / Sub-title -->
+                    <div class="px-6 py-4 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            @if (categoryName.Contains("Inventory"))
+                            {
+                                <span class="p-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m7.5 4.27 9 5.15"/>
+                                        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                                        <path d="m3.3 7 8.7 5 8.7-5"/>
+                                        <path d="M12 22V12"/>
+                                    </svg>
+                                </span>
+                            }
+                            else if (categoryName.Contains("Sales"))
+                            {
+                                <span class="p-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="8" cy="21" r="1"/>
+                                        <circle cx="19" cy="21" r="1"/>
+                                        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+                                    </svg>
+                                </span>
+                            }
+                            else if (categoryName.Contains("Dashboard"))
+                            {
+                                <span class="p-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect width="7" height="9" x="3" y="3" rx="1"/>
+                                        <rect width="7" height="5" x="14" y="3" rx="1"/>
+                                        <rect width="7" height="9" x="14" y="12" rx="1"/>
+                                        <rect width="7" height="5" x="3" y="16" rx="1"/>
+                                    </svg>
+                                </span>
+                            }
+                            else if (categoryName.Contains("Staff") || categoryName.Contains("User"))
+                            {
+                                <span class="p-1.5 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="p-1.5 bg-teal-50 text-teal-700 border border-teal-200 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    </svg>
+                                </span>
+                            }
+                            <h3 class="text-sm font-bold text-slate-900 tracking-wide uppercase">
+                                @categoryName
+                            </h3>
+                            <span class="text-xs text-slate-400 font-medium ml-1">
+                                (@group.Count() permissions)
+                            </span>
+                        </div>
+                        <button type="button" class="btnCategoryToggle text-xs font-semibold text-teal-700 hover:text-teal-800 hover:underline" data-category="@categoryId">
+                            Toggle Module
+                        </button>
+                    </div>
+
+                    <!-- Category Permissions Grid -->
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="@categoryId">
+                        @foreach (var perm in group.OrderBy(p => p.PermissionName))
+                        {
+                            <label class="relative flex items-start gap-3 p-3.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/80 hover:border-teal-300 transition-all cursor-pointer group shadow-2xs">
+                                <div class="flex items-center h-5 mt-0.5">
+                                    <input type="checkbox" name="permissionCheckbox" value="@perm.PermissionId"
+                                           class="perm-checkbox w-4 h-4 text-teal-600 bg-slate-100 border-slate-300 rounded focus:ring-teal-500 focus:ring-2 cursor-pointer transition-all" />
+                                </div>
+                                <div class="flex flex-col min-w-0">
+                                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                        <span class="text-sm font-semibold text-slate-900 group-hover:text-teal-700 transition-colors">
+                                            @perm.DisplayName
+                                        </span>
+                                        <span class="px-1.5 py-0.5 text-[9px] font-bold tracking-wider rounded uppercase @perm.ActionBadgeClass">
+                                            @perm.Action
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-slate-500 leading-relaxed">
+                                        @perm.FriendlyDescription
+                                    </span>
+                                    <span class="text-[10px] text-slate-400 font-mono mt-1 block opacity-70">
+                                        @perm.PermissionName
+                                    </span>
+                                </div>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Sticky Bottom Bar -->
+        <div class="sticky bottom-4 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 shadow-xl flex items-center justify-between z-20">
+            <div class="text-sm text-slate-600">
+                Total Selected: <span id="selectedCountFooter" class="font-bold text-teal-700 text-base">0</span> permissions
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/Role" class="px-5 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" id="btnSubmitRole" class="px-6 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 text-sm transition-all shadow-md flex items-center gap-2">
+                    <span>Create Role</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            function updateSelectedCount() {
+                const count = $('.perm-checkbox:checked').length;
+                $('#selectedCountBadge').text(count);
+                $('#selectedCountFooter').text(count);
+            }
+
+            $('.perm-checkbox').on('change', function() {
+                updateSelectedCount();
+                $(this).closest('label').toggleClass('border-teal-500 bg-teal-50/30', this.checked);
+            });
+
+            // Global Select All / Clear All
+            $('#btnSelectAllGlobal').on('click', function() {
+                $('.perm-checkbox').prop('checked', true).trigger('change');
+            });
+
+            $('#btnClearAllGlobal').on('click', function() {
+                $('.perm-checkbox').prop('checked', false).trigger('change');
+            });
+
+            // Category Toggle Module
+            $('.btnCategoryToggle').on('click', function() {
+                const catId = $(this).data('category');
+                const $checkboxes = $('#' + catId + ' .perm-checkbox');
+                const allChecked = $checkboxes.length === $checkboxes.filter(':checked').length;
+                $checkboxes.prop('checked', !allChecked).trigger('change');
+            });
+
+            // Form Submit via AJAX
+            $('#createRoleForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const roleName = $('#roleNameInput').val().trim();
+                if (!roleName) {
+                    $('#roleNameInput').addClass('border-red-500 focus:ring-red-500/20');
+                    $('#roleNameError').removeClass('hidden');
+                    return;
+                }
+
+                const selectedPermIds = [];
+                $('.perm-checkbox:checked').each(function() {
+                    selectedPermIds.push(parseInt($(this).val(), 10));
+                });
+
+                const $btn = $('#btnSubmitRole');
+                $btn.prop('disabled', true).html(`
+                    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span>Saving...</span>
+                `);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/Role/Save',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        RoleName: roleName,
+                        PermissionIds: selectedPermIds
+                    }),
+                    success: function(response) {
+                        if (response.isSuccess) {
+                            window.location.href = '/Role';
+                        } else {
+                            $('#roleAlertText').text(response.message || response.Message || "Failed to create role.");
+                            $('#roleAlert').removeClass('hidden');
+                            $btn.prop('disabled', false).html(`
+                                <span>Create Role</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                                </svg>
+                            `);
+                        }
+                    },
+                    error: function(xhr) {
+                        const errMsg = (xhr.responseJSON && xhr.responseJSON.message) || "Network or server error occurred.";
+                        $('#roleAlertText').text(errMsg);
+                        $('#roleAlert').removeClass('hidden');
+                        $btn.prop('disabled', false).html(`
+                            <span>Create Role</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        `);
+                    }
+                });
+            });
+
+            $('#roleNameInput').on('input', function() {
+                $(this).removeClass('border-red-500 focus:ring-red-500/20');
+                $('#roleNameError').addClass('hidden');
+                $('#roleAlert').addClass('hidden');
+            });
+        });
+    </script>
+}

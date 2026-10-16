@@ -2,7 +2,6 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -32,12 +31,6 @@ public class PermissionFilter : IAsyncAuthorizationFilter
 
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
-        // Allow anonymous access if [AllowAnonymous] is present
-        if (context.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any())
-        {
-            return;
-        }
-
         bool hasPermission = false;
 
         if (_checkFromDb)
@@ -67,3 +60,4 @@ public class PermissionFilter : IAsyncAuthorizationFilter
         }
     }
 }
+

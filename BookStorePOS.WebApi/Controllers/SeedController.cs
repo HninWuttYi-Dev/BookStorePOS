@@ -178,7 +178,8 @@ namespace BookStorePOS.WebApi.Controllers
                     "User.View", "User.Create", "User.Update", "User.Delete",
                     "Genre.View", "Genre.Create", "Genre.Update", "Genre.Delete",
                     "Author.View", "Author.Create", "Author.Update", "Author.Delete",
-                    "Edition.View", "Edition.Create", "Edition.Update", "Edition.Delete"
+                    "Edition.View", "Edition.Create", "Edition.Update", "Edition.Delete",
+                    "Role.View", "Role.Create", "Role.Update", "Role.Delete"
                 };
 
                 var perms = new Dictionary<string, TblPermission>();

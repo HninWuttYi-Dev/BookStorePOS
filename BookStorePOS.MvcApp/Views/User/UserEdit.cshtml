@@ -1,0 +1,276 @@
+@model UserModel
+@{
+    ViewData["Title"] = "Edit Staff: " + Model.FullName;
+    var roles = ViewData["Roles"] as List<RoleModel> ?? new List<RoleModel>();
+    bool isSystemAdmin = Model.Username.Equals("admin", StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="max-w-3xl mx-auto pb-16">
+    <!-- Breadcrumb & Title -->
+    <div class="mb-8">
+        <a href="/User" class="group inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition-colors mb-2">
+            <svg class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+            </svg>
+            Back to Staff List
+        </a>
+        <div class="flex items-center gap-3">
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl @(isSystemAdmin ? "bg-amber-50 text-amber-600 border border-amber-200" : "bg-teal-50 text-teal-600 border border-teal-200") flex items-center justify-center shadow-2xs">
+                    <svg class="w-5 h-5 transition-transform duration-300 hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                        <path d="m15 5 4 4"/>
+                    </svg>
+                </span>
+                Edit Staff: @Model.FullName
+            </h1>
+            @if (isSystemAdmin)
+            {
+                <span class="px-3 py-1 text-xs font-bold bg-amber-100 text-amber-800 rounded-full border border-amber-200">
+                    System Protected
+                </span>
+            }
+        </div>
+        <p class="text-slate-500 mt-1.5 text-sm font-medium">
+            Update contact details, reassign role permissions, or reset staff login password.
+        </p>
+    </div>
+
+    <!-- Alert Banner -->
+    <div id="userAlert" class="hidden mb-6 p-4 rounded-2xl text-sm border flex items-start gap-3 bg-red-50 border-red-200 text-red-800" role="alert">
+        <svg class="w-5 h-5 text-red-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="userAlertText"></span>
+    </div>
+
+    <form id="editStaffForm" novalidate class="space-y-6">
+        <input type="hidden" id="userIdInput" value="@Model.UserId" />
+
+        <!-- Staff Details Card -->
+        <div class="bg-white p-7 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Full Name -->
+                <div>
+                    <label for="fullNameInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+                        Full Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="fullNameInput" name="FullName" value="@Model.FullName" required
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium" />
+                    <span id="fullNameError" class="hidden text-xs text-red-600 mt-1 block">Full name is required.</span>
+                </div>
+
+                <!-- Username -->
+                <div>
+                    <label for="usernameInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+                        Login Username <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-mono text-sm pointer-events-none">&#64;</span>
+                        <input type="text" id="usernameInput" name="Username" value="@Model.Username" required @(isSystemAdmin ? "readonly" : "")
+                               autocomplete="off"
+                               class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium font-mono @(isSystemAdmin ? "cursor-not-allowed text-slate-500 bg-slate-100" : "")" />
+                    </div>
+                    <span id="usernameError" class="hidden text-xs text-red-600 mt-1 block">Username is required.</span>
+                    @if (!isSystemAdmin)
+                    {
+                        <p class="text-[11px] text-slate-400 mt-1">No spaces allowed. Letters, numbers, and underscores only.</p>
+                    }
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <label for="phoneInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+                        Phone Number <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="phoneInput" name="Phone" value="@Model.Phone" required
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium font-mono" />
+                    <span id="phoneError" class="hidden text-xs text-red-600 mt-1 block">Valid Myanmar phone number is required (09XXXXXXXXX).</span>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="emailInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+                        Email Address <span class="text-slate-400 font-normal lowercase">(optional)</span>
+                    </label>
+                    <input type="email" id="emailInput" name="Email" value="@Model.Email"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium" />
+                </div>
+
+                <!-- Role Selection -->
+                <div class="md:col-span-2">
+                    <label for="roleIdSelect" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
+                        Assigned Role <span class="text-red-500">*</span>
+                    </label>
+                    <select id="roleIdSelect" name="RoleId" required @(isSystemAdmin ? "disabled" : "")
+                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium @(isSystemAdmin ? "cursor-not-allowed bg-slate-100 text-slate-500" : "")">
+                        @foreach (var r in roles)
+                        {
+                            <option value="@r.RoleId" selected="@(Model.RoleId == r.RoleId ? "selected" : null)">@r.RoleName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <!-- Password Reset Section -->
+            <div class="pt-4 border-t border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 mb-1 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-teal-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    Reset Password (Optional)
+                </h3>
+                <p class="text-xs text-slate-400 mb-4">
+                    Leave blank to keep the current password. Enter a new password below only if the staff member forgot their password or needs a new one.
+                </p>
+
+                <div class="max-w-md relative">
+                    <input type="password" id="passwordInput" name="Password" minlength="3"
+                           placeholder="Enter new password (optional)"
+                           class="w-full pl-4 pr-11 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium" />
+                    <button type="button" id="btnTogglePassword" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-teal-700 transition-colors" title="Toggle password visibility">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+                <span id="passwordError" class="hidden text-xs text-red-600 mt-1 block">New password must be at least 3 characters.</span>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3 pt-2">
+            <a href="/User" class="px-5 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-colors">
+                Cancel
+            </a>
+            <button type="submit" id="btnSubmitStaff" class="px-6 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 text-sm transition-all shadow-md flex items-center gap-2 group">
+                <svg class="w-4 h-4 transition-transform duration-200 group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                <span>Save Changes</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    $(document).ready(function() {
+        $('#btnTogglePassword').on('click', function() {
+            const $pwd = $('#passwordInput');
+            const type = $pwd.attr('type') === 'password' ? 'text' : 'password';
+            $pwd.attr('type', type);
+        });
+
+        // Prevent typing spaces in username field
+        $('#usernameInput').on('keydown', function(e) {
+            if (e.which === 32 || e.key === ' ' || e.code === 'Space') {
+                e.preventDefault();
+                $('#usernameError').text('Spaces are not allowed in username.').removeClass('hidden');
+                return false;
+            }
+        });
+
+        // Strip any pasted spaces immediately
+        $('#usernameInput').on('input', function() {
+            const val = $(this).val();
+            if (/\s/.test(val)) {
+                $(this).val(val.replace(/\s+/g, ''));
+                $('#usernameError').text('Spaces are not allowed and were removed.').removeClass('hidden');
+            } else if (!val) {
+                $('#usernameError').text('Username is required.').addClass('hidden');
+            } else {
+                $('#usernameError').addClass('hidden');
+            }
+        });
+
+        $('#editStaffForm').on('submit', function(e) {
+            e.preventDefault();
+
+            let isValid = true;
+            $('#userAlert').addClass('hidden');
+            $('#fullNameError, #usernameError, #phoneError, #passwordError').addClass('hidden');
+
+            const userId = parseInt($('#userIdInput').val(), 10);
+            const fullName = $('#fullNameInput').val().trim();
+            const rawUsername = $('#usernameInput').val();
+            const phone = $('#phoneInput').val().trim().replace(/[\s-]+/g, '');
+            const email = $('#emailInput').val().trim();
+            const roleId = parseInt($('#roleIdSelect').val(), 10);
+            const password = $('#passwordInput').val();
+
+            if (!fullName) {
+                $('#fullNameError').removeClass('hidden');
+                isValid = false;
+            }
+            if (!rawUsername || !rawUsername.trim()) {
+                $('#usernameError').text('Username is required.').removeClass('hidden');
+                isValid = false;
+            } else if (/\s/.test(rawUsername)) {
+                $('#usernameError').text('Username cannot contain spaces.').removeClass('hidden');
+                isValid = false;
+            }
+            const username = rawUsername.trim().replace(/\s+/g, '');
+            if (!phone || phone.length < 9) {
+                $('#phoneError').removeClass('hidden');
+                isValid = false;
+            }
+            if (password && password.length < 3) {
+                $('#passwordError').removeClass('hidden');
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            const $btn = $('#btnSubmitStaff');
+            $btn.prop('disabled', true).html(`
+                <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span>Saving...</span>
+            `);
+
+            $.ajax({
+                type: 'POST',
+                url: '/User/Update/' + userId,
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    UserId: userId,
+                    FullName: fullName,
+                    Username: username,
+                    Phone: phone,
+                    Email: email,
+                    RoleId: roleId,
+                    Password: password || null
+                }),
+                success: function(res) {
+                    if (res.isSuccess) {
+                        window.location.href = '/User';
+                    } else {
+                        $('#userAlertText').text(res.message || "Failed to update staff account.");
+                        $('#userAlert').removeClass('hidden');
+                        $btn.prop('disabled', false).html(`
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            <span>Save Changes</span>
+                        `);
+                    }
+                },
+                error: function(xhr) {
+                    const msg = (xhr.responseJSON && xhr.responseJSON.message) || "An error occurred while updating staff account.";
+                    $('#userAlertText').text(msg);
+                    $('#userAlert').removeClass('hidden');
+                    $btn.prop('disabled', false).html(`
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        <span>Save Changes</span>
+                    `);
+                }
+            });
+        });
+    });
+</script>
+}

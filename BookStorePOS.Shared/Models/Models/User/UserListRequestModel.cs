@@ -6,6 +6,8 @@ namespace BookStorePOS.Shared.Models.User;
 public class UserListRequestModel
 {
     public string? Username { get; set; }
+    public string? Search { get; set; }
+    public int? RoleId { get; set; }
     public int Page { get; set; } = 1;
     public int Limit { get; set; } = 10;
 }
@@ -28,6 +30,8 @@ public class UserModel
     public string FullName { get; set; } = null!;
     public string Phone { get; set; } = null!;
     public string? Email { get; set; }
+    public int? RoleId { get; set; }
+    public string? RoleName { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

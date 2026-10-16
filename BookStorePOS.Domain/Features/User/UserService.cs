@@ -28,13 +28,16 @@ public class UserService : IUserService
             if (string.IsNullOrWhiteSpace(request.Username))
                 return new UserCreateResponseModel { isSuccess = false, Message = "Username is required." };
 
+            if (request.Username.Contains(' ') || request.Username.Any(char.IsWhiteSpace))
+                return new UserCreateResponseModel { isSuccess = false, Message = "Username cannot contain spaces." };
+
             if (string.IsNullOrWhiteSpace(request.FullName))
                 return new UserCreateResponseModel { isSuccess = false, Message = "Full Name is required." };
 
             if (string.IsNullOrWhiteSpace(request.Phone))
                 return new UserCreateResponseModel { isSuccess = false, Message = "Phone number is required." };
 
-            string username = request.Username.Trim().Replace(" ", "");
+            string username = request.Username.Trim();
             string phone = request.Phone.Trim().Replace(" ", "").Replace("-", "");
             string? email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
 
@@ -82,13 +85,49 @@ public class UserService : IUserService
                     return new UserCreateResponseModel { isSuccess = false, Message = "Email is already registered." };
             }
 
+            // Password validation for staff account
+            string password = !string.IsNullOrWhiteSpace(request.Password) ? request.Password.Trim() 
+                            : (!string.IsNullOrWhiteSpace(request.PasswordHash) ? request.PasswordHash.Trim() : "");
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                return new UserCreateResponseModel { isSuccess = false, Message = "Password is required for staff account." };
+            }
+            if (password.Length < 3)
+            {
+                return new UserCreateResponseModel { isSuccess = false, Message = "Password must be at least 3 characters." };
+            }
+
+            // Role assignment
+            int? roleId = request.RoleId;
+            string roleName = "Staff";
+            if (roleId.HasValue && roleId.Value > 0)
+            {
+                var role = await _db.TblRoles.FirstOrDefaultAsync(r => r.RoleId == roleId.Value && !r.IsDeleted);
+                if (role == null)
+                {
+                    return new UserCreateResponseModel { isSuccess = false, Message = "Selected role does not exist." };
+                }
+                if (role.RoleName.Equals("Customer", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new UserCreateResponseModel { isSuccess = false, Message = "Staff cannot be assigned the Customer system role." };
+                }
+                roleName = role.RoleName;
+            }
+            else
+            {
+                var defaultRole = await _db.TblRoles.FirstOrDefaultAsync(r => r.RoleName == "Staff" && !r.IsDeleted);
+                roleId = defaultRole?.RoleId;
+                if (defaultRole != null) roleName = defaultRole.RoleName;
+            }
+
             var newUser = new TblUser
             {
                 Username = username,
                 FullName = request.FullName.Trim(),
                 Phone = phone,
                 Email = email,
-                PasswordHash = request.PasswordHash, // Might be hashed in controller/API later
+                PasswordHash = password,
+                RoleId = roleId,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
             };
@@ -103,6 +142,8 @@ public class UserService : IUserService
                 FullName = newUser.FullName,
                 Phone = newUser.Phone,
                 Email = newUser.Email,
+                RoleId = newUser.RoleId,
+                RoleName = roleName,
                 IsDeleted = newUser.IsDeleted,
                 CreatedAt = newUser.CreatedAt,
                 UpdatedAt = newUser.UpdatedAt
@@ -113,14 +154,14 @@ public class UserService : IUserService
             return new UserCreateResponseModel
             {
                 isSuccess = true,
-                Message = "User created successfully.",
+                Message = "Staff user created successfully.",
                 Data = userModel
             };
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Create User Async => Failed to create user");
-            return new UserCreateResponseModel { isSuccess = false, Message = "An unexpected error occurred." };
+            return new UserCreateResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
         }
     }
 
@@ -131,21 +172,36 @@ public class UserService : IUserService
         {
             var query = _db.TblUsers
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted);
+                .Include(x => x.Role)
+                .Where(x => !x.IsDeleted && (x.Role == null || x.Role.RoleName != "Customer"));
 
-            if (!string.IsNullOrWhiteSpace(requestModel.Username))
+            if (!string.IsNullOrWhiteSpace(requestModel.Search))
+            {
+                var term = requestModel.Search.Trim().ToLower();
+                query = query.Where(x => x.Username.ToLower().Contains(term) 
+                                      || x.FullName.ToLower().Contains(term) 
+                                      || x.Phone.Contains(term));
+            }
+            else if (!string.IsNullOrWhiteSpace(requestModel.Username))
             {
                 query = query.Where(x => x.Username.Contains(requestModel.Username));
             }
 
+            if (requestModel.RoleId.HasValue && requestModel.RoleId.Value > 0)
+            {
+                query = query.Where(x => x.RoleId == requestModel.RoleId.Value);
+            }
+
             int count = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling(count / (double)requestModel.Limit);
+            int limit = requestModel.Limit > 0 ? requestModel.Limit : 10;
+            int page = requestModel.Page > 0 ? requestModel.Page : 1;
+            var totalPages = (int)Math.Ceiling(count / (double)limit);
             if (totalPages == 0) totalPages = 1;
 
             var users = await query
                 .OrderByDescending(x => x.UserId)
-                .Skip((requestModel.Page - 1) * requestModel.Limit)
-                .Take(requestModel.Limit)
+                .Skip((page - 1) * limit)
+                .Take(limit)
                 .Select(x => new UserModel
                 {
                     UserId = x.UserId,
@@ -153,6 +209,8 @@ public class UserService : IUserService
                     FullName = x.FullName,
                     Phone = x.Phone,
                     Email = x.Email,
+                    RoleId = x.RoleId,
+                    RoleName = x.Role != null ? x.Role.RoleName : "Staff",
                     IsDeleted = x.IsDeleted,
                     CreatedAt = x.CreatedAt,
                     UpdatedAt = x.UpdatedAt
@@ -165,8 +223,8 @@ public class UserService : IUserService
                 isSuccess = true,
                 Message = "Users retrieved successfully.",
                 Data = users,
-                Page = requestModel.Page,
-                Limit = requestModel.Limit,
+                Page = page,
+                Limit = limit,
                 Count = count,
                 TotalPages = totalPages
             };
@@ -174,7 +232,7 @@ public class UserService : IUserService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Get Users Async => Failed to fetch users");
-            return new UserListResponseModel { isSuccess = false, Message = "An unexpected error occurred." };
+            return new UserListResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
         }
     }
 
@@ -185,6 +243,7 @@ public class UserService : IUserService
         {
             var user = await _db.TblUsers
                 .AsNoTracking()
+                .Include(x => x.Role)
                 .FirstOrDefaultAsync(x => x.UserId == userId && !x.IsDeleted);
 
             if (user == null)
@@ -200,6 +259,8 @@ public class UserService : IUserService
                 FullName = user.FullName,
                 Phone = user.Phone,
                 Email = user.Email,
+                RoleId = user.RoleId,
+                RoleName = user.Role != null ? user.Role.RoleName : "Staff",
                 IsDeleted = user.IsDeleted,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt
@@ -216,7 +277,7 @@ public class UserService : IUserService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Get User By Id Async => Failed to fetch user");
-            return new UserGetByIdResponseModel { isSuccess = false, Message = "An unexpected error occurred." };
+            return new UserGetByIdResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
         }
     }
 
@@ -228,13 +289,16 @@ public class UserService : IUserService
             if (string.IsNullOrWhiteSpace(request.Username))
                 return new UserUpdateResponseModel { isSuccess = false, Message = "Username is required." };
 
+            if (request.Username.Contains(' ') || request.Username.Any(char.IsWhiteSpace))
+                return new UserUpdateResponseModel { isSuccess = false, Message = "Username cannot contain spaces." };
+
             if (string.IsNullOrWhiteSpace(request.FullName))
                 return new UserUpdateResponseModel { isSuccess = false, Message = "Full Name is required." };
 
             if (string.IsNullOrWhiteSpace(request.Phone))
                 return new UserUpdateResponseModel { isSuccess = false, Message = "Phone number is required." };
 
-            var user = await _db.TblUsers.FirstOrDefaultAsync(x => x.UserId == request.UserId && !x.IsDeleted);
+            var user = await _db.TblUsers.Include(x => x.Role).FirstOrDefaultAsync(x => x.UserId == request.UserId && !x.IsDeleted);
 
             if (user == null)
             {
@@ -242,7 +306,7 @@ public class UserService : IUserService
                 return new UserUpdateResponseModel { isSuccess = false, Message = "User not found." };
             }
 
-            string username = request.Username.Trim().Replace(" ", "");
+            string username = request.Username.Trim();
             string phone = request.Phone.Trim().Replace(" ", "").Replace("-", "");
             string? email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
 
@@ -290,14 +354,34 @@ public class UserService : IUserService
                     return new UserUpdateResponseModel { isSuccess = false, Message = "Email is already registered." };
             }
 
+            // Update password if provided
+            string newPassword = !string.IsNullOrWhiteSpace(request.Password) ? request.Password.Trim() 
+                               : (!string.IsNullOrWhiteSpace(request.PasswordHash) ? request.PasswordHash.Trim() : "");
+            if (!string.IsNullOrEmpty(newPassword))
+            {
+                if (newPassword.Length < 3)
+                {
+                    return new UserUpdateResponseModel { isSuccess = false, Message = "New password must be at least 3 characters." };
+                }
+                user.PasswordHash = newPassword;
+            }
+
+            // Update role if provided
+            string roleName = user.Role != null ? user.Role.RoleName : "Staff";
+            if (request.RoleId.HasValue && request.RoleId.Value > 0)
+            {
+                var role = await _db.TblRoles.FirstOrDefaultAsync(r => r.RoleId == request.RoleId.Value && !r.IsDeleted);
+                if (role != null && !role.RoleName.Equals("Customer", StringComparison.OrdinalIgnoreCase))
+                {
+                    user.RoleId = request.RoleId.Value;
+                    roleName = role.RoleName;
+                }
+            }
+
             user.Username = username;
             user.FullName = request.FullName.Trim();
             user.Phone = phone;
             user.Email = email;
-            if (!string.IsNullOrEmpty(request.PasswordHash))
-            {
-                user.PasswordHash = request.PasswordHash;
-            }
             user.UpdatedAt = DateTime.Now;
 
             await _db.SaveChangesAsync();
@@ -309,6 +393,8 @@ public class UserService : IUserService
                 FullName = user.FullName,
                 Phone = user.Phone,
                 Email = user.Email,
+                RoleId = user.RoleId,
+                RoleName = roleName,
                 IsDeleted = user.IsDeleted,
                 CreatedAt = user.CreatedAt,
                 UpdatedAt = user.UpdatedAt
@@ -319,14 +405,14 @@ public class UserService : IUserService
             return new UserUpdateResponseModel
             {
                 isSuccess = true,
-                Message = "User updated successfully.",
+                Message = "Staff user updated successfully.",
                 Data = userModel
             };
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Update User Async => Failed to update user");
-            return new UserUpdateResponseModel { isSuccess = false, Message = "An unexpected error occurred." };
+            return new UserUpdateResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
         }
     }
 
@@ -343,6 +429,11 @@ public class UserService : IUserService
                 return new UserDeleteResponseModel { isSuccess = false, Message = "User not found." };
             }
 
+            if (user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return new UserDeleteResponseModel { isSuccess = false, Message = "The system admin account cannot be deleted." };
+            }
+
             user.IsDeleted = true;
             user.UpdatedAt = DateTime.Now;
             
@@ -353,13 +444,13 @@ public class UserService : IUserService
             return new UserDeleteResponseModel
             {
                 isSuccess = true,
-                Message = "User deleted successfully."
+                Message = "Staff user deleted successfully."
             };
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Delete User Async => Failed to delete user");
-            return new UserDeleteResponseModel { isSuccess = false, Message = "An unexpected error occurred." };
+            return new UserDeleteResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
         }
     }
 }
