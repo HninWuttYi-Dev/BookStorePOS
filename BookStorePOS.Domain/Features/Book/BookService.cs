@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Shared.Models.Book;
+using BookStorePOS.Shared.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -68,13 +69,13 @@ public class BookService : IBookService
 
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
-            if(totalPages == 0) totalPages = 1;
-            
+            if (totalPages == 0) totalPages = 1;
+
             var lst = await query.OrderByDescending(b => b.BookId)
-                            .Skip((requestModel.Page -1) * requestModel.Limit)
+                            .Skip((requestModel.Page - 1) * requestModel.Limit)
                             .Take(requestModel.Limit)
                             .ToListAsync();
-                            
+
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
             {
@@ -90,7 +91,8 @@ public class BookService : IBookService
                     IsDeleted = item.IsDeleted,
                     StartingPrice = item.TblBookEditions.Any(e => !e.IsDeleted) ? item.TblBookEditions.Where(e => !e.IsDeleted).Min(e => e.Price) : 0,
                     TotalStockQuantity = item.TblBookEditions.Where(e => !e.IsDeleted).Sum(e => e.StockQuantity),
-                    Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel {
+                    Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel
+                    {
                         BookEditionId = e.BookEditionId,
                         BookId = e.BookId,
                         EditionId = e.EditionId,
@@ -110,11 +112,12 @@ public class BookService : IBookService
             _logger.LogInformation("Get Books Async => Books fetched successfully");
             return new BookListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Books fetched successfully",
                 Data = books,
                 Page = requestModel.Page,
-                Limit =requestModel.Limit,
+                Limit = requestModel.Limit,
                 Count = totalCount,
                 TotalPages = totalPages
             };
@@ -124,13 +127,14 @@ public class BookService : IBookService
             _logger.LogWarning("Get Books Async => Failed to fetch books {Message}", ex.Message);
             return new BookListResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = "Failed to fetch books: " + ex.Message
             };
         }
     }
 
-    public async Task<BookByIdResponseModel> GetBookAsync(BookByIdRequestModel requestModel)
+    public async Task<Result<BookModel>> GetBookAsync(BookByIdRequestModel requestModel)
     {
         _logger.LogInformation("Get Book ById Async => Fetching book by Id");
         try
@@ -146,63 +150,52 @@ public class BookService : IBookService
                         x.BookId == requestModel.BookId
                         &&
                         !x.IsDeleted);
-                        
+
             if (item is null)
             {
                 _logger.LogWarning("Get Book ById Async => Book is not found");
-                return new BookByIdResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Book is not found"
-                };
+                return Result<BookModel>.NotFound("Book is not found");
             }
+
             _logger.LogInformation("Get Book ById Async => Book fetched successfully");
-            return new BookByIdResponseModel
+            return Result<BookModel>.Success(new BookModel
             {
-                isSuccess = true,
-                Message = "Book fetched successfully",
-                Data = new BookModel
+                BookId = item.BookId,
+                Title = item.Title,
+                Author = item.Author?.AuthorName,
+                AuthorId = item.AuthorId,
+                Genre = item.Genre?.GenreName,
+                GenreId = item.GenreId,
+                Description = item.Description,
+                IsDeleted = item.IsDeleted,
+                StartingPrice = item.TblBookEditions.Any(e => !e.IsDeleted) ? item.TblBookEditions.Where(e => !e.IsDeleted).Min(e => e.Price) : 0,
+                TotalStockQuantity = item.TblBookEditions.Where(e => !e.IsDeleted).Sum(e => e.StockQuantity),
+                Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel
                 {
-                    BookId = item.BookId,
-                    Title = item.Title,
-                    Author = item.Author?.AuthorName,
-                    AuthorId = item.AuthorId,
-                    Genre = item.Genre?.GenreName,
-                    GenreId = item.GenreId,
-                    Description = item.Description,
-                    IsDeleted = item.IsDeleted,
-                    StartingPrice = item.TblBookEditions.Any(e => !e.IsDeleted) ? item.TblBookEditions.Where(e => !e.IsDeleted).Min(e => e.Price) : 0,
-                    TotalStockQuantity = item.TblBookEditions.Where(e => !e.IsDeleted).Sum(e => e.StockQuantity),
-                    Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel {
-                        BookEditionId = e.BookEditionId,
-                        BookId = e.BookId,
-                        EditionId = e.EditionId,
-                        EditionName = e.Edition?.EditionName ?? "Unknown Edition",
-                        Isbn = e.Isbn,
-                        Price = e.Price,
-                        StockQuantity = e.StockQuantity,
-                        EditionNote = e.EditionNote,
-                        PublishDate = e.PublishDate,
-                        PageCount = e.PageCount,
-                        ReorderLevel = e.ReorderLevel,
-                        CoverImageUrl = e.CoverImageUrl,
-                        IsDeleted = e.IsDeleted
-                    }).ToList()
-                }
-            };
+                    BookEditionId = e.BookEditionId,
+                    BookId = e.BookId,
+                    EditionId = e.EditionId,
+                    EditionName = e.Edition?.EditionName ?? "Unknown Edition",
+                    Isbn = e.Isbn,
+                    Price = e.Price,
+                    StockQuantity = e.StockQuantity,
+                    EditionNote = e.EditionNote,
+                    PublishDate = e.PublishDate,
+                    PageCount = e.PageCount,
+                    ReorderLevel = e.ReorderLevel,
+                    CoverImageUrl = e.CoverImageUrl,
+                    IsDeleted = e.IsDeleted
+                }).ToList()
+            }, "Book fetched successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Get Book ById Async => Failed to fetch book {Message}", ex.Message);
-            return new BookByIdResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to fetch book: " + ex.Message
-            };
+            return Result<BookModel>.SystemError("Failed to fetch book: " + ex.Message);
         }
     }
 
-    public async Task<BookCreateResponseModel> CreateBookAsync(BookCreateRequestModel requestModel)
+    public async Task<Result<BookModel>> CreateBookAsync(BookCreateRequestModel requestModel)
     {
         _logger.LogInformation("Create Book Async => Creating book");
         using var transaction = await _db.Database.BeginTransactionAsync();
@@ -211,27 +204,27 @@ public class BookService : IBookService
             if (string.IsNullOrWhiteSpace(requestModel.Title))
             {
                 _logger.LogWarning("Create Book Async => Title is required");
-                return new BookCreateResponseModel { isSuccess = false, Message = "Title is required." };
+                return Result<BookModel>.ValidationError("Title is required.");
             }
             if ((!requestModel.AuthorId.HasValue || requestModel.AuthorId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Author))
             {
                 _logger.LogWarning("Create Book Async => Author is required");
-                return new BookCreateResponseModel { isSuccess = false, Message = "Author is required." };
+                return Result<BookModel>.ValidationError("Author is required.");
             }
             if ((!requestModel.GenreId.HasValue || requestModel.GenreId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Genre))
             {
                 _logger.LogWarning("Create Book Async => Genre is required");
-                return new BookCreateResponseModel { isSuccess = false, Message = "Genre is required." };
+                return Result<BookModel>.ValidationError("Genre is required.");
             }
             if (requestModel.ReorderLevel < 0)
             {
                 _logger.LogWarning("Create Book Async => ReorderLevel cannot be negative");
-                return new BookCreateResponseModel { isSuccess = false, Message = "ReorderLevel cannot be negative." };
+                return Result<BookModel>.ValidationError("ReorderLevel cannot be negative.");
             }
             if (requestModel.Price <= 0)
             {
                 _logger.LogWarning("Create Book Async => Price must be greater than 0");
-                return new BookCreateResponseModel { isSuccess = false, Message = "Price must be greater than 0." };
+                return Result<BookModel>.ValidationError("Price must be greater than 0.");
             }
 
             // Handle Author
@@ -240,7 +233,7 @@ public class BookService : IBookService
             {
                 var authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId);
                 if (authorEntity != null) authorName = authorEntity.AuthorName;
-                else return new BookCreateResponseModel { isSuccess = false, Message = "Invalid Author." };
+                else return Result<BookModel>.ValidationError("Invalid Author.");
             }
             else if (!string.IsNullOrWhiteSpace(authorName))
             {
@@ -266,7 +259,7 @@ public class BookService : IBookService
             {
                 var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
                 if (genreEntity != null) genreName = genreEntity.GenreName;
-                else return new BookCreateResponseModel { isSuccess = false, Message = "Invalid Genre." };
+                else return Result<BookModel>.ValidationError("Invalid Genre.");
             }
             else if (!string.IsNullOrWhiteSpace(genreName))
             {
@@ -282,6 +275,7 @@ public class BookService : IBookService
                     _db.TblGenres.Add(newGenre);
                     await _db.SaveChangesAsync();
                     requestModel.GenreId = newGenre.GenreId;
+                    genreName = newGenre.GenreName;
                 }
             }
             else requestModel.GenreId = null;
@@ -291,15 +285,15 @@ public class BookService : IBookService
             {
                 var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
                 if (isbn.Length != 10 && isbn.Length != 13)
-                    return new BookCreateResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." };
+                    return Result<BookModel>.ValidationError("ISBN must be 10 or 13 digits.");
 
                 bool isbnExists = await _db.TblBookEditions.AnyAsync(e => e.Isbn == requestModel.Isbn && !e.IsDeleted);
                 if (isbnExists)
-                    return new BookCreateResponseModel { isSuccess = false, Message = "A book edition with this ISBN already exists." };
+                    return Result<BookModel>.Conflict("A book edition with this ISBN already exists.");
             }
 
             if (requestModel.StockQuantity < 0)
-                return new BookCreateResponseModel { isSuccess = false, Message = "StockQuantity cannot be negative." };
+                return Result<BookModel>.ValidationError("StockQuantity cannot be negative.");
 
             // Create Book
             TblBook book = new TblBook
@@ -342,59 +336,50 @@ public class BookService : IBookService
             };
             _db.TblBookEditions.Add(bookEdition);
             await _db.SaveChangesAsync();
-            
+
             await transaction.CommitAsync();
 
             _logger.LogInformation("Create Book Async => Book is created successfully");
-            return new BookCreateResponseModel
+            return Result<BookModel>.Success(new BookModel
             {
-                isSuccess = true,
-                Message = "Created new book successfully",
-                Data = new BookModel
-                {
-                    BookId = book.BookId,
-                    Title = book.Title,
-                    Author = authorName,
-                    AuthorId = book.AuthorId,
-                    Genre = genreName,
-                    GenreId = book.GenreId,
-                    Description = book.Description,
-                    IsDeleted = book.IsDeleted,
-                    StartingPrice = bookEdition.Price,
-                    TotalStockQuantity = bookEdition.StockQuantity,
-                    Editions = new List<BookEditionModel> {
-                        new BookEditionModel {
-                            BookEditionId = bookEdition.BookEditionId,
-                            BookId = bookEdition.BookId,
-                            EditionId = bookEdition.EditionId,
-                            EditionName = editionType.EditionName,
-                            Isbn = bookEdition.Isbn,
-                            Price = bookEdition.Price,
-                            StockQuantity = bookEdition.StockQuantity,
-                            EditionNote = bookEdition.EditionNote,
-                            PublishDate = bookEdition.PublishDate,
-                            PageCount = bookEdition.PageCount,
-                            ReorderLevel = bookEdition.ReorderLevel,
-                            CoverImageUrl = bookEdition.CoverImageUrl,
-                            IsDeleted = bookEdition.IsDeleted
-                        }
+                BookId = book.BookId,
+                Title = book.Title,
+                Author = authorName,
+                AuthorId = book.AuthorId,
+                Genre = genreName,
+                GenreId = book.GenreId,
+                Description = book.Description,
+                IsDeleted = book.IsDeleted,
+                StartingPrice = bookEdition.Price,
+                TotalStockQuantity = bookEdition.StockQuantity,
+                Editions = new List<BookEditionModel> {
+                    new BookEditionModel {
+                        BookEditionId = bookEdition.BookEditionId,
+                        BookId = bookEdition.BookId,
+                        EditionId = bookEdition.EditionId,
+                        EditionName = editionType.EditionName,
+                        Isbn = bookEdition.Isbn,
+                        Price = bookEdition.Price,
+                        StockQuantity = bookEdition.StockQuantity,
+                        EditionNote = bookEdition.EditionNote,
+                        PublishDate = bookEdition.PublishDate,
+                        PageCount = bookEdition.PageCount,
+                        ReorderLevel = bookEdition.ReorderLevel,
+                        CoverImageUrl = bookEdition.CoverImageUrl,
+                        IsDeleted = bookEdition.IsDeleted
                     }
                 }
-            };
+            }, "Created new book successfully");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogWarning("Create Book Async => Failed to create book {Message}", ex?.InnerException?.Message);
-            return new BookCreateResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to create book: " + ex?.InnerException?.Message
-            };
+            _logger.LogWarning("Create Book Async => Failed to create book {Message}", ex?.InnerException?.Message ?? ex?.Message);
+            return Result<BookModel>.SystemError("Failed to create book: " + (ex?.InnerException?.Message ?? ex?.Message));
         }
     }
 
-    public async Task<BookPatchResponseModel> UpdateBookAsync(BookPatchRequestModel requestModel)
+    public async Task<Result<BookModel>> UpdateBookAsync(BookPatchRequestModel requestModel)
     {
         _logger.LogInformation("Update Book Async => Updating book");
         try
@@ -406,11 +391,11 @@ public class BookService : IBookService
             if (item is null)
             {
                 _logger.LogWarning("Update Book Async => Book doesn't exist");
-                return new BookPatchResponseModel { isSuccess = false, Message = "Book doesn't exist" };
+                return Result<BookModel>.NotFound("Book doesn't exist");
             }
 
             if (requestModel.Title != null && string.IsNullOrWhiteSpace(requestModel.Title))
-                return new BookPatchResponseModel { isSuccess = false, Message = "Title cannot be empty." };
+                return Result<BookModel>.ValidationError("Title cannot be empty.");
 
             // Handle Author
             string authorName = item.Author?.AuthorName ?? "";
@@ -418,7 +403,7 @@ public class BookService : IBookService
             {
                 var authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId);
                 if (authorEntity != null) authorName = authorEntity.AuthorName;
-                else return new BookPatchResponseModel { isSuccess = false, Message = "Invalid Author." };
+                else return Result<BookModel>.ValidationError("Invalid Author.");
             }
             else if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value <= 0 && !string.IsNullOrWhiteSpace(requestModel.Author))
             {
@@ -445,7 +430,7 @@ public class BookService : IBookService
             {
                 var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
                 if (genreEntity != null) genreName = genreEntity.GenreName;
-                else return new BookPatchResponseModel { isSuccess = false, Message = "Invalid Genre." };
+                else return Result<BookModel>.ValidationError("Invalid Genre.");
             }
             else if (requestModel.GenreId.HasValue && requestModel.GenreId.Value <= 0 && !string.IsNullOrWhiteSpace(requestModel.Genre))
             {
@@ -467,63 +452,50 @@ public class BookService : IBookService
             else if (requestModel.GenreId.HasValue && requestModel.GenreId.Value <= 0) requestModel.GenreId = null;
 
             if (!string.IsNullOrEmpty(requestModel.Title)) item.Title = requestModel.Title;
-            
             if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0) item.AuthorId = requestModel.AuthorId;
-
             if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0) item.GenreId = requestModel.GenreId;
-
             if (requestModel.Description != null) item.Description = requestModel.Description;
-
 
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Update Book Async => Book is updated successfully");
-            return new BookPatchResponseModel
+            return Result<BookModel>.Success(new BookModel
             {
-                isSuccess = true,
-                Message = "Updated book successfully",
-                Data = new BookModel
-                {
-                    BookId = item.BookId,
-                    Title = item.Title,
-                    Author = authorName,
-                    AuthorId = item.AuthorId,
-                    Genre = genreName,
-                    GenreId = item.GenreId,
-                    Description = item.Description,
-                    IsDeleted = item.IsDeleted
-                }
-            };
+                BookId = item.BookId,
+                Title = item.Title,
+                Author = authorName,
+                AuthorId = item.AuthorId,
+                Genre = genreName,
+                GenreId = item.GenreId,
+                Description = item.Description,
+                IsDeleted = item.IsDeleted
+            }, "Updated book successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Update Book Async => Failed to update book {Message}", ex.Message);
-            return new BookPatchResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to update book: " + ex.Message
-            };
+            return Result<BookModel>.SystemError("Failed to update book: " + ex.Message);
         }
     }
 
-    public async Task<BookDeleteResponseModel> DeleteBookAsync(BookDeleteRequestModel requestModel)
+    public async Task<Result<BookModel>> DeleteBookAsync(BookDeleteRequestModel requestModel)
     {
         _logger.LogInformation("Delete Book Async => Deleting book");
         try
         {
             var item = await _db.TblBooks.FirstOrDefaultAsync(x => x.BookId == requestModel.BookId);
             if (item is null)
-                return new BookDeleteResponseModel { isSuccess = false, Message = "Book is not found" };
+                return Result<BookModel>.NotFound("Book is not found");
 
             if (item.IsDeleted)
-                return new BookDeleteResponseModel { isSuccess = false, Message = "Book is already deleted." };
+                return Result<BookModel>.Conflict("Book is already deleted.");
 
             item.IsDeleted = true;
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;
-            
+
             // Delete editions as well
             var editions = await _db.TblBookEditions.Where(e => e.BookId == item.BookId).ToListAsync();
             foreach (var edition in editions)
@@ -532,20 +504,16 @@ public class BookService : IBookService
                 edition.UpdatedAt = DateTime.Now;
                 _db.Entry(edition).State = EntityState.Modified;
             }
-            
+
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Delete Book Async => Book is deleted successfully");
-            return new BookDeleteResponseModel
-            {
-                isSuccess = true,
-                Message = "Book is deleted successfully"
-            };
+            return Result<BookModel>.DeleteSuccess("Book is deleted successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Delete Book Async => Failed to delete book {Message}", ex.Message);
-            return new BookDeleteResponseModel { isSuccess = false, Message = "Failed to delete book: " + ex.Message };
+            return Result<BookModel>.SystemError("Failed to delete book: " + ex.Message);
         }
     }
 
@@ -579,7 +547,8 @@ public class BookService : IBookService
                     IsDeleted = item.IsDeleted,
                     StartingPrice = item.TblBookEditions.Any(e => !e.IsDeleted) ? item.TblBookEditions.Where(e => !e.IsDeleted).Min(e => e.Price) : 0,
                     TotalStockQuantity = item.TblBookEditions.Where(e => !e.IsDeleted).Sum(e => e.StockQuantity),
-                    Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel {
+                    Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel
+                    {
                         BookEditionId = e.BookEditionId,
                         BookId = e.BookId,
                         EditionId = e.EditionId,
@@ -600,7 +569,8 @@ public class BookService : IBookService
             _logger.LogInformation("Get Low Stock Books Async => Low stock books fetched successfully");
             return new BookListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Low stock books fetched successfully",
                 Data = books
             };
@@ -610,13 +580,14 @@ public class BookService : IBookService
             _logger.LogWarning(ex, "Get Low Stock Books Async => Failed to fetch low stock books");
             return new BookListResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = "Failed to fetch low stock books: " + ex.Message
             };
         }
     }
 
-    public async Task<BookEditionCreateResponseModel> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel)
+    public async Task<Result<BookEditionModel>> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel)
     {
         _logger.LogInformation("Create Book Edition Async => Creating book edition for BookId {BookId}", requestModel.BookId);
         using var transaction = await _db.Database.BeginTransactionAsync();
@@ -625,20 +596,20 @@ public class BookService : IBookService
             var book = await _db.TblBooks.FirstOrDefaultAsync(b => b.BookId == requestModel.BookId && !b.IsDeleted);
             if (book == null)
             {
-                return new BookEditionCreateResponseModel { isSuccess = false, Message = "Book not found." };
+                return Result<BookEditionModel>.NotFound("Book not found.");
             }
 
             if (string.IsNullOrWhiteSpace(requestModel.EditionName))
             {
-                return new BookEditionCreateResponseModel { isSuccess = false, Message = "Edition Name is required." };
+                return Result<BookEditionModel>.ValidationError("Edition Name is required.");
             }
             if (requestModel.Price <= 0)
             {
-                return new BookEditionCreateResponseModel { isSuccess = false, Message = "Price must be greater than 0." };
+                return Result<BookEditionModel>.ValidationError("Price must be greater than 0.");
             }
             if (requestModel.StockQuantity < 0)
             {
-                return new BookEditionCreateResponseModel { isSuccess = false, Message = "StockQuantity cannot be negative." };
+                return Result<BookEditionModel>.ValidationError("StockQuantity cannot be negative.");
             }
 
             // Validate duplicate edition name for this book
@@ -648,7 +619,7 @@ public class BookService : IBookService
 
             if (existingEditionNameCheck != null)
             {
-                return new BookEditionCreateResponseModel { isSuccess = false, Message = "This book already has an edition with this name." };
+                return Result<BookEditionModel>.Conflict("This book already has an edition with this name.");
             }
 
             // Handle ISBN
@@ -656,11 +627,11 @@ public class BookService : IBookService
             {
                 var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
                 if (isbn.Length != 10 && isbn.Length != 13)
-                    return new BookEditionCreateResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." };
+                    return Result<BookEditionModel>.ValidationError("ISBN must be 10 or 13 digits.");
 
                 bool isbnExists = await _db.TblBookEditions.AnyAsync(e => e.Isbn == requestModel.Isbn && !e.IsDeleted);
                 if (isbnExists)
-                    return new BookEditionCreateResponseModel { isSuccess = false, Message = "A book edition with this ISBN already exists." };
+                    return Result<BookEditionModel>.Conflict("A book edition with this ISBN already exists.");
             }
 
             // Create or get Edition Type
@@ -681,55 +652,46 @@ public class BookService : IBookService
                 Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn,
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
+                ReorderLevel = requestModel.ReorderLevel,
                 EditionNote = requestModel.EditionNote,
                 PublishDate = requestModel.PublishDate ?? DateTime.Now,
                 PageCount = requestModel.PageCount,
-                ReorderLevel = requestModel.ReorderLevel,
                 CoverImageUrl = requestModel.CoverImageUrl,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
             };
             _db.TblBookEditions.Add(bookEdition);
             await _db.SaveChangesAsync();
-            
+
             await transaction.CommitAsync();
 
             _logger.LogInformation("Create Book Edition Async => Book Edition is created successfully");
-            return new BookEditionCreateResponseModel
+            return Result<BookEditionModel>.Success(new BookEditionModel
             {
-                isSuccess = true,
-                Message = "Created new book edition successfully",
-                Data = new BookEditionModel
-                {
-                    BookEditionId = bookEdition.BookEditionId,
-                    BookId = bookEdition.BookId,
-                    EditionId = bookEdition.EditionId,
-                    EditionName = editionType.EditionName,
-                    Isbn = bookEdition.Isbn,
-                    Price = bookEdition.Price,
-                    StockQuantity = bookEdition.StockQuantity,
-                    EditionNote = bookEdition.EditionNote,
-                    PublishDate = bookEdition.PublishDate,
-                    PageCount = bookEdition.PageCount,
-                    ReorderLevel = bookEdition.ReorderLevel,
-                    CoverImageUrl = bookEdition.CoverImageUrl,
-                    IsDeleted = bookEdition.IsDeleted
-                }
-            };
+                BookEditionId = bookEdition.BookEditionId,
+                BookId = bookEdition.BookId,
+                EditionId = bookEdition.EditionId,
+                EditionName = editionType.EditionName,
+                Isbn = bookEdition.Isbn,
+                Price = bookEdition.Price,
+                StockQuantity = bookEdition.StockQuantity,
+                EditionNote = bookEdition.EditionNote,
+                PublishDate = bookEdition.PublishDate,
+                PageCount = bookEdition.PageCount,
+                ReorderLevel = bookEdition.ReorderLevel,
+                CoverImageUrl = bookEdition.CoverImageUrl,
+                IsDeleted = bookEdition.IsDeleted
+            }, "Created new book edition successfully");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
             _logger.LogWarning("Create Book Edition Async => Failed to create book edition {Message}", ex.Message);
-            return new BookEditionCreateResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to create book edition: " + ex.Message
-            };
+            return Result<BookEditionModel>.SystemError("Failed to create book edition: " + ex.Message);
         }
     }
 
-    public async Task<BookEditionPatchResponseModel> UpdateBookEditionAsync(BookEditionPatchRequestModel requestModel)
+    public async Task<Result<BookEditionModel>> UpdateBookEditionAsync(BookEditionPatchRequestModel requestModel)
     {
         _logger.LogInformation("Update Book Edition Async => Updating book edition");
         using var transaction = await _db.Database.BeginTransactionAsync();
@@ -741,16 +703,16 @@ public class BookService : IBookService
 
             if (bookEdition == null)
             {
-                return new BookEditionPatchResponseModel { isSuccess = false, Message = "Book edition not found." };
+                return Result<BookEditionModel>.NotFound("Book edition not found.");
             }
 
             if (requestModel.Price <= 0)
             {
-                return new BookEditionPatchResponseModel { isSuccess = false, Message = "Price must be greater than 0." };
+                return Result<BookEditionModel>.ValidationError("Price must be greater than 0.");
             }
             if (requestModel.StockQuantity < 0)
             {
-                return new BookEditionPatchResponseModel { isSuccess = false, Message = "StockQuantity cannot be negative." };
+                return Result<BookEditionModel>.ValidationError("StockQuantity cannot be negative.");
             }
 
             // Handle ISBN uniqueness if changed
@@ -758,24 +720,23 @@ public class BookService : IBookService
             {
                 var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
                 if (isbn.Length != 10 && isbn.Length != 13)
-                    return new BookEditionPatchResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." };
+                    return Result<BookEditionModel>.ValidationError("ISBN must be 10 or 13 digits.");
 
                 bool isbnExists = await _db.TblBookEditions.AnyAsync(e => e.Isbn == requestModel.Isbn && e.BookEditionId != requestModel.BookEditionId && !e.IsDeleted);
                 if (isbnExists)
-                    return new BookEditionPatchResponseModel { isSuccess = false, Message = "A book edition with this ISBN already exists." };
+                    return Result<BookEditionModel>.Conflict("A book edition with this ISBN already exists.");
             }
 
             // Handle Edition Name change
             if (!string.IsNullOrWhiteSpace(requestModel.EditionName) && bookEdition.Edition?.EditionName != requestModel.EditionName)
             {
-                // Validate duplicate edition name for this book (excluding current edition)
                 var existingEditionNameCheck = await _db.TblBookEditions
                     .Include(be => be.Edition)
                     .FirstOrDefaultAsync(be => be.BookId == bookEdition.BookId && be.BookEditionId != bookEdition.BookEditionId && be.Edition != null && be.Edition.EditionName.ToLower() == requestModel.EditionName.ToLower() && !be.IsDeleted);
 
                 if (existingEditionNameCheck != null)
                 {
-                    return new BookEditionPatchResponseModel { isSuccess = false, Message = "This book already has an edition with this name." };
+                    return Result<BookEditionModel>.Conflict("This book already has an edition with this name.");
                 }
 
                 var editionType = await _db.TblEditions.FirstOrDefaultAsync(e => e.EditionName.ToLower() == requestModel.EditionName.ToLower());
@@ -805,44 +766,12 @@ public class BookService : IBookService
             if (!_db.ChangeTracker.HasChanges())
             {
                 await transaction.CommitAsync();
-                return new BookEditionPatchResponseModel
-                {
-                    isSuccess = true,
-                    Message = "No changes detected.",
-                    Data = new BookEditionModel
-                    {
-                        BookEditionId = bookEdition.BookEditionId,
-                        BookId = bookEdition.BookId,
-                        EditionId = bookEdition.EditionId,
-                        EditionName = bookEdition.Edition?.EditionName ?? "",
-                        Isbn = bookEdition.Isbn,
-                        Price = bookEdition.Price,
-                        StockQuantity = bookEdition.StockQuantity,
-                        EditionNote = bookEdition.EditionNote,
-                        PublishDate = bookEdition.PublishDate,
-                        PageCount = bookEdition.PageCount,
-                        ReorderLevel = bookEdition.ReorderLevel,
-                        CoverImageUrl = bookEdition.CoverImageUrl,
-                        IsDeleted = bookEdition.IsDeleted
-                    }
-                };
-            }
-
-            bookEdition.UpdatedAt = DateTime.Now;
-            await _db.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            _logger.LogInformation("Update Book Edition Async => Book Edition updated successfully");
-            return new BookEditionPatchResponseModel
-            {
-                isSuccess = true,
-                Message = "Updated book edition successfully",
-                Data = new BookEditionModel
+                return Result<BookEditionModel>.Success(new BookEditionModel
                 {
                     BookEditionId = bookEdition.BookEditionId,
                     BookId = bookEdition.BookId,
                     EditionId = bookEdition.EditionId,
-                    EditionName = requestModel.EditionName,
+                    EditionName = bookEdition.Edition?.EditionName ?? "",
                     Isbn = bookEdition.Isbn,
                     Price = bookEdition.Price,
                     StockQuantity = bookEdition.StockQuantity,
@@ -852,22 +781,40 @@ public class BookService : IBookService
                     ReorderLevel = bookEdition.ReorderLevel,
                     CoverImageUrl = bookEdition.CoverImageUrl,
                     IsDeleted = bookEdition.IsDeleted
-                }
-            };
+                }, "No changes detected.");
+            }
+
+            bookEdition.UpdatedAt = DateTime.Now;
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Update Book Edition Async => Book Edition updated successfully");
+            return Result<BookEditionModel>.Success(new BookEditionModel
+            {
+                BookEditionId = bookEdition.BookEditionId,
+                BookId = bookEdition.BookId,
+                EditionId = bookEdition.EditionId,
+                EditionName = requestModel.EditionName,
+                Isbn = bookEdition.Isbn,
+                Price = bookEdition.Price,
+                StockQuantity = bookEdition.StockQuantity,
+                EditionNote = bookEdition.EditionNote,
+                PublishDate = bookEdition.PublishDate,
+                PageCount = bookEdition.PageCount,
+                ReorderLevel = bookEdition.ReorderLevel,
+                CoverImageUrl = bookEdition.CoverImageUrl,
+                IsDeleted = bookEdition.IsDeleted
+            }, "Updated book edition successfully");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
             _logger.LogWarning("Update Book Edition Async => Failed to update book edition {Message}", ex.Message);
-            return new BookEditionPatchResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to update book edition: " + ex.Message
-            };
+            return Result<BookEditionModel>.SystemError("Failed to update book edition: " + ex.Message);
         }
     }
 
-    public async Task<BookEditionDeleteResponseModel> DeleteBookEditionAsync(BookEditionDeleteRequestModel requestModel)
+    public async Task<Result<BookEditionModel>> DeleteBookEditionAsync(BookEditionDeleteRequestModel requestModel)
     {
         _logger.LogInformation("Delete Book Edition Async => Deleting book edition");
         try
@@ -875,35 +822,27 @@ public class BookService : IBookService
             var bookEdition = await _db.TblBookEditions.FirstOrDefaultAsync(x => x.BookEditionId == requestModel.BookEditionId);
             if (bookEdition == null)
             {
-                return new BookEditionDeleteResponseModel { isSuccess = false, Message = "Book edition not found." };
+                return Result<BookEditionModel>.NotFound("Book edition not found.");
             }
 
             if (bookEdition.IsDeleted)
             {
-                return new BookEditionDeleteResponseModel { isSuccess = false, Message = "Book edition is already deleted." };
+                return Result<BookEditionModel>.Conflict("Book edition is already deleted.");
             }
 
             bookEdition.IsDeleted = true;
             bookEdition.UpdatedAt = DateTime.Now;
             _db.Entry(bookEdition).State = EntityState.Modified;
-            
+
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Delete Book Edition Async => Book Edition deleted successfully");
-            return new BookEditionDeleteResponseModel
-            {
-                isSuccess = true,
-                Message = "Book edition deleted successfully"
-            };
+            return Result<BookEditionModel>.DeleteSuccess("Book edition deleted successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Delete Book Edition Async => Failed to delete book edition {Message}", ex.Message);
-            return new BookEditionDeleteResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to delete book edition: " + ex.Message
-            };
+            return Result<BookEditionModel>.SystemError("Failed to delete book edition: " + ex.Message);
         }
     }
 }

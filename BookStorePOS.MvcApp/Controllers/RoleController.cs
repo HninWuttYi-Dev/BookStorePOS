@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
+using System.Net;
 using Newtonsoft.Json;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.RolePermission;
 
 namespace BookStorePOS.MvcApp.Controllers
@@ -38,7 +40,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<RoleListResponseModel>(jsonString);
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Roles"] = response.Data;
                     ViewData["CurrentPage"] = response.PageNumber;
@@ -61,7 +63,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RoleListAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -85,7 +87,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RoleCreateAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -100,7 +102,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel == null || string.IsNullOrWhiteSpace(requestModel.RoleName))
                 {
                     _logger.LogWarning("Role Save Async => Role name is required");
-                    return Json(new RoleCreateResponseModel { isSuccess = false, Message = "Role name is required." });
+                    return Json(new RoleCreateResponseModel { IsSuccess = false, Message = "Role name is required." });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -110,9 +112,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.PostAsync("api/RolePermission/roles", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<RoleCreateResponseModel>(jsonString)
-                    ?? new RoleCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                    ?? new RoleCreateResponseModel { IsSuccess = false, Message = "Unknown error" };
 
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Role Save Async => Role created successfully");
                     TempData["Message"] = model.Message ?? "Role created successfully.";
@@ -128,7 +130,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RoleSaveAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -137,19 +139,28 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             try
             {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"Role Edit Async => Fetching role details for RoleId: {id}");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var roleResponse = await client.GetAsync($"api/RolePermission/roles/{id}");
+
+                if (roleResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var roleJson = await roleResponse.Content.ReadAsStringAsync();
                 var roleModel = JsonConvert.DeserializeObject<RoleByIdResponseModel>(roleJson);
 
-                if (roleModel == null || !roleModel.isSuccess || roleModel.Data == null)
+                if (roleModel == null || !roleModel.IsSuccess || roleModel.Data == null || roleModel.Type == EnumResType.NotFound)
                 {
                     _logger.LogWarning($"Role Edit Async => Failed to fetch role {id}: {roleModel?.Message}");
-                    TempData["isSuccess"] = false;
-                    TempData["Message"] = roleModel?.Message ?? "Role not found.";
-                    return RedirectToAction("Index");
+                    return NotFound();
                 }
 
                 var permResponse = await client.GetAsync("api/RolePermission/permissions?PageNumber=1&PageSize=100");
@@ -166,7 +177,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RoleEditAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -180,7 +191,7 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 if (requestModel == null || string.IsNullOrWhiteSpace(requestModel.RoleName))
                 {
-                    return Json(new RoleUpdateResponseModel { isSuccess = false, Message = "Role name is required." });
+                    return Json(new RoleUpdateResponseModel { IsSuccess = false, Message = "Role name is required." });
                 }
 
                 requestModel.RoleId = id;
@@ -191,9 +202,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.PutAsync($"api/RolePermission/roles/{id}", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<RoleUpdateResponseModel>(jsonString)
-                    ?? new RoleUpdateResponseModel { isSuccess = false, Message = "Unknown error" };
+                    ?? new RoleUpdateResponseModel { IsSuccess = false, Message = "Unknown error" };
 
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Role Update Async => Role updated successfully");
                     TempData["Message"] = model.Message ?? "Role updated successfully.";
@@ -209,7 +220,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RoleUpdateAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -226,9 +237,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.DeleteAsync($"api/RolePermission/roles/{roleId}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<RoleDeleteResponseModel>(jsonString)
-                    ?? new RoleDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+                    ?? new RoleDeleteResponseModel { IsSuccess = false, Message = "Unknown error" };
 
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Role Delete Async => Role deleted successfully");
                     TempData["Message"] = model.Message ?? "Role deleted successfully.";
@@ -244,7 +255,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RoleDeleteAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
     }

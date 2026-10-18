@@ -295,7 +295,7 @@ namespace BookStorePOS.WebApi.Controllers
 
                 return Ok(new
                 {
-                    isSuccess = true,
+                    IsSuccess = true,
                     Message = "Roles, Permissions, and Default Users seeded successfully!",
                     Roles = roles.Keys.ToList(),
                     TotalPermissions = allPermissions.Length,
@@ -308,7 +308,7 @@ namespace BookStorePOS.WebApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { isSuccess = false, Message = ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = ex.Message });
             }
         }
     }

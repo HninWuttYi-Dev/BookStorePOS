@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -31,7 +32,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<AuthorListResponseModel>(jsonString);
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Authors"] = response.Data;
                     ViewData["CurrentPage"] = response.Page;
@@ -52,7 +53,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "AuthorListAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -67,7 +68,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.GetAsync($"api/author{qs}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<AuthorListResponseModel>(jsonString);
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     return Json(response.Data);
                 }
@@ -77,7 +78,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "AuthorSearchAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -92,7 +93,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "AuthorCreate => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -107,7 +108,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
                 {
                     _logger.LogWarning("Author Save Async => Author name is required");
-                    return Json(new AuthorCreateResponseModel { isSuccess = false, Message = "Author name is required" });
+                    return Json(new AuthorCreateResponseModel { IsSuccess = false, Message = "Author name is required" });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -115,9 +116,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
                 var httpResponse = await client.PostAsync("api/author", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<AuthorCreateResponseModel>(jsonString) ?? new AuthorCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<AuthorCreateResponseModel>(jsonString) ?? new AuthorCreateResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Author Save Async => Author created successfully");
                     TempData["Message"] = model.Message ?? "Author created successfully.";
@@ -134,39 +135,47 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "AuthorSaveAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
         [ActionName("Edit")]
         public async Task<IActionResult> AuthorEditAsync(int id)
         {
-        try
-        {
+            try
+            {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"Author Edit Async => Fetching author {id}");
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/author/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<AuthorByIdResponseModel>(jsonString);
             
-                if (model == null || !model.isSuccess || model.Data == null)
+                if (model == null || !model.IsSuccess || model.Data == null)
                 {
                     _logger.LogWarning($"Author Edit Async => Failed to fetch author {id}: {model?.Message}");
-                    TempData["isSuccess"] = false;
-                    TempData["Message"] = model?.Message ?? "Author not found.";
-                    return Redirect("/Author");
+                    return NotFound();
                 }
 
                 ViewData["Id"] = model.Data.AuthorId;
                 ViewData["AuthorName"] = model.Data.AuthorName;
 
                 return View("AuthorEdit", model.Data);
-        
-        }
+            }
         catch (Exception ex)
         {
             _logger.LogError(ex, "AuthorEditAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -181,7 +190,7 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
                 {
-                    return Json(new AuthorPatchResponseModel { isSuccess = false, Message = "Author name is required." });
+                    return Json(new AuthorPatchResponseModel { IsSuccess = false, Message = "Author name is required." });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -189,9 +198,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
                 var httpResponse = await client.PatchAsync($"api/author/{id}", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<AuthorPatchResponseModel>(jsonString) ?? new AuthorPatchResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<AuthorPatchResponseModel>(jsonString) ?? new AuthorPatchResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Author Update Async => Author updated successfully");
                     TempData["Message"] = model.Message ?? "Author updated successfully.";
@@ -208,7 +217,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "AuthorUpdateAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -222,9 +231,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.DeleteAsync($"api/author/{requestModel.AuthorId}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<AuthorDeleteResponseModel>(jsonString) ?? new AuthorDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<AuthorDeleteResponseModel>(jsonString) ?? new AuthorDeleteResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Author Delete Async => Author deleted successfully");
                     TempData["Message"] = model.Message ?? "Author deleted successfully.";
@@ -240,7 +249,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "AuthorDeleteAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
     }

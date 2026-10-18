@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Author;
 
@@ -9,11 +10,8 @@ public class AuthorListRequestModel
     public int Limit { get; set; } = 10;
 }
 
-public class AuthorListResponseModel
+public class AuthorListResponseModel : Result<List<AuthorModel>>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public List<AuthorModel> Data { get; set; } = null!;
     public int Page { get; set; }
     public int Limit { get; set; }
     public int Count { get; set; }

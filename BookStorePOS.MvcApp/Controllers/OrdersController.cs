@@ -1,9 +1,14 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using System;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using BookStorePOS.Shared.Models.Common;
+using BookStorePOS.Shared.Models.Order;
+using Newtonsoft.Json;
 
 namespace BookStorePOS.MvcApp.Controllers
 {
@@ -34,7 +39,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<OrderHistoryResponseModel>(jsonString);
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Orders"] = response.Data.Orders;
                     ViewData["Summary"] = response.Data.Summary;
@@ -57,23 +62,34 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "OrdersAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
         [ActionName("OrderDetail")]
         public async Task<IActionResult> OrderDetailAsync(int id)
         {
-        try
-        {
+            try
+            {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"Order Detail Async => Fetching order details for OrderId: {id}");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/order/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<OrderGetByIdResponseModel>(jsonString);
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     _logger.LogInformation($"Order Detail Async => Order details fetched successfully for OrderId: {id}");
                     ViewData["OrderDetail"] = response.Data;
@@ -82,16 +98,13 @@ namespace BookStorePOS.MvcApp.Controllers
                 else
                 {
                     _logger.LogWarning($"Order Detail Async => Failed to fetch order details for OrderId: {id}. Message: {response?.Message}");
-                    TempData["Message"] = response?.Message;
-                    TempData["isSuccess"] = false;
-                    return RedirectToAction("Index");
+                    return NotFound();
                 }
-        
-        }
+            }
         catch (Exception ex)
         {
             _logger.LogError(ex, "OrderDetailAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -106,7 +119,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel == null || requestModel.Items == null || requestModel.Items.Count == 0)
                 {
                     _logger.LogWarning("Order Create Async => No items provided");
-                    return Json(new OrderCreateResponseModel { isSuccess = false, Message = "Please provide at least one item." });
+                    return Json(new OrderCreateResponseModel { IsSuccess = false, Message = "Please provide at least one item." });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -114,9 +127,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
                 var httpResponse = await client.PostAsync("api/order", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var response = JsonConvert.DeserializeObject<OrderCreateResponseModel>(jsonString) ?? new OrderCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                var response = JsonConvert.DeserializeObject<OrderCreateResponseModel>(jsonString) ?? new OrderCreateResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (response != null && response.isSuccess)
+                if (response != null && response.IsSuccess)
                 {
                     _logger.LogInformation("Order Create Async => Order created successfully");
                 }
@@ -131,7 +144,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "OrderCreateAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
     }

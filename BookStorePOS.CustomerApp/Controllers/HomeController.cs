@@ -30,8 +30,23 @@ namespace BookStorePOS.CustomerApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Index => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
+
+        [ActionName("NotFound")]
+        public IActionResult PageNotFound()
+        {
+            try
+            {
+                Response.StatusCode = 404;
+                return View("NotFound");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "NotFound => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
+        }
     }
 }

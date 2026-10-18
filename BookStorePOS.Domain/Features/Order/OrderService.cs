@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BookStorePOS.Database.AppDbContextModels;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.Order;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,8 @@ public class OrderService : IOrderService
             _logger.LogInformation("Get Orders Async => Orders fetched successfully");
             return new OrderListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Orders fetched successfully",
                 Data = orders
             };
@@ -53,13 +55,14 @@ public class OrderService : IOrderService
             _logger.LogWarning("Get Orders Async => Failed to fetch orders {Message}", ex.Message);
             return new OrderListResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = "Failed to fetch orders: " + ex.Message
             };
         }
     }
 
-    public async Task<OrderGetByIdResponseModel> GetOrderById(OrderGetByIdRequestModel requestModel)
+    public async Task<Result<OrderModel>> GetOrderById(OrderGetByIdRequestModel requestModel)
     {
         _logger.LogInformation("Get Order Async => Fetching order by Id");
         try
@@ -77,11 +80,7 @@ public class OrderService : IOrderService
             if (item is null)
             {
                 _logger.LogWarning("Get Order Async => Order is not found");
-                return new OrderGetByIdResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Order is not found"
-                };
+                return Result<OrderModel>.NotFound("Order is not found");
             }
 
             var orderModel = new OrderModel
@@ -110,25 +109,16 @@ public class OrderService : IOrderService
             }
 
             _logger.LogInformation("Get Order Async => Order fetched successfully");
-            return new OrderGetByIdResponseModel
-            {
-                isSuccess = true,
-                Message = "Order fetched successfully",
-                Data = orderModel
-            };
+            return Result<OrderModel>.Success(orderModel, "Order fetched successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Get Order Async => Failed to fetch order {Message}", ex.Message);
-            return new OrderGetByIdResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to fetch order: " + ex.Message
-            };
+            return Result<OrderModel>.SystemError("Failed to fetch order: " + ex.Message);
         }
     }
 
-    public async Task<OrderCreateResponseModel> CreateOrder(OrderCreateRequestModel requestModel)
+    public async Task<Result<OrderModel>> CreateOrder(OrderCreateRequestModel requestModel)
     {
         _logger.LogInformation("Create Order Async => Creating order");
 
@@ -138,22 +128,14 @@ public class OrderService : IOrderService
             if (requestModel.Items == null || !requestModel.Items.Any())
             {
                 _logger.LogWarning("Create Order Async => Order items are required");
-                return new OrderCreateResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Order must contain at least one item."
-                };
+                return Result<OrderModel>.ValidationError("Order must contain at least one item.");
             }
 
             foreach (var item in requestModel.Items)
             {
                 if (item.Quantity <= 0)
                 {
-                    return new OrderCreateResponseModel
-                    {
-                        isSuccess = false,
-                        Message = "Quantity must be greater than 0."
-                    };
+                    return Result<OrderModel>.ValidationError("Quantity must be greater than 0.");
                 }
 
                 var edition = await _db.TblBookEditions
@@ -163,20 +145,12 @@ public class OrderService : IOrderService
 
                 if (edition == null)
                 {
-                    return new OrderCreateResponseModel
-                    {
-                        isSuccess = false,
-                        Message = $"Book Edition with ID {item.BookEditionId} not found or is deleted."
-                    };
+                    return Result<OrderModel>.NotFound($"Book Edition with ID {item.BookEditionId} not found or is deleted.");
                 }
 
                 if (edition.StockQuantity < item.Quantity)
                 {
-                    return new OrderCreateResponseModel
-                    {
-                        isSuccess = false,
-                        Message = $"Insufficient stock for '{edition.Book.Title} ({edition.Edition.EditionName})'. Available: {edition.StockQuantity}"
-                    };
+                    return Result<OrderModel>.ValidationError($"Insufficient stock for '{edition.Book.Title} ({edition.Edition.EditionName})'. Available: {edition.StockQuantity}");
                 }
             }
 
@@ -248,31 +222,22 @@ public class OrderService : IOrderService
             await transaction.CommitAsync();
 
             _logger.LogInformation("Create Order Async => Order is created successfully");
-            return new OrderCreateResponseModel
+            return Result<OrderModel>.Success(new OrderModel
             {
-                isSuccess = true,
-                Message = "Created new order successfully",
-                Data = new OrderModel
-                {
-                    OrderId = order.OrderId,
-                    OrderDate = order.OrderDate,
-                    TotalPrice = order.TotalPrice,
-                    TotalQuantity = order.TotalQuantity,
-                    OrderStatus = (OrderStatus)order.OrderStatus,
-                    OrderSource = order.OrderSource,
-                    Items = orderModelItems
-                }
-            };
+                OrderId = order.OrderId,
+                OrderDate = order.OrderDate,
+                TotalPrice = order.TotalPrice,
+                TotalQuantity = order.TotalQuantity,
+                OrderStatus = (OrderStatus)order.OrderStatus,
+                OrderSource = order.OrderSource,
+                Items = orderModelItems
+            }, "Created new order successfully");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
             _logger.LogWarning(ex, "Create Order Async => Failed to create order");
-            return new OrderCreateResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to create order: " + ex.Message
-            };
+            return Result<OrderModel>.SystemError("Failed to create order: " + ex.Message);
         }
     }
 
@@ -311,7 +276,8 @@ public class OrderService : IOrderService
             _logger.LogInformation("Get Order Summary Async => Order summary fetched successfully");
             return new OrderSummaryResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Order summary fetched successfully",
                 Data = summary
             };
@@ -321,7 +287,8 @@ public class OrderService : IOrderService
             _logger.LogWarning(ex, "Get Order Summary Async => Failed to fetch order summary");
             return new OrderSummaryResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = "Failed to fetch order summary: " + ex.Message
             };
         }
@@ -382,7 +349,8 @@ public class OrderService : IOrderService
             _logger.LogInformation("Get Order History Async => Order history fetched successfully");
             return new OrderHistoryResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Order history fetched successfully",
                 Data = data
             };
@@ -392,7 +360,8 @@ public class OrderService : IOrderService
             _logger.LogWarning(ex, "Get Order History Async => Failed to fetch order history");
             return new OrderHistoryResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = "Failed to fetch order history: " + ex.Message
             };
         }

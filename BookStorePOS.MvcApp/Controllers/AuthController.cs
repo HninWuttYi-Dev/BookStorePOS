@@ -34,7 +34,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 {
                     return Json(new LoginResponseModel
                     {
-                        isSuccess = false,
+                        IsSuccess = false,
                         Message = "Username and password are required."
                     });
                 }
@@ -46,9 +46,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.PostAsync("api/Auth/login", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<LoginResponseModel>(jsonString)
-                    ?? new LoginResponseModel { isSuccess = false, Message = "Unexpected server response." };
+                    ?? new LoginResponseModel { IsSuccess = false, Message = "Unexpected server response." };
 
-                if (model.isSuccess && !string.IsNullOrEmpty(model.AccessToken))
+                if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
                 {
                     _logger.LogInformation("Staff Login => Staff login succeeded for username: {Username}, Role: {Role}", requestModel.Username, model.Role);
 
@@ -85,7 +85,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 _logger.LogError(ex, "Staff Login => Exception occurred");
                 return StatusCode(500, new LoginResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
                     Message = "Unable to connect to POS Auth service: " + ex.Message
                 });
             }

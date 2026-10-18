@@ -1,4 +1,6 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.CustomerApp.Controllers
 {
@@ -26,7 +28,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Books"] = response.Data;
                     ViewData["CurrentPage"] = response.Page;
@@ -51,38 +53,46 @@ namespace BookStorePOS.CustomerApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "BookListAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
         [ActionName("Detail")]
         public async Task<IActionResult> BookDetailAsync(int id)
         {
-        try
-        {
+            try
+            {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"Book Detail Async => Fetching book {id}");
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/book/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-                if (response == null || !response.isSuccess || response.Data == null)
+                if (response == null || !response.IsSuccess || response.Data == null)
                 {
                     _logger.LogWarning($"Book Detail Async => Failed to fetch book {id}");
-                    TempData["Message"] = "Book not found.";
-                    TempData["isSuccess"] = false;
-                    return RedirectToAction("Index");
+                    return NotFound();
                 }
 
                 ViewData["Book"] = response.Data;
                 return View("BookDetail");
-        
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BookDetailAsync => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "BookDetailAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
-    }
     }
 }

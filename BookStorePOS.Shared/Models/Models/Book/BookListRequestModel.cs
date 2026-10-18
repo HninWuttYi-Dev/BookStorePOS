@@ -1,5 +1,4 @@
-using System;
-using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Book;
 
@@ -18,11 +17,8 @@ public class BookListRequestModel
     
 }
 
-public class BookListResponseModel
+public class BookListResponseModel : Result<List<BookModel>>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public List<BookModel> Data { get; set; } = null!;
     public int Page {get; set;}
     public int Limit {get; set;}
     public int Count {get;set;}

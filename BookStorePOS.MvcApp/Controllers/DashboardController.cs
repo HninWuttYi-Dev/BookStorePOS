@@ -31,7 +31,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var summaryJson = await summaryHttp.Content.ReadAsStringAsync();
                 var summaryResponse = JsonConvert.DeserializeObject<OrderSummaryResponseModel>(summaryJson);
 
-                if (summaryResponse != null && summaryResponse.isSuccess && summaryResponse.Data != null)
+                if (summaryResponse != null && summaryResponse.IsSuccess && summaryResponse.Data != null)
                 {
                     ViewData["TodaySales"] = summaryResponse.Data.todayTotalRevenue;
                     ViewData["ThisMonthSales"] = summaryResponse.Data.thisMonthTotalRevenue;
@@ -49,7 +49,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var lowStockJson = await lowStockHttp.Content.ReadAsStringAsync();
                 var lowStockResponse = JsonConvert.DeserializeObject<BookListResponseModel>(lowStockJson);
 
-                var lowStockBooks = lowStockResponse != null && lowStockResponse.isSuccess && lowStockResponse.Data != null
+                var lowStockBooks = lowStockResponse != null && lowStockResponse.IsSuccess && lowStockResponse.Data != null
                     ? lowStockResponse.Data
                     : new List<BookModel>();
 
@@ -61,7 +61,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var historyJson = await historyHttp.Content.ReadAsStringAsync();
                 var historyResponse = JsonConvert.DeserializeObject<OrderHistoryResponseModel>(historyJson);
 
-                var recentOrders = historyResponse != null && historyResponse.isSuccess && historyResponse.Data?.Orders != null
+                var recentOrders = historyResponse != null && historyResponse.IsSuccess && historyResponse.Data?.Orders != null
                     ? historyResponse.Data.Orders
                     : new List<OrderModel>();
 
@@ -76,7 +76,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "DashboardIndexAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
     }

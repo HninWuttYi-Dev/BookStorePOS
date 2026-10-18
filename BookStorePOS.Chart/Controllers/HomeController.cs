@@ -25,10 +25,10 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         var bookResponse = await _bookService.GetBooksAsync(new BookListRequestModel());
-        var books = bookResponse.isSuccess ? bookResponse.Data : new List<BookModel>();
+        var books = bookResponse.IsSuccess ? bookResponse.Data : new List<BookModel>();
         
         var orderResponse = await _orderService.GetOrdersAsync(new OrderListRequestModel());
-        var orders = orderResponse.isSuccess ? orderResponse.Data : new List<OrderModel>();
+        var orders = orderResponse.IsSuccess ? orderResponse.Data : new List<OrderModel>();
 
         // 1. Total Metrics
         var totalSales = orders.Sum(o => o.TotalPrice);

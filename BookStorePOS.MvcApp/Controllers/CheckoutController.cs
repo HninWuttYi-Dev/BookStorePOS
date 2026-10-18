@@ -28,7 +28,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
             
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Books"] = response.Data;
                     ViewData["CurrentPage"] = response.Page;
@@ -42,7 +42,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "CheckoutAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.Edition;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -57,7 +58,8 @@ public class EditionService : IEditionService
             _logger.LogInformation("Get Editions Async => Editions fetched successfully");
             return new EditionListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Editions fetched successfully",
                 Data = editions,
                 Page = requestModel.Page,
@@ -71,13 +73,14 @@ public class EditionService : IEditionService
             _logger.LogWarning("Get Editions Async => Failed to fetch editions {Message}", ex.Message);
             return new EditionListResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = "Failed to fetch editions: " + ex.Message
             };
         }
     }
 
-    public async Task<EditionByIdResponseModel> GetEditionByIdAsync(EditionByIdRequestModel requestModel)
+    public async Task<Result<EditionModel>> GetEditionByIdAsync(EditionByIdRequestModel requestModel)
     {
         _logger.LogInformation("Get Edition ById Async => Fetching edition by Id");
         try
@@ -89,38 +92,25 @@ public class EditionService : IEditionService
             if (item is null)
             {
                 _logger.LogWarning("Get Edition ById Async => Edition is not found");
-                return new EditionByIdResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Edition is not found"
-                };
+                return Result<EditionModel>.NotFound("Edition is not found");
             }
             
             _logger.LogInformation("Get Edition ById Async => Edition fetched successfully");
-            return new EditionByIdResponseModel
+            return Result<EditionModel>.Success(new EditionModel
             {
-                isSuccess = true,
-                Message = "Edition fetched successfully",
-                Data = new EditionModel
-                {
-                    EditionId = item.EditionId,
-                    EditionName = item.EditionName,
-                    IsDeleted = item.IsDeleted
-                }
-            };
+                EditionId = item.EditionId,
+                EditionName = item.EditionName,
+                IsDeleted = item.IsDeleted
+            }, "Edition fetched successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Get Edition ById Async => Failed to fetch edition {Message}", ex.Message);
-            return new EditionByIdResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to fetch edition: " + ex.Message
-            };
+            return Result<EditionModel>.SystemError("Failed to fetch edition: " + ex.Message);
         }
     }
 
-    public async Task<EditionCreateResponseModel> CreateEditionAsync(EditionCreateRequestModel requestModel)
+    public async Task<Result<EditionModel>> CreateEditionAsync(EditionCreateRequestModel requestModel)
     {
         _logger.LogInformation("Create Edition Async => Creating edition");
         try
@@ -128,14 +118,14 @@ public class EditionService : IEditionService
             if (string.IsNullOrWhiteSpace(requestModel.EditionName))
             {
                 _logger.LogWarning("Create Edition Async => Edition name is required");
-                return new EditionCreateResponseModel { isSuccess = false, Message = "Edition name is required." };
+                return Result<EditionModel>.ValidationError("Edition name is required.");
             }
 
             var exists = await _db.TblEditions.AnyAsync(a => a.EditionName.ToLower() == requestModel.EditionName.ToLower() && !a.IsDeleted);
             if (exists)
             {
                 _logger.LogWarning("Create Edition Async => Edition name already exists");
-                return new EditionCreateResponseModel { isSuccess = false, Message = "Edition already exists." };
+                return Result<EditionModel>.Conflict("Edition already exists.");
             }
 
             var edition = new TblEdition
@@ -149,30 +139,21 @@ public class EditionService : IEditionService
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Create Edition Async => Edition is created successfully");
-            return new EditionCreateResponseModel
+            return Result<EditionModel>.Success(new EditionModel
             {
-                isSuccess = true,
-                Message = "Created new edition successfully",
-                Data = new EditionModel
-                {
-                    EditionId = edition.EditionId,
-                    EditionName = edition.EditionName,
-                    IsDeleted = edition.IsDeleted
-                }
-            };
+                EditionId = edition.EditionId,
+                EditionName = edition.EditionName,
+                IsDeleted = edition.IsDeleted
+            }, "Created new edition successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Create Edition Async => Failed to create edition {Message}", ex.Message);
-            return new EditionCreateResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to create edition: " + ex.Message
-            };
+            return Result<EditionModel>.SystemError("Failed to create edition: " + ex.Message);
         }
     }
 
-    public async Task<EditionPatchResponseModel> UpdateEditionAsync(EditionPatchRequestModel requestModel)
+    public async Task<Result<EditionModel>> UpdateEditionAsync(EditionPatchRequestModel requestModel)
     {
         _logger.LogInformation("Update Edition Async => Updating edition");
         try
@@ -183,24 +164,20 @@ public class EditionService : IEditionService
             if (item is null)
             {
                 _logger.LogWarning("Update Edition Async => Edition doesn't exist");
-                return new EditionPatchResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Edition doesn't exist"
-                };
+                return Result<EditionModel>.NotFound("Edition doesn't exist");
             }
 
             if (string.IsNullOrWhiteSpace(requestModel.EditionName))
             {
                 _logger.LogWarning("Update Edition Async => Edition name is required");
-                return new EditionPatchResponseModel { isSuccess = false, Message = "Edition name is required." };
+                return Result<EditionModel>.ValidationError("Edition name is required.");
             }
 
             var exists = await _db.TblEditions.AnyAsync(a => a.EditionId != requestModel.EditionId && a.EditionName.ToLower() == requestModel.EditionName.ToLower() && !a.IsDeleted);
             if (exists)
             {
                 _logger.LogWarning("Update Edition Async => Edition name already exists");
-                return new EditionPatchResponseModel { isSuccess = false, Message = "Edition already exists." };
+                return Result<EditionModel>.Conflict("Edition already exists.");
             }
 
             item.EditionName = requestModel.EditionName;
@@ -209,30 +186,21 @@ public class EditionService : IEditionService
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Update Edition Async => Edition is updated successfully");
-            return new EditionPatchResponseModel
+            return Result<EditionModel>.Success(new EditionModel
             {
-                isSuccess = true,
-                Message = "Updated edition successfully",
-                Data = new EditionModel
-                {
-                    EditionId = item.EditionId,
-                    EditionName = item.EditionName,
-                    IsDeleted = item.IsDeleted
-                }
-            };
+                EditionId = item.EditionId,
+                EditionName = item.EditionName,
+                IsDeleted = item.IsDeleted
+            }, "Updated edition successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Update Edition Async => Failed to update edition {Message}", ex.Message);
-            return new EditionPatchResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to update edition: " + ex.Message
-            };
+            return Result<EditionModel>.SystemError("Failed to update edition: " + ex.Message);
         }
     }
 
-    public async Task<EditionDeleteResponseModel> DeleteEditionAsync(EditionDeleteRequestModel requestModel)
+    public async Task<Result<EditionModel>> DeleteEditionAsync(EditionDeleteRequestModel requestModel)
     {
         _logger.LogInformation("Delete Edition Async => Deleting edition");
         try
@@ -243,21 +211,13 @@ public class EditionService : IEditionService
             if (item is null)
             {
                 _logger.LogWarning("Delete Edition Async => Edition is not found");
-                return new EditionDeleteResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Edition is not found"
-                };
+                return Result<EditionModel>.NotFound("Edition is not found");
             }
 
             if (item.IsDeleted)
             {
                 _logger.LogWarning("Delete Edition Async => Edition is already deleted");
-                return new EditionDeleteResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Edition is already deleted."
-                };
+                return Result<EditionModel>.Conflict("Edition already deleted.");
             }
 
             item.IsDeleted = true;
@@ -266,26 +226,17 @@ public class EditionService : IEditionService
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Delete Edition Async => Edition is deleted successfully");
-            return new EditionDeleteResponseModel
+            return Result<EditionModel>.Success(new EditionModel
             {
-                isSuccess = true,
-                Message = "Edition is deleted successfully",
-                Data = new EditionModel
-                {
-                    EditionId = item.EditionId,
-                    EditionName = item.EditionName,
-                    IsDeleted = item.IsDeleted
-                }
-            };
+                EditionId = item.EditionId,
+                EditionName = item.EditionName,
+                IsDeleted = item.IsDeleted
+            }, "Edition is deleted successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Delete Edition Async => Failed to delete edition {Message}", ex.Message);
-            return new EditionDeleteResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to delete edition: " + ex.Message
-            };
+            return Result<EditionModel>.SystemError("Failed to delete edition: " + ex.Message);
         }
     }
 }

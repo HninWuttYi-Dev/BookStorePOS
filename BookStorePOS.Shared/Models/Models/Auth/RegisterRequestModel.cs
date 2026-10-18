@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Auth;
 
@@ -11,10 +12,8 @@ public class RegisterRequestModel
     public string Password { get; set; } = string.Empty;
 }
 
-public class RegisterResponseModel
+public class RegisterResponseModel : Result<string?>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = string.Empty;
     public string? AccessToken { get; set; }
     public string? Role { get; set; }
     public List<string> Permissions { get; set; } = new();

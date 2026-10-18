@@ -1,4 +1,4 @@
-using System;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Book;
 
@@ -23,9 +23,6 @@ public class BookCreateRequestModel
     public string? CoverImageUrl { get; set; }
 }
 
-public class BookCreateResponseModel
+public class BookCreateResponseModel : Result<BookModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public BookModel Data { get; set; } = null!;
 }

@@ -19,7 +19,7 @@ public class ApexChartsController : Controller
     public async Task<IActionResult> Index()
     {
         var bookResponse = await _bookService.GetBooksAsync(new BookListRequestModel());
-        var books = bookResponse.isSuccess ? bookResponse.Data : new List<BookModel>();
+        var books = bookResponse.IsSuccess ? bookResponse.Data : new List<BookModel>();
         
         List<int> series = books.Select(x => x.TotalStockQuantity).ToList();
         List<string> labels = books.Select(x => x.Title).ToList();

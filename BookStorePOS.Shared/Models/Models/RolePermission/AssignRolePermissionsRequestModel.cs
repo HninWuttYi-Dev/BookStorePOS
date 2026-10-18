@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.RolePermission;
 
@@ -8,8 +9,6 @@ public class AssignRolePermissionsRequestModel
     public List<int> PermissionIds { get; set; } = new();
 }
 
-public class AssignRolePermissionsResponseModel
+public class AssignRolePermissionsResponseModel : Result<object?>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = string.Empty;
 }

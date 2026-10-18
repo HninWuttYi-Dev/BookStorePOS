@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Order;
 
-public class OrderHistoryResponseModel
+public class OrderHistoryResponseModel : Result<OrderHistoryDataModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public OrderHistoryDataModel Data { get; set; } = null!;
 }
 
 public class OrderHistoryDataModel

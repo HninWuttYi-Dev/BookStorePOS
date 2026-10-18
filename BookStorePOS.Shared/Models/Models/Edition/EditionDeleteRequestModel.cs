@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Edition;
 
 public class EditionDeleteRequestModel
@@ -5,9 +7,6 @@ public class EditionDeleteRequestModel
     public int EditionId { get; set; }
 }
 
-public class EditionDeleteResponseModel
+public class EditionDeleteResponseModel : Result<EditionModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public EditionModel Data { get; set; } = null!;
 }

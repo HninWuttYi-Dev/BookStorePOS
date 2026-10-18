@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.User;
 
 public class UserUpdateRequestModel
@@ -12,9 +14,6 @@ public class UserUpdateRequestModel
     public int? RoleId { get; set; }
 }
 
-public class UserUpdateResponseModel
+public class UserUpdateResponseModel : Result<UserModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public UserModel? Data { get; set; }
 }

@@ -1,0 +1,111 @@
+@{
+    ViewData["Title"] = "404 - Page Not Found";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="min-h-[calc(100vh-10rem)] flex flex-col items-center justify-center py-6 px-4">
+    <!-- GitHub-Inspired Hero Stage (Aligned with POS Teal/Slate UI) -->
+    <div class="w-full max-w-4xl bg-gradient-to-br from-teal-800 via-teal-700 to-slate-900 rounded-3xl p-8 sm:p-12 md:p-14 shadow-lg border border-teal-600/40 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12">
+        
+        <!-- Ambient Atmosphere Glows -->
+        <div class="absolute -top-24 -left-24 w-72 h-72 bg-teal-400/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Left: 404 + Speech Bubble + Action -->
+        <div class="flex flex-col items-center md:items-start text-center md:text-left z-10 max-w-sm">
+            <!-- Prominent 404 -->
+            <div class="text-7xl sm:text-8xl md:text-9xl font-black text-white tracking-tight leading-none drop-shadow-md select-none">
+                404
+            </div>
+
+            <!-- Speech Bubble (pointing towards illustration) -->
+            <div class="mt-4 relative bg-white text-slate-900 px-6 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-md border border-slate-100 max-w-xs">
+                This is not the page you are looking for.
+                <!-- Pointer right on desktop -->
+                <div class="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 w-0 h-0 border-y-8 border-y-transparent border-l-[12px] border-l-white"></div>
+                <!-- Pointer bottom on mobile -->
+                <div class="md:hidden absolute -bottom-3 left-1/2 -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-[12px] border-t-white"></div>
+            </div>
+
+            <!-- Action CTA -->
+            <div class="mt-8 flex items-center gap-3">
+                <a href="/Dashboard" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 font-bold text-sm shadow-sm transition-all hover:shadow hover:-translate-y-0.5">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Back to Dashboard</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Right: Modern POS Vector Mascot Illustration -->
+        <div class="w-full max-w-[280px] sm:max-w-[340px] flex items-center justify-center z-10 shrink-0">
+            <svg class="w-full h-auto drop-shadow-xl" viewBox="0 0 320 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Ground Base Shadow -->
+                <ellipse cx="160" cy="232" rx="120" ry="12" fill="#0b1320" fill-opacity="0.35"/>
+                
+                <!-- Books Stack on Side -->
+                <rect x="42" y="210" width="65" height="14" rx="3" fill="#14b8a6"/>
+                <rect x="44" y="212" width="61" height="3" rx="1" fill="#5eead4"/>
+                <rect x="48" y="196" width="55" height="14" rx="3" fill="#f59e0b"/>
+                <rect x="50" y="198" width="51" height="3" rx="1" fill="#fde68a"/>
+                <rect x="54" y="182" width="45" height="14" rx="3" fill="#0f766e"/>
+
+                <!-- POS Terminal Stand Base -->
+                <path d="M125 210 L195 210 L185 168 L135 168 Z" fill="#1e293b"/>
+                <ellipse cx="160" cy="210" rx="36" ry="6" fill="#0f172a"/>
+
+                <!-- POS Terminal Head / Monitor -->
+                <rect x="96" y="58" width="128" height="110" rx="16" fill="#1e293b" stroke="#334155" stroke-width="3"/>
+                <!-- Monitor Screen -->
+                <rect x="106" y="68" width="108" height="90" rx="10" fill="#042f2e"/>
+                <!-- Glow reflection -->
+                <path d="M110 72 L180 72 L130 152 L110 152 Z" fill="#0d9488" fill-opacity="0.15"/>
+
+                <!-- Terminal Friendly Face / Expression -->
+                <circle cx="138" cy="108" r="6" fill="#2dd4bf"/>
+                <circle cx="182" cy="108" r="6" fill="#2dd4bf"/>
+                <circle cx="140" cy="106" r="2" fill="#ffffff"/>
+                <circle cx="184" cy="106" r="2" fill="#ffffff"/>
+                <!-- Smile -->
+                <path d="M150 120 Q160 128 170 120" stroke="#2dd4bf" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                <!-- Cheeks -->
+                <circle cx="130" cy="120" r="4" fill="#14b8a6" fill-opacity="0.4"/>
+                <circle cx="190" cy="120" r="4" fill="#14b8a6" fill-opacity="0.4"/>
+
+                <!-- Antenna with Pulse Glow -->
+                <line x1="160" y1="58" x2="160" y2="34" stroke="#64748b" stroke-width="3"/>
+                <circle cx="160" cy="30" r="7" fill="#2dd4bf"/>
+                <circle cx="160" cy="30" r="12" stroke="#2dd4bf" stroke-width="1.5" stroke-opacity="0.5" stroke-dasharray="3 3"/>
+
+                <!-- Barcode Scanner on Side -->
+                <rect x="230" y="145" width="22" height="38" rx="6" fill="#334155" transform="rotate(-15 230 145)"/>
+                <rect x="220" y="132" width="28" height="18" rx="4" fill="#1e293b" transform="rotate(-15 220 132)"/>
+                <!-- Laser beam -->
+                <path d="M216 142 L175 190 L185 194 Z" fill="#ef4444" fill-opacity="0.25"/>
+                <line x1="216" y1="142" x2="180" y2="192" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+
+                <!-- Floating Star / Sparkles -->
+                <path d="M90 42 L93 49 L100 52 L93 55 L90 62 L87 55 L80 52 L87 49 Z" fill="#5eead4"/>
+                <path d="M236 78 L238 82 L242 84 L238 86 L236 90 L234 86 L230 84 L234 82 Z" fill="#fde68a"/>
+                <circle cx="218" cy="46" r="3" fill="#5eead4" fill-opacity="0.6"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Minimal Back Option -->
+    <div class="mt-6 text-center">
+        <button type="button" onclick="window.history.length > 1 ? window.history.back() : window.location.href='/Dashboard'" class="text-xs text-slate-400 hover:text-slate-600 font-medium transition-colors inline-flex items-center gap-1.5">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+            <span>Or return to the previous screen</span>
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+}

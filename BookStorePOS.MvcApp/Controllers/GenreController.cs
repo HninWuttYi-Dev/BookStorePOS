@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using static System.Net.Mime.MediaTypeNames;
@@ -27,7 +28,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<GenreListResponseModel>(jsonString);
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Genres"] = response.Data;
                     ViewData["CurrentPage"] = response.Page;
@@ -48,7 +49,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "GenreListAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -63,7 +64,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.GetAsync($"api/genre{qs}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<GenreListResponseModel>(jsonString);
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     return Json(response.Data);
                 }
@@ -73,7 +74,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "GenreSearchAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -88,7 +89,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "GenreCreate => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -103,7 +104,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (string.IsNullOrWhiteSpace(requestModel.GenreName))
                 {
                     _logger.LogWarning("Genre Save Async => Genre name is required");
-                    return Json(new GenreCreateResponseModel { isSuccess = false, Message = "Genre name is required" });
+                    return Json(new GenreCreateResponseModel { IsSuccess = false, Message = "Genre name is required" });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -111,9 +112,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
                 var httpResponse = await client.PostAsync("api/genre", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<GenreCreateResponseModel>(jsonString) ?? new GenreCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<GenreCreateResponseModel>(jsonString) ?? new GenreCreateResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Genre Save Async => Genre created successfully");
                     TempData["Message"] = model.Message ?? "Genre created successfully.";
@@ -130,39 +131,47 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "GenreSaveAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
         [ActionName("Edit")]
         public async Task<IActionResult> GenreEditAsync(int id)
         {
-        try
-        {
+            try
+            {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"Genre Edit Async => Fetching genre {id}");
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/genre/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<GenreByIdResponseModel>(jsonString);
             
-                if (model == null || !model.isSuccess || model.Data == null)
+                if (model == null || !model.IsSuccess || model.Data == null)
                 {
                     _logger.LogWarning($"Genre Edit Async => Failed to fetch genre {id}: {model?.Message}");
-                    TempData["isSuccess"] = false;
-                    TempData["Message"] = model?.Message ?? "Genre not found.";
-                    return Redirect("/Genre");
+                    return NotFound();
                 }
 
                 ViewData["Id"] = model.Data.GenreId;
                 ViewData["GenreName"] = model.Data.GenreName;
 
                 return View("GenreEdit", model.Data);
-        
-        }
+            }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GenreEditAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -177,7 +186,7 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 if (string.IsNullOrWhiteSpace(requestModel.GenreName))
                 {
-                    return Json(new GenrePatchResponseModel { isSuccess = false, Message = "Genre name is required." });
+                    return Json(new GenrePatchResponseModel { IsSuccess = false, Message = "Genre name is required." });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -185,9 +194,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
                 var httpResponse = await client.PatchAsync($"api/genre/{id}", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<GenrePatchResponseModel>(jsonString) ?? new GenrePatchResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<GenrePatchResponseModel>(jsonString) ?? new GenrePatchResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Genre Update Async => Genre updated successfully");
                     TempData["Message"] = model.Message ?? "Genre updated successfully.";
@@ -204,7 +213,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "GenreUpdateAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -218,9 +227,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.DeleteAsync($"api/genre/{requestModel.GenreId}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<GenreDeleteResponseModel>(jsonString) ?? new GenreDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<GenreDeleteResponseModel>(jsonString) ?? new GenreDeleteResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Genre Delete Async => Genre deleted successfully");
                     TempData["Message"] = model.Message ?? "Genre deleted successfully.";
@@ -236,7 +245,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "GenreDeleteAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
     }

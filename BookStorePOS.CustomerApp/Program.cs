@@ -2,7 +2,6 @@
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient("WebAPI", client =>
 {
@@ -18,10 +17,17 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/Home/NotFound");
+
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthorization();
 app.MapStaticAssets();
+
+app.MapControllerRoute(
+    name: "notfound",
+    pattern: "NotFound",
+    defaults: new { controller = "Home", action = "NotFound" });
 
 app.MapControllerRoute(
     name: "default",

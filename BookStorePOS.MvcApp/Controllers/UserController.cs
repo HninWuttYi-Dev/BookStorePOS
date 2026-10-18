@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 using Newtonsoft.Json;
+using System.Net;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.User;
 using BookStorePOS.Shared.Models.RolePermission;
 
@@ -56,7 +58,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     ViewData["Roles"] = activeRoles;
                 }
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Users"] = response.Data;
                     ViewData["CurrentPage"] = response.Page > 0 ? response.Page : page;
@@ -79,7 +81,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UserListAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -109,7 +111,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UserCreateAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -124,17 +126,17 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel == null)
                 {
                     _logger.LogWarning("User Save Async => No user data provided");
-                    return Json(new UserCreateResponseModel { isSuccess = false, Message = "Invalid staff data provided." });
+                    return Json(new UserCreateResponseModel { IsSuccess = false, Message = "Invalid staff data provided." });
                 }
 
                 if (string.IsNullOrWhiteSpace(requestModel.Username))
                 {
-                    return Json(new UserCreateResponseModel { isSuccess = false, Message = "Login username is required." });
+                    return Json(new UserCreateResponseModel { IsSuccess = false, Message = "Login username is required." });
                 }
 
                 if (requestModel.Username.Contains(' ') || requestModel.Username.Any(char.IsWhiteSpace))
                 {
-                    return Json(new UserCreateResponseModel { isSuccess = false, Message = "Username cannot contain spaces." });
+                    return Json(new UserCreateResponseModel { IsSuccess = false, Message = "Username cannot contain spaces." });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -143,9 +145,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.PostAsync("api/user", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<UserCreateResponseModel>(jsonString) 
-                    ?? new UserCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                    ?? new UserCreateResponseModel { IsSuccess = false, Message = "Unknown error" };
 
-                if (response != null && response.isSuccess)
+                if (response != null && response.IsSuccess)
                 {
                     _logger.LogInformation("User Save Async => User created successfully");
                     TempData["Message"] = response.Message ?? "Staff account created successfully.";
@@ -161,7 +163,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UserSaveAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -170,19 +172,28 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             try
             {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"User Edit Async => Fetching user {id}");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var userResponse = await client.GetAsync($"api/user/{id}");
+
+                if (userResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var userJson = await userResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<UserGetByIdResponseModel>(userJson);
 
-                if (model == null || !model.isSuccess || model.Data == null)
+                if (model == null || !model.IsSuccess || model.Data == null || model.Type == EnumResType.NotFound)
                 {
                     _logger.LogWarning($"User Edit Async => Failed to fetch user {id}: {model?.Message}");
-                    TempData["Message"] = model?.Message ?? "Staff user not found.";
-                    TempData["isSuccess"] = false;
-                    return RedirectToAction("Index");
+                    return NotFound();
                 }
 
                 var rolesResponse = await client.GetAsync("api/RolePermission/roles?PageSize=100");
@@ -203,7 +214,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UserEditAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -217,19 +228,19 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 if (requestModel == null)
                 {
-                    return Json(new UserUpdateResponseModel { isSuccess = false, Message = "Invalid staff update data." });
+                    return Json(new UserUpdateResponseModel { IsSuccess = false, Message = "Invalid staff update data." });
                 }
 
                 requestModel.UserId = id;
 
                 if (string.IsNullOrWhiteSpace(requestModel.Username))
                 {
-                    return Json(new UserUpdateResponseModel { isSuccess = false, Message = "Login username is required." });
+                    return Json(new UserUpdateResponseModel { IsSuccess = false, Message = "Login username is required." });
                 }
 
                 if (requestModel.Username.Contains(' ') || requestModel.Username.Any(char.IsWhiteSpace))
                 {
-                    return Json(new UserUpdateResponseModel { isSuccess = false, Message = "Username cannot contain spaces." });
+                    return Json(new UserUpdateResponseModel { IsSuccess = false, Message = "Username cannot contain spaces." });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -238,9 +249,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.PatchAsync($"api/user/{id}", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<UserUpdateResponseModel>(jsonString) 
-                    ?? new UserUpdateResponseModel { isSuccess = false, Message = "Unknown error" };
+                    ?? new UserUpdateResponseModel { IsSuccess = false, Message = "Unknown error" };
 
-                if (response != null && response.isSuccess)
+                if (response != null && response.IsSuccess)
                 {
                     _logger.LogInformation("User Update Async => User updated successfully");
                     TempData["Message"] = response.Message ?? "Staff account updated successfully.";
@@ -256,7 +267,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UserUpdateAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -272,9 +283,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var httpResponse = await client.DeleteAsync($"api/user/{id}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<UserDeleteResponseModel>(jsonString) 
-                    ?? new UserDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+                    ?? new UserDeleteResponseModel { IsSuccess = false, Message = "Unknown error" };
 
-                if (response != null && response.isSuccess)
+                if (response != null && response.IsSuccess)
                 {
                     _logger.LogInformation("User Delete Async => User deleted successfully");
                     TempData["Message"] = response.Message ?? "Staff account deleted successfully.";
@@ -290,7 +301,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UserDeleteAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
     }

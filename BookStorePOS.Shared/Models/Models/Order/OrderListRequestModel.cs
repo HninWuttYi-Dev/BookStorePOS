@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Order;
 
@@ -7,11 +8,8 @@ public class OrderListRequestModel
 {
 }
 
-public class OrderListResponseModel
+public class OrderListResponseModel : Result<List<OrderModel>>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public List<OrderModel> Data { get; set; } = null!;
 }
 
 public class OrderModel

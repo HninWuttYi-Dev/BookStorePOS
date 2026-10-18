@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.RolePermission;
 
@@ -126,11 +127,8 @@ public class RoleListRequestModel
     public string? RoleName { get; set; }
 }
 
-public class RoleListResponseModel
+public class RoleListResponseModel : Result<List<RoleModel>>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public List<RoleModel> Data { get; set; } = new();
     public int TotalCount { get; set; }
     public int PageNumber { get; set; }
     public int PageSize { get; set; }

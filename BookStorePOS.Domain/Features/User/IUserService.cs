@@ -1,13 +1,15 @@
 using System.Threading.Tasks;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.User;
 
 namespace BookStorePOS.Domain.Features.User;
 
 public interface IUserService
 {
-    Task<UserCreateResponseModel> CreateUserAsync(UserCreateRequestModel request);
+    Task<Result<UserModel>> CreateUserAsync(UserCreateRequestModel request);
     Task<UserListResponseModel> GetUsersAsync(UserListRequestModel request);
-    Task<UserGetByIdResponseModel> GetUserByIdAsync(int userId);
-    Task<UserUpdateResponseModel> UpdateUserAsync(UserUpdateRequestModel request);
-    Task<UserDeleteResponseModel> DeleteUserAsync(int userId);
+    Task<Result<UserModel>> GetUserByIdAsync(int userId);
+    Task<Result<UserModel>> UpdateUserAsync(UserUpdateRequestModel request);
+    Task<Result<UserModel>> DeleteUserAsync(int userId);
 }
+

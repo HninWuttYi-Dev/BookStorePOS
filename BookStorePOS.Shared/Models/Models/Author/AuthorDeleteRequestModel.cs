@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Author;
 
 public class AuthorDeleteRequestModel
@@ -5,9 +7,6 @@ public class AuthorDeleteRequestModel
     public int AuthorId { get; set; }
 }
 
-public class AuthorDeleteResponseModel
+public class AuthorDeleteResponseModel : Result<AuthorModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public AuthorModel Data { get; set; } = null!;
 }

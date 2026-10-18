@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BookStorePOS.Database.AppDbContextModels;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.RolePermission;
 
 namespace BookStorePOS.Domain.Features.RolePermission;
@@ -38,7 +39,8 @@ public class RolePermissionService : IRolePermissionService
             {
                 return new RoleListResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.ValidationError,
                     Message = "Page number and page size must be positive and within the supported range."
                 };
             }
@@ -67,7 +69,8 @@ public class RolePermissionService : IRolePermissionService
 
             return new RoleListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Roles retrieved successfully.",
                 Data = roles,
                 TotalCount = totalCount,
@@ -80,13 +83,14 @@ public class RolePermissionService : IRolePermissionService
             _logger.LogError(ex, "GetRolesAsync => Error fetching roles");
             return new RoleListResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = $"Failed to retrieve roles: {ex.Message}"
             };
         }
     }
 
-    public async Task<RoleByIdResponseModel> GetRoleByIdAsync(int id)
+    public async Task<Result<RoleModel>> GetRoleByIdAsync(int id)
     {
         _logger.LogInformation("GetRoleByIdAsync => Fetching role by id: {RoleId}", id);
         try
@@ -97,32 +101,19 @@ public class RolePermissionService : IRolePermissionService
 
             if (role == null)
             {
-                return new RoleByIdResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Role not found."
-                };
+                return Result<RoleModel>.NotFound("Role not found.");
             }
 
-            return new RoleByIdResponseModel
-            {
-                isSuccess = true,
-                Message = "Role retrieved successfully.",
-                Data = Map(role)
-            };
+            return Result<RoleModel>.Success(Map(role), "Role retrieved successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetRoleByIdAsync => Error fetching role {RoleId}", id);
-            return new RoleByIdResponseModel
-            {
-                isSuccess = false,
-                Message = $"Failed to retrieve role: {ex.Message}"
-            };
+            return Result<RoleModel>.SystemError($"Failed to retrieve role: {ex.Message}");
         }
     }
 
-    public async Task<RoleCreateResponseModel> CreateRoleAsync(RoleCreateRequestModel request)
+    public async Task<Result<RoleModel>> CreateRoleAsync(RoleCreateRequestModel request)
     {
         _logger.LogInformation("CreateRoleAsync => Creating role: {RoleName}", request.RoleName);
         try
@@ -130,11 +121,9 @@ public class RolePermissionService : IRolePermissionService
             var error = await Validate(request.RoleName, request.PermissionIds);
             if (error != null)
             {
-                return new RoleCreateResponseModel
-                {
-                    isSuccess = false,
-                    Message = error
-                };
+                return error.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+                    ? Result<RoleModel>.Conflict(error)
+                    : Result<RoleModel>.ValidationError(error);
             }
 
             var role = new TblRole
@@ -159,25 +148,16 @@ public class RolePermissionService : IRolePermissionService
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.RoleId == role.RoleId);
 
-            return new RoleCreateResponseModel
-            {
-                isSuccess = true,
-                Message = "Role created successfully.",
-                Data = createdRole != null ? Map(createdRole) : null
-            };
+            return Result<RoleModel>.Success(createdRole != null ? Map(createdRole) : null, "Role created successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "CreateRoleAsync => Error creating role {RoleName}", request.RoleName);
-            return new RoleCreateResponseModel
-            {
-                isSuccess = false,
-                Message = $"Failed to create role: {ex.Message}"
-            };
+            return Result<RoleModel>.SystemError($"Failed to create role: {ex.Message}");
         }
     }
 
-    public async Task<RoleUpdateResponseModel> UpdateRoleAsync(RoleUpdateRequestModel request)
+    public async Task<Result<RoleModel>> UpdateRoleAsync(RoleUpdateRequestModel request)
     {
         _logger.LogInformation("UpdateRoleAsync => Updating role id: {RoleId}", request.RoleId);
         try
@@ -187,39 +167,25 @@ public class RolePermissionService : IRolePermissionService
 
             if (role == null)
             {
-                return new RoleUpdateResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Role not found."
-                };
+                return Result<RoleModel>.NotFound("Role not found.");
             }
 
             var error = await Validate(request.RoleName, request.PermissionIds, request.RoleId);
             if (error != null)
             {
-                return new RoleUpdateResponseModel
-                {
-                    isSuccess = false,
-                    Message = error
-                };
+                return error.Contains("already exists", StringComparison.OrdinalIgnoreCase)
+                    ? Result<RoleModel>.Conflict(error)
+                    : Result<RoleModel>.ValidationError(error);
             }
 
             if (IsCustomer(role))
             {
-                return new RoleUpdateResponseModel
-                {
-                    isSuccess = false,
-                    Message = "The system Customer role cannot be modified via the staff portal."
-                };
+                return Result<RoleModel>.ValidationError("The system Customer role cannot be modified via the staff portal.");
             }
 
             if (IsAdmin(role) && (request.RoleName.Trim() != role.RoleName || await StripsAdminPermissions(role, request.PermissionIds)))
             {
-                return new RoleUpdateResponseModel
-                {
-                    isSuccess = false,
-                    Message = "The system Admin role cannot be renamed or have permissions removed."
-                };
+                return Result<RoleModel>.ValidationError("The system Admin role cannot be renamed or have permissions removed.");
             }
 
             role.RoleName = request.RoleName.Trim();
@@ -233,25 +199,16 @@ public class RolePermissionService : IRolePermissionService
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.RoleId == role.RoleId);
 
-            return new RoleUpdateResponseModel
-            {
-                isSuccess = true,
-                Message = "Role updated successfully.",
-                Data = updatedRole != null ? Map(updatedRole) : null
-            };
+            return Result<RoleModel>.Success(updatedRole != null ? Map(updatedRole) : null, "Role updated successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "UpdateRoleAsync => Error updating role {RoleId}", request.RoleId);
-            return new RoleUpdateResponseModel
-            {
-                isSuccess = false,
-                Message = $"Failed to update role: {ex.Message}"
-            };
+            return Result<RoleModel>.SystemError($"Failed to update role: {ex.Message}");
         }
     }
 
-    public async Task<RoleDeleteResponseModel> DeleteRoleAsync(int id)
+    public async Task<Result<RoleModel>> DeleteRoleAsync(int id)
     {
         _logger.LogInformation("DeleteRoleAsync => Deleting role id: {RoleId}", id);
         try
@@ -259,29 +216,17 @@ public class RolePermissionService : IRolePermissionService
             var role = await ActiveRoles.FirstOrDefaultAsync(r => r.RoleId == id);
             if (role == null)
             {
-                return new RoleDeleteResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Role not found."
-                };
+                return Result<RoleModel>.NotFound("Role not found.");
             }
 
             if (IsAdmin(role) || IsCustomer(role))
             {
-                return new RoleDeleteResponseModel
-                {
-                    isSuccess = false,
-                    Message = $"The system {role.RoleName} role cannot be deleted."
-                };
+                return Result<RoleModel>.ValidationError($"The system {role.RoleName} role cannot be deleted.");
             }
 
             if (await _db.TblUsers.AnyAsync(u => u.RoleId == id && !u.IsDeleted))
             {
-                return new RoleDeleteResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Role is assigned to active users."
-                };
+                return Result<RoleModel>.Conflict("Role is assigned to active users.");
             }
 
             role.IsDeleted = true;
@@ -289,20 +234,12 @@ public class RolePermissionService : IRolePermissionService
 
             await _db.SaveChangesAsync();
 
-            return new RoleDeleteResponseModel
-            {
-                isSuccess = true,
-                Message = "Role deleted successfully."
-            };
+            return Result<RoleModel>.Success(null, "Role deleted successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "DeleteRoleAsync => Error deleting role {RoleId}", id);
-            return new RoleDeleteResponseModel
-            {
-                isSuccess = false,
-                Message = $"Failed to delete role: {ex.Message}"
-            };
+            return Result<RoleModel>.SystemError($"Failed to delete role: {ex.Message}");
         }
     }
 
@@ -318,7 +255,8 @@ public class RolePermissionService : IRolePermissionService
             {
                 return new PermissionListResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.ValidationError,
                     Message = "Page number and page size must be positive and within the supported range."
                 };
             }
@@ -341,7 +279,8 @@ public class RolePermissionService : IRolePermissionService
 
             return new PermissionListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Permissions retrieved successfully.",
                 Data = permissions,
                 TotalCount = totalCount,
@@ -354,13 +293,14 @@ public class RolePermissionService : IRolePermissionService
             _logger.LogError(ex, "GetPermissionsAsync => Error fetching permissions");
             return new PermissionListResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = $"Failed to retrieve permissions: {ex.Message}"
             };
         }
     }
 
-    public async Task<AssignRolePermissionsResponseModel> AssignPermissionsAsync(AssignRolePermissionsRequestModel request)
+    public async Task<Result<object?>> AssignPermissionsAsync(AssignRolePermissionsRequestModel request)
     {
         _logger.LogInformation("AssignPermissionsAsync => Assigning permissions to role id: {RoleId}", request.RoleId);
         try
@@ -370,29 +310,17 @@ public class RolePermissionService : IRolePermissionService
 
             if (role == null)
             {
-                return new AssignRolePermissionsResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Role not found."
-                };
+                return Result<object?>.NotFound("Role not found.");
             }
 
             if (!await ValidPermissions(request.PermissionIds))
             {
-                return new AssignRolePermissionsResponseModel
-                {
-                    isSuccess = false,
-                    Message = "One or more permissions are invalid or inactive."
-                };
+                return Result<object?>.ValidationError("One or more permissions are invalid or inactive.");
             }
 
             if (IsAdmin(role) && await StripsAdminPermissions(role, request.PermissionIds))
             {
-                return new AssignRolePermissionsResponseModel
-                {
-                    isSuccess = false,
-                    Message = "The system Admin role cannot have permissions removed."
-                };
+                return Result<object?>.ValidationError("The system Admin role cannot have permissions removed.");
             }
 
             ReplacePermissions(role, request.PermissionIds);
@@ -400,20 +328,12 @@ public class RolePermissionService : IRolePermissionService
 
             await _db.SaveChangesAsync();
 
-            return new AssignRolePermissionsResponseModel
-            {
-                isSuccess = true,
-                Message = "Permissions assigned successfully."
-            };
+            return Result<object?>.Success(null, "Permissions assigned successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "AssignPermissionsAsync => Error assigning permissions to role {RoleId}", request.RoleId);
-            return new AssignRolePermissionsResponseModel
-            {
-                isSuccess = false,
-                Message = $"Failed to assign permissions: {ex.Message}"
-            };
+            return Result<object?>.SystemError($"Failed to assign permissions: {ex.Message}");
         }
     }
 

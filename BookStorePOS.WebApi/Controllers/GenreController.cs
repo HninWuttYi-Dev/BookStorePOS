@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.Genre;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.Genre;
 using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class GenreController : ControllerBase
+public class GenreController : BaseController
 {
     private readonly IGenreService _genreService;
     private readonly ILogger<GenreController> _logger;
@@ -29,19 +29,12 @@ public class GenreController : ControllerBase
         {
             _logger.LogInformation("Get Genres Async => Fetching all genres");
             var response = await _genreService.GetGenresAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get Genres Async => Failed to fetch genres {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get Genres Async => Genres fetched successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetGenresAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<List<GenreModel>>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -51,21 +44,14 @@ public class GenreController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Get Genre ById Async => Fetching genre by Id");
+            _logger.LogInformation("Get Genre ById Async => Fetching genre by Id {GenreId}", id);
             var response = await _genreService.GetGenreByIdAsync(new GenreByIdRequestModel { GenreId = id });
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get Genre ById Async => Failed to fetch genre {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get Genre ById Async => Genre fetched successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetGenreByIdAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<GenreModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -77,19 +63,12 @@ public class GenreController : ControllerBase
         {
             _logger.LogInformation("Create Genre Async => Creating genre");
             var response = await _genreService.CreateGenreAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Create Genre Async => Failed to create genre {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Create Genre Async => Genre is created successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "CreateGenreAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<GenreModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -99,22 +78,15 @@ public class GenreController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Update Genre Async => Updating genre");
+            _logger.LogInformation("Update Genre Async => Updating genre {GenreId}", id);
             requestModel.GenreId = id;
             var response = await _genreService.UpdateGenreAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Update Genre Async => Failed to update genre {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Update Genre Async => Genre is updated successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "UpdateGenreAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<GenreModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -124,21 +96,14 @@ public class GenreController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Delete Genre Async => Deleting genre");
+            _logger.LogInformation("Delete Genre Async => Deleting genre {GenreId}", id);
             var response = await _genreService.DeleteGenreAsync(new GenreDeleteRequestModel { GenreId = id });
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Delete Genre Async => Failed to delete genre {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Delete Genre Async => Genre is deleted successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "DeleteGenreAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<GenreModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 }

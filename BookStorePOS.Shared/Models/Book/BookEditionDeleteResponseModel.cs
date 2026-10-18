@@ -1,7 +1,7 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Book;
 
-public class BookEditionDeleteResponseModel
+public class BookEditionDeleteResponseModel : Result<BookEditionModel>
 {
-    public bool isSuccess { get; set; }
-    public string? Message { get; set; }
 }

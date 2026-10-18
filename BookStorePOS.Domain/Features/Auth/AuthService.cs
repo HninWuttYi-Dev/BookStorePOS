@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Features.RolePermission;
 using BookStorePOS.Shared.Models.Auth;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Domain.Features.Auth;
 
@@ -44,7 +45,8 @@ public class AuthService : IAuthService
             {
                 return new LoginResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.ValidationError,
                     Message = "Username and password are required."
                 };
             }
@@ -61,7 +63,8 @@ public class AuthService : IAuthService
                 _logger.LogWarning("LoginAsync => Invalid credentials for username: {Username}", request.Username);
                 return new LoginResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
                     Message = "Invalid username or password."
                 };
             }
@@ -71,7 +74,8 @@ public class AuthService : IAuthService
                 _logger.LogWarning("LoginAsync => User's assigned role is deactivated for username: {Username}", request.Username);
                 return new LoginResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
                     Message = "User's role is deactivated."
                 };
             }
@@ -84,7 +88,8 @@ public class AuthService : IAuthService
 
             return new LoginResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Login successful.",
                 AccessToken = token,
                 Role = roleName,
@@ -96,7 +101,8 @@ public class AuthService : IAuthService
             _logger.LogError(ex, "LoginAsync => Error during login for username: {Username}", request.Username);
             return new LoginResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = $"An error occurred during login: {ex.Message}"
             };
         }
@@ -108,23 +114,24 @@ public class AuthService : IAuthService
         try
         {
             if (string.IsNullOrWhiteSpace(request.Username))
-                return new RegisterResponseModel { isSuccess = false, Message = "Username is required." };
+                return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.ValidationError, Message = "Username is required." };
 
             if (string.IsNullOrWhiteSpace(request.FullName))
-                return new RegisterResponseModel { isSuccess = false, Message = "Full Name is required." };
+                return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.ValidationError, Message = "Full Name is required." };
 
             if (string.IsNullOrWhiteSpace(request.Phone))
-                return new RegisterResponseModel { isSuccess = false, Message = "Phone number is required." };
+                return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.ValidationError, Message = "Phone number is required." };
 
             if (string.IsNullOrWhiteSpace(request.Password))
-                return new RegisterResponseModel { isSuccess = false, Message = "Password is required." };
+                return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.ValidationError, Message = "Password is required." };
 
             if (request.Username.Contains(' ') || !Regex.IsMatch(request.Username.Trim(), @"^[a-zA-Z0-9_.-]+$"))
             {
                 _logger.LogWarning("RegisterCustomerAsync => Username contains spaces or invalid characters: {Username}", request.Username);
                 return new RegisterResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.ValidationError,
                     Message = "Username cannot contain spaces or special characters. Please use letters, numbers, '.', '_', or '-' only."
                 };
             }
@@ -133,7 +140,8 @@ public class AuthService : IAuthService
             {
                 return new RegisterResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.ValidationError,
                     Message = "Username must be between 3 and 30 characters long."
                 };
             }
@@ -157,7 +165,8 @@ public class AuthService : IAuthService
                 _logger.LogWarning("RegisterCustomerAsync => Invalid phone number format: {Phone}", request.Phone);
                 return new RegisterResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
+                    Type = EnumResType.ValidationError,
                     Message = "Invalid phone number. Please enter a valid Myanmar phone number (e.g. 09789456123)."
                 };
             }
@@ -165,7 +174,7 @@ public class AuthService : IAuthService
             if (!string.IsNullOrEmpty(email) && !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
             {
                 _logger.LogWarning("RegisterCustomerAsync => Invalid email format: {Email}", email);
-                return new RegisterResponseModel { isSuccess = false, Message = "Invalid email format." };
+                return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.ValidationError, Message = "Invalid email format." };
             }
 
             // Uniqueness checks
@@ -173,14 +182,14 @@ public class AuthService : IAuthService
             if (usernameExists)
             {
                 _logger.LogWarning("RegisterCustomerAsync => Username already exists: {Username}", username);
-                return new RegisterResponseModel { isSuccess = false, Message = "Username is already taken." };
+                return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.Conflict, Message = "Username is already taken." };
             }
 
             bool phoneExists = await _context.TblUsers.AnyAsync(x => x.Phone == phone && !x.IsDeleted);
             if (phoneExists)
             {
                 _logger.LogWarning("RegisterCustomerAsync => Phone already registered: {Phone}", phone);
-                return new RegisterResponseModel { isSuccess = false, Message = "Phone number is already registered." };
+                return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.Conflict, Message = "Phone number is already registered." };
             }
 
             if (!string.IsNullOrEmpty(email))
@@ -189,7 +198,7 @@ public class AuthService : IAuthService
                 if (emailExists)
                 {
                     _logger.LogWarning("RegisterCustomerAsync => Email already registered: {Email}", email);
-                    return new RegisterResponseModel { isSuccess = false, Message = "Email is already registered." };
+                    return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.Conflict, Message = "Email is already registered." };
                 }
             }
 
@@ -265,7 +274,8 @@ public class AuthService : IAuthService
 
             return new RegisterResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Registration successful.",
                 AccessToken = token,
                 Role = customerRole.RoleName,
@@ -277,7 +287,8 @@ public class AuthService : IAuthService
             _logger.LogError(ex, "RegisterCustomerAsync => Error registering customer {Username}", request.Username);
             return new RegisterResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = $"An error occurred while registering: {ex.Message}"
             };
         }

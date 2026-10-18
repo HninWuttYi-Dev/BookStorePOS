@@ -18,7 +18,7 @@ public partial class MainForm : Form
     private async void LoadBooks()
     {
         var response = await _bookService.GetBooksAsync(new BookListRequestModel());
-        if (response.isSuccess)
+        if (response.IsSuccess)
         {
             dataGridViewBooks.DataSource = response.Data;
         }
@@ -42,7 +42,7 @@ public partial class MainForm : Form
                 StockQuantity = stock
             };
             var res = await _bookService.CreateBookAsync(req);
-            if (res.isSuccess)
+            if (res.IsSuccess)
             {
                 MessageBox.Show("Book created successfully", "Success");
                 LoadBooks();
@@ -79,7 +79,7 @@ public partial class MainForm : Form
             };
 
             var res =await _bookService.UpdateBookAsync(req);
-            if (res.isSuccess)
+            if (res.IsSuccess)
             {
                 MessageBox.Show("Book updated successfully", "Success");
                 LoadBooks();
@@ -99,7 +99,7 @@ public partial class MainForm : Form
             var req = new BookDeleteRequestModel { BookId = bookId };
             var res =await _bookService.DeleteBookAsync(req);
             
-            if (res.isSuccess)
+            if (res.IsSuccess)
             {
                 MessageBox.Show("Book deleted successfully", "Success");
                 LoadBooks();

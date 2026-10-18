@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Edition;
 
 public class EditionByIdRequestModel
@@ -5,9 +7,6 @@ public class EditionByIdRequestModel
     public int EditionId { get; set; }
 }
 
-public class EditionByIdResponseModel
+public class EditionByIdResponseModel : Result<EditionModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public EditionModel Data { get; set; } = null!;
 }

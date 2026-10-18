@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Genre;
 
@@ -9,11 +10,8 @@ public class GenreListRequestModel
     public int Limit { get; set; } = 10;
 }
 
-public class GenreListResponseModel
+public class GenreListResponseModel : Result<List<GenreModel>>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public List<GenreModel> Data { get; set; } = null!;
     public int Page { get; set; }
     public int Limit { get; set; }
     public int Count { get; set; }

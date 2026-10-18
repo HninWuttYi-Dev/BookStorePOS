@@ -19,7 +19,7 @@ public class CanvasJsController : Controller
     public async Task<IActionResult> Index()
     {
         var bookResponse = await _bookService.GetBooksAsync(new BookListRequestModel());
-        var books = bookResponse.isSuccess ? bookResponse.Data : new List<BookModel>();
+        var books = bookResponse.IsSuccess ? bookResponse.Data : new List<BookModel>();
         
         var dataPoints = books.Select(x => new { label = x.Title, y = x.StartingPrice }).ToList();
         

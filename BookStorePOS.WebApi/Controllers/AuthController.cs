@@ -9,7 +9,7 @@ namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
@@ -26,15 +26,7 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Login => Received login request for username: {Username}", request.Username);
         var response = await _authService.LoginAsync(request);
-
-        if (!response.isSuccess)
-        {
-            _logger.LogWarning("Login => Invalid login credentials for username: {Username}", request.Username);
-            return Unauthorized(response);
-        }
-
-        _logger.LogInformation("Login => Login succeeded for username: {Username}", request.Username);
-        return Ok(response);
+        return ExecuteResult(response);
     }
 
     [HttpPost("register")]
@@ -43,14 +35,6 @@ public class AuthController : ControllerBase
     {
         _logger.LogInformation("Register => Received registration request for username: {Username}", request.Username);
         var response = await _authService.RegisterCustomerAsync(request);
-
-        if (!response.isSuccess)
-        {
-            _logger.LogWarning("Register => Registration failed for username: {Username}. Reason: {Message}", request.Username, response.Message);
-            return BadRequest(response);
-        }
-
-        _logger.LogInformation("Register => Customer registration succeeded for username: {Username}", request.Username);
-        return Ok(response);
+        return ExecuteResult(response);
     }
 }

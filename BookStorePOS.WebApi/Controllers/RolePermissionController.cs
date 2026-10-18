@@ -12,7 +12,7 @@ namespace BookStorePOS.WebApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class RolePermissionController : ControllerBase
+public class RolePermissionController : BaseController
 {
     private readonly IRolePermissionService _rolePermissionService;
     private readonly ILogger<RolePermissionController> _logger;
@@ -31,11 +31,7 @@ public class RolePermissionController : ControllerBase
     {
         _logger.LogInformation("GetRoles => Fetching roles");
         var response = await _rolePermissionService.GetRolesAsync(request);
-        if (!response.isSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
+        return ExecuteResult(response);
     }
 
     [HttpGet("roles/{id:int}")]
@@ -44,11 +40,7 @@ public class RolePermissionController : ControllerBase
     {
         _logger.LogInformation("GetRoleById => Fetching role id: {RoleId}", id);
         var response = await _rolePermissionService.GetRoleByIdAsync(id);
-        if (!response.isSuccess)
-        {
-            return NotFound(response);
-        }
-        return Ok(response);
+        return ExecuteResult(response);
     }
 
     [HttpPost("roles")]
@@ -57,11 +49,7 @@ public class RolePermissionController : ControllerBase
     {
         _logger.LogInformation("CreateRole => Creating role: {RoleName}", request.RoleName);
         var response = await _rolePermissionService.CreateRoleAsync(request);
-        if (!response.isSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
+        return ExecuteResult(response);
     }
 
     [HttpPut("roles/{id:int}")]
@@ -71,11 +59,7 @@ public class RolePermissionController : ControllerBase
         _logger.LogInformation("UpdateRole => Updating role id: {RoleId}", id);
         request.RoleId = id;
         var response = await _rolePermissionService.UpdateRoleAsync(request);
-        if (!response.isSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
+        return ExecuteResult(response);
     }
 
     [HttpDelete("roles/{id:int}")]
@@ -84,11 +68,7 @@ public class RolePermissionController : ControllerBase
     {
         _logger.LogInformation("DeleteRole => Deleting role id: {RoleId}", id);
         var response = await _rolePermissionService.DeleteRoleAsync(id);
-        if (!response.isSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
+        return ExecuteResult(response);
     }
 
     [HttpGet("permissions")]
@@ -97,11 +77,7 @@ public class RolePermissionController : ControllerBase
     {
         _logger.LogInformation("GetPermissions => Fetching permissions");
         var response = await _rolePermissionService.GetPermissionsAsync(request);
-        if (!response.isSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
+        return ExecuteResult(response);
     }
 
     [HttpPost("assign")]
@@ -110,10 +86,6 @@ public class RolePermissionController : ControllerBase
     {
         _logger.LogInformation("AssignPermissions => Assigning permissions to role id: {RoleId}", request.RoleId);
         var response = await _rolePermissionService.AssignPermissionsAsync(request);
-        if (!response.isSuccess)
-        {
-            return BadRequest(response);
-        }
-        return Ok(response);
+        return ExecuteResult(response);
     }
 }

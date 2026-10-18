@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.User;
 
 public class UserDeleteRequestModel
@@ -5,8 +7,6 @@ public class UserDeleteRequestModel
     public int UserId { get; set; }
 }
 
-public class UserDeleteResponseModel
+public class UserDeleteResponseModel : Result<UserModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
 }

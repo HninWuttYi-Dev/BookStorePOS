@@ -1,16 +1,18 @@
+using System.Threading.Tasks;
 using BookStorePOS.Shared.Models.Book;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Domain.Features.Book;
 
 public interface IBookService
 {
-    Task<BookCreateResponseModel> CreateBookAsync(BookCreateRequestModel requestModel);
-    Task<BookDeleteResponseModel> DeleteBookAsync(BookDeleteRequestModel requestModel);
-    Task<BookByIdResponseModel> GetBookAsync(BookByIdRequestModel requestModel);
+    Task<Result<BookModel>> CreateBookAsync(BookCreateRequestModel requestModel);
+    Task<Result<BookModel>> DeleteBookAsync(BookDeleteRequestModel requestModel);
+    Task<Result<BookModel>> GetBookAsync(BookByIdRequestModel requestModel);
     Task<BookListResponseModel> GetBooksAsync(BookListRequestModel requestModel);
     Task<BookListResponseModel> GetLowStockBooksAsync();
-    Task<BookPatchResponseModel> UpdateBookAsync(BookPatchRequestModel requestModel);
-    Task<BookEditionCreateResponseModel> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel);
-    Task<BookEditionPatchResponseModel> UpdateBookEditionAsync(BookEditionPatchRequestModel requestModel);
-    Task<BookEditionDeleteResponseModel> DeleteBookEditionAsync(BookEditionDeleteRequestModel requestModel);
+    Task<Result<BookModel>> UpdateBookAsync(BookPatchRequestModel requestModel);
+    Task<Result<BookEditionModel>> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel);
+    Task<Result<BookEditionModel>> UpdateBookEditionAsync(BookEditionPatchRequestModel requestModel);
+    Task<Result<BookEditionModel>> DeleteBookEditionAsync(BookEditionDeleteRequestModel requestModel);
 }

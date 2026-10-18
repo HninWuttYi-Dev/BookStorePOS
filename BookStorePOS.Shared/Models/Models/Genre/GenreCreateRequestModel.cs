@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Genre;
 
 public class GenreCreateRequestModel
@@ -5,9 +7,6 @@ public class GenreCreateRequestModel
     public string GenreName { get; set; } = null!;
 }
 
-public class GenreCreateResponseModel
+public class GenreCreateResponseModel : Result<GenreModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public GenreModel Data { get; set; } = null!;
 }

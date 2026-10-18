@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Author;
 
 public class AuthorPatchRequestModel
@@ -6,9 +8,6 @@ public class AuthorPatchRequestModel
     public string? AuthorName { get; set; }
 }
 
-public class AuthorPatchResponseModel
+public class AuthorPatchResponseModel : Result<AuthorModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public AuthorModel Data { get; set; } = null!;
 }

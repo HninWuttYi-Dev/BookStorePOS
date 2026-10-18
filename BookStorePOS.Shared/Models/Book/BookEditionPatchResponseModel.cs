@@ -1,8 +1,7 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Book;
 
-public class BookEditionPatchResponseModel
+public class BookEditionPatchResponseModel : Result<BookEditionModel>
 {
-    public bool isSuccess { get; set; }
-    public string? Message { get; set; }
-    public BookEditionModel? Data { get; set; }
 }

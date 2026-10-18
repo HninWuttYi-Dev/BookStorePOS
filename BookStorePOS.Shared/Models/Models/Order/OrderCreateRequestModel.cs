@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Order;
 
@@ -19,9 +20,6 @@ public class CheckoutItemModel
     public int Quantity { get; set; }
 }
 
-public class OrderCreateResponseModel
+public class OrderCreateResponseModel : Result<OrderModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public OrderModel Data { get; set; } = null!;
 }

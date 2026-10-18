@@ -11,7 +11,7 @@ namespace BookStorePOS.WebApi.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class OrderController : ControllerBase
+public class OrderController : BaseController
 {
     private readonly IOrderService _orderService;
     private readonly ILogger<OrderController> _logger;
@@ -26,119 +26,44 @@ public class OrderController : ControllerBase
     [Permission("Dashboard.View")]
     public async Task<IActionResult> GetOrderSummaryAsync()
     {
-        try
-        {
-            _logger.LogInformation("Get Order Summary Async => Fetching order summary");
-            var response = await _orderService.GetOrderSummaryAsync();
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get Order Summary Async => Failed to fetch order summary {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get Order Summary Async => Order summary fetched successfully");
-            return Ok(response);
-    
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetOrderSummaryAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
+        _logger.LogInformation("Get Order Summary Async => Fetching order summary");
+        var response = await _orderService.GetOrderSummaryAsync();
+        return ExecuteResult(response);
     }
 
     [HttpGet("history")]
     [Permission("Order.View")]
     public async Task<IActionResult> GetOrderHistoryAsync([FromQuery] OrderHistoryRequestModel requestModel)
     {
-        try
-        {
-            _logger.LogInformation("Get Order History Async => Fetching order history");
-            var response = await _orderService.GetOrderHistoryAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get Order History Async => Failed to fetch order history {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get Order History Async => Order history fetched successfully");
-            return Ok(response);
-    
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetOrderHistoryAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
+        _logger.LogInformation("Get Order History Async => Fetching order history");
+        var response = await _orderService.GetOrderHistoryAsync(requestModel);
+        return ExecuteResult(response);
     }
 
     [HttpGet]
     [Permission("Order.View")]
     public async Task<IActionResult> GetOrdersAsync([FromQuery] OrderListRequestModel requestModel)
     {
-        try
-        {
-            _logger.LogInformation("Get Orders Async => Fetching all orders");
-            var response =await _orderService.GetOrdersAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get Orders Async => Failed to fetch orders {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get Orders Async => Orders fetched successfully");
-            return Ok(response);
-    
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetOrdersAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
+        _logger.LogInformation("Get Orders Async => Fetching all orders");
+        var response = await _orderService.GetOrdersAsync(requestModel);
+        return ExecuteResult(response);
     }
 
     [HttpGet("{id}")]
     [Permission("Order.View")]
     public async Task<IActionResult> GetOrderAsync(int id)
     {
-        try
-        {
-            _logger.LogInformation("Get Order Async => Fetching order by Id");
-            var response =await _orderService.GetOrderById(new OrderGetByIdRequestModel{OrderId = id});
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get Order Async => Failed to fetch order {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get Order Async => Order fetched successfully");
-            return Ok(response);
-    
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "GetOrderAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
+        _logger.LogInformation("Get Order Async => Fetching order by Id: {OrderId}", id);
+        var response = await _orderService.GetOrderById(new OrderGetByIdRequestModel { OrderId = id });
+        return ExecuteResult(response);
     }
 
     [HttpPost]
     [Permission("Order.Create")]
     public async Task<IActionResult> CreateOrderAsync([FromBody] OrderCreateRequestModel requestModel)
     {
-        try
-        {
-            _logger.LogInformation("Create Order Async => Creating order");
-            var response =await _orderService.CreateOrder(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Create Order Async => Failed to create order {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Create Order Async => Order is created successfully");
-            return Ok(response);
-    
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "CreateOrderAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
+        _logger.LogInformation("Create Order Async => Creating order");
+        var response = await _orderService.CreateOrder(requestModel);
+        return ExecuteResult(response);
     }
 }

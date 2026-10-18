@@ -34,7 +34,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                 {
                     return Json(new LoginResponseModel
                     {
-                        isSuccess = false,
+                        IsSuccess = false,
                         Message = "Username and password are required."
                     });
                 }
@@ -46,9 +46,9 @@ namespace BookStorePOS.CustomerApp.Controllers
                 var httpResponse = await client.PostAsync("api/Auth/login", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<LoginResponseModel>(jsonString)
-                    ?? new LoginResponseModel { isSuccess = false, Message = "Unexpected server response." };
+                    ?? new LoginResponseModel { IsSuccess = false, Message = "Unexpected server response." };
 
-                if (model.isSuccess && !string.IsNullOrEmpty(model.AccessToken))
+                if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
                 {
                     _logger.LogInformation("Customer Login => Login successful for username: {Username}", requestModel.Username);
 
@@ -78,7 +78,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                 _logger.LogError(ex, "Customer Login => Exception occurred");
                 return StatusCode(500, new LoginResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
                     Message = "Unable to connect to authentication service: " + ex.Message
                 });
             }
@@ -106,7 +106,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                 {
                     return Json(new RegisterResponseModel
                     {
-                        isSuccess = false,
+                        IsSuccess = false,
                         Message = "Full name, phone number, username, and password are required."
                     });
                 }
@@ -115,7 +115,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                 {
                     return Json(new RegisterResponseModel
                     {
-                        isSuccess = false,
+                        IsSuccess = false,
                         Message = "Username cannot contain spaces or special characters. Please use letters, numbers, '.', '_', or '-' only."
                     });
                 }
@@ -127,9 +127,9 @@ namespace BookStorePOS.CustomerApp.Controllers
                 var httpResponse = await client.PostAsync("api/Auth/register", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<RegisterResponseModel>(jsonString)
-                    ?? new RegisterResponseModel { isSuccess = false, Message = "Unexpected server response." };
+                    ?? new RegisterResponseModel { IsSuccess = false, Message = "Unexpected server response." };
 
-                if (model.isSuccess && !string.IsNullOrEmpty(model.AccessToken))
+                if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
                 {
                     _logger.LogInformation("Customer Register => Registration successful for username: {Username}", requestModel.Username);
 
@@ -159,7 +159,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                 _logger.LogError(ex, "Customer Register => Exception occurred");
                 return StatusCode(500, new RegisterResponseModel
                 {
-                    isSuccess = false,
+                    IsSuccess = false,
                     Message = "Unable to connect to registration service: " + ex.Message
                 });
             }

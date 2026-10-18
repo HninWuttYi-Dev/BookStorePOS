@@ -1,12 +1,10 @@
 using System;
+using BookStorePOS.Shared.Models.Common;
 
 namespace BookStorePOS.Shared.Models.Order;
 
-public class OrderSummaryResponseModel
+public class OrderSummaryResponseModel : Result<OrderSummaryModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public OrderSummaryModel Data { get; set; } = null!;
 }
 
 public class OrderSummaryModel

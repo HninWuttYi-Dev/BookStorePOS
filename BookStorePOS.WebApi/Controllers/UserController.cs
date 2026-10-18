@@ -1,16 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using BookStorePOS.Domain.Features.User;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.User;
 using BookStorePOS.WebApi.Filters;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UserController : ControllerBase
+public class UserController : BaseController
 {
     private readonly IUserService _userService;
     private readonly ILogger<UserController> _logger;
@@ -29,19 +29,12 @@ public class UserController : ControllerBase
         {
             _logger.LogInformation("Get Users Async => Fetching all users");
             var response = await _userService.GetUsersAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get Users Async => Failed to fetch users {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get Users Async => Users fetched successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetUsersAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<List<UserModel>>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -51,21 +44,14 @@ public class UserController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Get User ById Async => Fetching user by Id");
+            _logger.LogInformation("Get User ById Async => Fetching user by Id {UserId}", id);
             var response = await _userService.GetUserByIdAsync(id);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Get User ById Async => Failed to fetch user {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Get User ById Async => User fetched successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "GetUserByIdAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<UserModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -77,19 +63,12 @@ public class UserController : ControllerBase
         {
             _logger.LogInformation("Create User Async => Creating user");
             var response = await _userService.CreateUserAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Create User Async => Failed to create user {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Create User Async => User is created successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "CreateUserAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<UserModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -99,22 +78,15 @@ public class UserController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Update User Async => Updating user");
+            _logger.LogInformation("Update User Async => Updating user {UserId}", id);
             requestModel.UserId = id;
             var response = await _userService.UpdateUserAsync(requestModel);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Update User Async => Failed to update user {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Update User Async => User is updated successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "UpdateUserAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<UserModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 
@@ -124,21 +96,14 @@ public class UserController : ControllerBase
     {
         try
         {
-            _logger.LogInformation("Delete User Async => Deleting user");
+            _logger.LogInformation("Delete User Async => Deleting user {UserId}", id);
             var response = await _userService.DeleteUserAsync(id);
-            if (!response.isSuccess)
-            {
-                _logger.LogWarning("Delete User Async => Failed to delete user {Message}", response.Message);
-                return BadRequest(response);
-            }
-            _logger.LogInformation("Delete User Async => User is deleted successfully");
-            return Ok(response);
-    
+            return ExecuteResult(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "DeleteUserAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return ExecuteResult(Result<UserModel>.SystemError("Internal Server Error: " + ex.Message));
         }
     }
 }

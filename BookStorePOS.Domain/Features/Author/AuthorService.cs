@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Shared.Models.Author;
+using BookStorePOS.Shared.Models.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -57,7 +58,8 @@ public class AuthorService : IAuthorService
             _logger.LogInformation("Get Authors Async => Authors fetched successfully");
             return new AuthorListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Authors fetched successfully",
                 Data = authors,
                 Page = requestModel.Page,
@@ -71,13 +73,14 @@ public class AuthorService : IAuthorService
             _logger.LogWarning("Get Authors Async => Failed to fetch authors {Message}", ex.Message);
             return new AuthorListResponseModel
             {
-                isSuccess = false,
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
                 Message = "Failed to fetch authors: " + ex.Message
             };
         }
     }
 
-    public async Task<AuthorByIdResponseModel> GetAuthorByIdAsync(AuthorByIdRequestModel requestModel)
+    public async Task<Result<AuthorModel>> GetAuthorByIdAsync(AuthorByIdRequestModel requestModel)
     {
         _logger.LogInformation("Get Author ById Async => Fetching author by Id");
         try
@@ -89,38 +92,25 @@ public class AuthorService : IAuthorService
             if (item is null)
             {
                 _logger.LogWarning("Get Author ById Async => Author is not found");
-                return new AuthorByIdResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Author is not found"
-                };
+                return Result<AuthorModel>.NotFound("Author is not found");
             }
             
             _logger.LogInformation("Get Author ById Async => Author fetched successfully");
-            return new AuthorByIdResponseModel
+            return Result<AuthorModel>.Success(new AuthorModel
             {
-                isSuccess = true,
-                Message = "Author fetched successfully",
-                Data = new AuthorModel
-                {
-                    AuthorId = item.AuthorId,
-                    AuthorName = item.AuthorName,
-                    IsDeleted = item.IsDeleted
-                }
-            };
+                AuthorId = item.AuthorId,
+                AuthorName = item.AuthorName,
+                IsDeleted = item.IsDeleted
+            }, "Author fetched successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Get Author ById Async => Failed to fetch author {Message}", ex.Message);
-            return new AuthorByIdResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to fetch author: " + ex.Message
-            };
+            return Result<AuthorModel>.SystemError("Failed to fetch author: " + ex.Message);
         }
     }
 
-    public async Task<AuthorCreateResponseModel> CreateAuthorAsync(AuthorCreateRequestModel requestModel)
+    public async Task<Result<AuthorModel>> CreateAuthorAsync(AuthorCreateRequestModel requestModel)
     {
         _logger.LogInformation("Create Author Async => Creating author");
         try
@@ -128,14 +118,14 @@ public class AuthorService : IAuthorService
             if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
             {
                 _logger.LogWarning("Create Author Async => Author name is required");
-                return new AuthorCreateResponseModel { isSuccess = false, Message = "Author name is required." };
+                return Result<AuthorModel>.ValidationError("Author name is required.");
             }
 
             var exists = await _db.TblAuthors.AnyAsync(a => a.AuthorName.ToLower() == requestModel.AuthorName.ToLower() && !a.IsDeleted);
             if (exists)
             {
                 _logger.LogWarning("Create Author Async => Author name already exists");
-                return new AuthorCreateResponseModel { isSuccess = false, Message = "Author already exists." };
+                return Result<AuthorModel>.Conflict("Author already exists.");
             }
 
             var author = new TblAuthor
@@ -149,30 +139,21 @@ public class AuthorService : IAuthorService
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Create Author Async => Author is created successfully");
-            return new AuthorCreateResponseModel
+            return Result<AuthorModel>.Success(new AuthorModel
             {
-                isSuccess = true,
-                Message = "Created new author successfully",
-                Data = new AuthorModel
-                {
-                    AuthorId = author.AuthorId,
-                    AuthorName = author.AuthorName,
-                    IsDeleted = author.IsDeleted
-                }
-            };
+                AuthorId = author.AuthorId,
+                AuthorName = author.AuthorName,
+                IsDeleted = author.IsDeleted
+            }, "Created new author successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Create Author Async => Failed to create author {Message}", ex.Message);
-            return new AuthorCreateResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to create author: " + ex.Message
-            };
+            return Result<AuthorModel>.SystemError("Failed to create author: " + ex.Message);
         }
     }
 
-    public async Task<AuthorPatchResponseModel> UpdateAuthorAsync(AuthorPatchRequestModel requestModel)
+    public async Task<Result<AuthorModel>> UpdateAuthorAsync(AuthorPatchRequestModel requestModel)
     {
         _logger.LogInformation("Update Author Async => Updating author");
         try
@@ -183,24 +164,20 @@ public class AuthorService : IAuthorService
             if (item is null)
             {
                 _logger.LogWarning("Update Author Async => Author doesn't exist");
-                return new AuthorPatchResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Author doesn't exist"
-                };
+                return Result<AuthorModel>.NotFound("Author doesn't exist");
             }
 
             if (string.IsNullOrWhiteSpace(requestModel.AuthorName))
             {
                 _logger.LogWarning("Update Author Async => Author name is required");
-                return new AuthorPatchResponseModel { isSuccess = false, Message = "Author name is required." };
+                return Result<AuthorModel>.ValidationError("Author name is required.");
             }
 
             var exists = await _db.TblAuthors.AnyAsync(a => a.AuthorId != requestModel.AuthorId && a.AuthorName.ToLower() == requestModel.AuthorName.ToLower() && !a.IsDeleted);
             if (exists)
             {
                 _logger.LogWarning("Update Author Async => Author name already exists");
-                return new AuthorPatchResponseModel { isSuccess = false, Message = "Author already exists." };
+                return Result<AuthorModel>.Conflict("Author already exists.");
             }
 
             item.AuthorName = requestModel.AuthorName;
@@ -209,30 +186,21 @@ public class AuthorService : IAuthorService
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Update Author Async => Author is updated successfully");
-            return new AuthorPatchResponseModel
+            return Result<AuthorModel>.Success(new AuthorModel
             {
-                isSuccess = true,
-                Message = "Updated author successfully",
-                Data = new AuthorModel
-                {
-                    AuthorId = item.AuthorId,
-                    AuthorName = item.AuthorName,
-                    IsDeleted = item.IsDeleted
-                }
-            };
+                AuthorId = item.AuthorId,
+                AuthorName = item.AuthorName,
+                IsDeleted = item.IsDeleted
+            }, "Updated author successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Update Author Async => Failed to update author {Message}", ex.Message);
-            return new AuthorPatchResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to update author: " + ex.Message
-            };
+            return Result<AuthorModel>.SystemError("Failed to update author: " + ex.Message);
         }
     }
 
-    public async Task<AuthorDeleteResponseModel> DeleteAuthorAsync(AuthorDeleteRequestModel requestModel)
+    public async Task<Result<AuthorModel>> DeleteAuthorAsync(AuthorDeleteRequestModel requestModel)
     {
         _logger.LogInformation("Delete Author Async => Deleting author");
         try
@@ -243,21 +211,13 @@ public class AuthorService : IAuthorService
             if (item is null)
             {
                 _logger.LogWarning("Delete Author Async => Author is not found");
-                return new AuthorDeleteResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Author is not found"
-                };
+                return Result<AuthorModel>.NotFound("Author is not found");
             }
 
             if (item.IsDeleted)
             {
                 _logger.LogWarning("Delete Author Async => Author is already deleted");
-                return new AuthorDeleteResponseModel
-                {
-                    isSuccess = false,
-                    Message = "Author is already deleted."
-                };
+                return Result<AuthorModel>.Conflict("Author is already deleted.");
             }
 
             item.IsDeleted = true;
@@ -266,26 +226,17 @@ public class AuthorService : IAuthorService
             await _db.SaveChangesAsync();
 
             _logger.LogInformation("Delete Author Async => Author is deleted successfully");
-            return new AuthorDeleteResponseModel
+            return Result<AuthorModel>.Success(new AuthorModel
             {
-                isSuccess = true,
-                Message = "Author is deleted successfully",
-                Data = new AuthorModel
-                {
-                    AuthorId = item.AuthorId,
-                    AuthorName = item.AuthorName,
-                    IsDeleted = item.IsDeleted
-                }
-            };
+                AuthorId = item.AuthorId,
+                AuthorName = item.AuthorName,
+                IsDeleted = item.IsDeleted
+            }, "Author is deleted successfully");
         }
         catch (Exception ex)
         {
             _logger.LogWarning("Delete Author Async => Failed to delete author {Message}", ex.Message);
-            return new AuthorDeleteResponseModel
-            {
-                isSuccess = false,
-                Message = "Failed to delete author: " + ex.Message
-            };
+            return Result<AuthorModel>.SystemError("Failed to delete author: " + ex.Message);
         }
     }
 }

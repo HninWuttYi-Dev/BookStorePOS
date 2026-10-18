@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using BookStorePOS.Database.AppDbContextModels;
+using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.User;
 
 namespace BookStorePOS.Domain.Features.User;
@@ -20,22 +21,22 @@ public class UserService : IUserService
         _logger = logger;
     }
 
-    public async Task<UserCreateResponseModel> CreateUserAsync(UserCreateRequestModel request)
+    public async Task<Result<UserModel>> CreateUserAsync(UserCreateRequestModel request)
     {
         _logger.LogInformation("Create User Async => Creating user");
         try
         {
             if (string.IsNullOrWhiteSpace(request.Username))
-                return new UserCreateResponseModel { isSuccess = false, Message = "Username is required." };
+                return Result<UserModel>.ValidationError("Username is required.");
 
             if (request.Username.Contains(' ') || request.Username.Any(char.IsWhiteSpace))
-                return new UserCreateResponseModel { isSuccess = false, Message = "Username cannot contain spaces." };
+                return Result<UserModel>.ValidationError("Username cannot contain spaces.");
 
             if (string.IsNullOrWhiteSpace(request.FullName))
-                return new UserCreateResponseModel { isSuccess = false, Message = "Full Name is required." };
+                return Result<UserModel>.ValidationError("Full Name is required.");
 
             if (string.IsNullOrWhiteSpace(request.Phone))
-                return new UserCreateResponseModel { isSuccess = false, Message = "Phone number is required." };
+                return Result<UserModel>.ValidationError("Phone number is required.");
 
             string username = request.Username.Trim();
             string phone = request.Phone.Trim().Replace(" ", "").Replace("-", "");
@@ -53,12 +54,12 @@ public class UserService : IUserService
 
             if (!Regex.IsMatch(phone, @"^09\d{9}$"))
             {
-                return new UserCreateResponseModel { isSuccess = false, Message = "Invalid phone number. Please enter a valid Myanmar phone number." };
+                return Result<UserModel>.ValidationError("Invalid phone number. Please enter a valid Myanmar phone number.");
             }
 
             if (!string.IsNullOrEmpty(email) && !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
             {
-                return new UserCreateResponseModel { isSuccess = false, Message = "Invalid email format." };
+                return Result<UserModel>.ValidationError("Invalid email format.");
             }
 
             // Validate Username uniqueness
@@ -66,14 +67,14 @@ public class UserService : IUserService
                 .AnyAsync(x => x.Username == username && !x.IsDeleted);
             
             if (usernameExists)
-                return new UserCreateResponseModel { isSuccess = false, Message = "Username is already taken." };
+                return Result<UserModel>.Conflict("Username is already taken.");
 
             // Validate Phone uniqueness
             bool phoneExists = await _db.TblUsers
                 .AnyAsync(x => x.Phone == phone && !x.IsDeleted);
 
             if (phoneExists)
-                return new UserCreateResponseModel { isSuccess = false, Message = "Phone number is already registered." };
+                return Result<UserModel>.Conflict("Phone number is already registered.");
 
             // Validate Email uniqueness if provided
             if (!string.IsNullOrEmpty(email))
@@ -82,7 +83,7 @@ public class UserService : IUserService
                     .AnyAsync(x => x.Email == email && !x.IsDeleted);
 
                 if (emailExists)
-                    return new UserCreateResponseModel { isSuccess = false, Message = "Email is already registered." };
+                    return Result<UserModel>.Conflict("Email is already registered.");
             }
 
             // Password validation for staff account
@@ -90,11 +91,11 @@ public class UserService : IUserService
                             : (!string.IsNullOrWhiteSpace(request.PasswordHash) ? request.PasswordHash.Trim() : "");
             if (string.IsNullOrWhiteSpace(password))
             {
-                return new UserCreateResponseModel { isSuccess = false, Message = "Password is required for staff account." };
+                return Result<UserModel>.ValidationError("Password is required for staff account.");
             }
             if (password.Length < 3)
             {
-                return new UserCreateResponseModel { isSuccess = false, Message = "Password must be at least 3 characters." };
+                return Result<UserModel>.ValidationError("Password must be at least 3 characters.");
             }
 
             // Role assignment
@@ -105,11 +106,11 @@ public class UserService : IUserService
                 var role = await _db.TblRoles.FirstOrDefaultAsync(r => r.RoleId == roleId.Value && !r.IsDeleted);
                 if (role == null)
                 {
-                    return new UserCreateResponseModel { isSuccess = false, Message = "Selected role does not exist." };
+                    return Result<UserModel>.ValidationError("Selected role does not exist.");
                 }
                 if (role.RoleName.Equals("Customer", StringComparison.OrdinalIgnoreCase))
                 {
-                    return new UserCreateResponseModel { isSuccess = false, Message = "Staff cannot be assigned the Customer system role." };
+                    return Result<UserModel>.ValidationError("Staff cannot be assigned the Customer system role.");
                 }
                 roleName = role.RoleName;
             }
@@ -151,17 +152,12 @@ public class UserService : IUserService
 
             _logger.LogInformation("Create User Async => User created successfully");
 
-            return new UserCreateResponseModel
-            {
-                isSuccess = true,
-                Message = "Staff user created successfully.",
-                Data = userModel
-            };
+            return Result<UserModel>.Success(userModel, "Staff user created successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Create User Async => Failed to create user");
-            return new UserCreateResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
+            return Result<UserModel>.SystemError("An unexpected error occurred: " + ex.Message);
         }
     }
 
@@ -220,7 +216,8 @@ public class UserService : IUserService
             _logger.LogInformation("Get Users Async => Users fetched successfully");
             return new UserListResponseModel
             {
-                isSuccess = true,
+                IsSuccess = true,
+                Type = EnumResType.Success,
                 Message = "Users retrieved successfully.",
                 Data = users,
                 Page = page,
@@ -232,11 +229,11 @@ public class UserService : IUserService
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Get Users Async => Failed to fetch users");
-            return new UserListResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
+            return new UserListResponseModel { IsSuccess = false, Type = EnumResType.SystemError, Message = "An unexpected error occurred: " + ex.Message };
         }
     }
 
-    public async Task<UserGetByIdResponseModel> GetUserByIdAsync(int userId)
+    public async Task<Result<UserModel>> GetUserByIdAsync(int userId)
     {
         _logger.LogInformation("Get User Async => Fetching user by Id");
         try
@@ -249,7 +246,7 @@ public class UserService : IUserService
             if (user == null)
             {
                 _logger.LogWarning("Get User By Id Async => User is not found");
-                return new UserGetByIdResponseModel { isSuccess = false, Message = "User not found." };
+                return Result<UserModel>.NotFound("User not found.");
             }
 
             var userModel = new UserModel
@@ -267,43 +264,38 @@ public class UserService : IUserService
             };
 
             _logger.LogInformation("Get User By Id Async => User fetched successfully");
-            return new UserGetByIdResponseModel
-            {
-                isSuccess = true,
-                Message = "User retrieved successfully.",
-                Data = userModel
-            };
+            return Result<UserModel>.Success(userModel, "User retrieved successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Get User By Id Async => Failed to fetch user");
-            return new UserGetByIdResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
+            return Result<UserModel>.SystemError("An unexpected error occurred: " + ex.Message);
         }
     }
 
-    public async Task<UserUpdateResponseModel> UpdateUserAsync(UserUpdateRequestModel request)
+    public async Task<Result<UserModel>> UpdateUserAsync(UserUpdateRequestModel request)
     {
         _logger.LogInformation("Update User Async => Updating user");
         try
         {
             if (string.IsNullOrWhiteSpace(request.Username))
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Username is required." };
+                return Result<UserModel>.ValidationError("Username is required.");
 
             if (request.Username.Contains(' ') || request.Username.Any(char.IsWhiteSpace))
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Username cannot contain spaces." };
+                return Result<UserModel>.ValidationError("Username cannot contain spaces.");
 
             if (string.IsNullOrWhiteSpace(request.FullName))
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Full Name is required." };
+                return Result<UserModel>.ValidationError("Full Name is required.");
 
             if (string.IsNullOrWhiteSpace(request.Phone))
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Phone number is required." };
+                return Result<UserModel>.ValidationError("Phone number is required.");
 
             var user = await _db.TblUsers.Include(x => x.Role).FirstOrDefaultAsync(x => x.UserId == request.UserId && !x.IsDeleted);
 
             if (user == null)
             {
                 _logger.LogWarning("Update User Async => User is not found");
-                return new UserUpdateResponseModel { isSuccess = false, Message = "User not found." };
+                return Result<UserModel>.NotFound("User not found.");
             }
 
             string username = request.Username.Trim();
@@ -322,12 +314,12 @@ public class UserService : IUserService
 
             if (!Regex.IsMatch(phone, @"^09\d{9}$"))
             {
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Invalid phone number. Please enter a valid Myanmar phone number." };
+                return Result<UserModel>.ValidationError("Invalid phone number. Please enter a valid Myanmar phone number.");
             }
 
             if (!string.IsNullOrEmpty(email) && !Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
             {
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Invalid email format." };
+                return Result<UserModel>.ValidationError("Invalid email format.");
             }
 
             // Validate Username uniqueness (excluding current user)
@@ -335,14 +327,14 @@ public class UserService : IUserService
                 .AnyAsync(x => x.Username == username && x.UserId != request.UserId && !x.IsDeleted);
             
             if (usernameExists)
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Username is already taken." };
+                return Result<UserModel>.Conflict("Username is already taken.");
 
             // Validate Phone uniqueness (excluding current user)
             bool phoneExists = await _db.TblUsers
                 .AnyAsync(x => x.Phone == phone && x.UserId != request.UserId && !x.IsDeleted);
 
             if (phoneExists)
-                return new UserUpdateResponseModel { isSuccess = false, Message = "Phone number is already registered." };
+                return Result<UserModel>.Conflict("Phone number is already registered.");
 
             // Validate Email uniqueness if provided (excluding current user)
             if (!string.IsNullOrEmpty(email))
@@ -351,7 +343,7 @@ public class UserService : IUserService
                     .AnyAsync(x => x.Email == email && x.UserId != request.UserId && !x.IsDeleted);
 
                 if (emailExists)
-                    return new UserUpdateResponseModel { isSuccess = false, Message = "Email is already registered." };
+                    return Result<UserModel>.Conflict("Email is already registered.");
             }
 
             // Update password if provided
@@ -361,7 +353,7 @@ public class UserService : IUserService
             {
                 if (newPassword.Length < 3)
                 {
-                    return new UserUpdateResponseModel { isSuccess = false, Message = "New password must be at least 3 characters." };
+                    return Result<UserModel>.ValidationError("New password must be at least 3 characters.");
                 }
                 user.PasswordHash = newPassword;
             }
@@ -402,21 +394,16 @@ public class UserService : IUserService
 
             _logger.LogInformation("Update User Async => User updated successfully");
 
-            return new UserUpdateResponseModel
-            {
-                isSuccess = true,
-                Message = "Staff user updated successfully.",
-                Data = userModel
-            };
+            return Result<UserModel>.Success(userModel, "Staff user updated successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Update User Async => Failed to update user");
-            return new UserUpdateResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
+            return Result<UserModel>.SystemError("An unexpected error occurred: " + ex.Message);
         }
     }
 
-    public async Task<UserDeleteResponseModel> DeleteUserAsync(int userId)
+    public async Task<Result<UserModel>> DeleteUserAsync(int userId)
     {
         _logger.LogInformation("Delete User Async => Deleting user");
         try
@@ -426,12 +413,12 @@ public class UserService : IUserService
             if (user == null)
             {
                 _logger.LogWarning("Delete User Async => User is not found");
-                return new UserDeleteResponseModel { isSuccess = false, Message = "User not found." };
+                return Result<UserModel>.NotFound("User not found.");
             }
 
             if (user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
             {
-                return new UserDeleteResponseModel { isSuccess = false, Message = "The system admin account cannot be deleted." };
+                return Result<UserModel>.ValidationError("The system admin account cannot be deleted.");
             }
 
             user.IsDeleted = true;
@@ -441,16 +428,12 @@ public class UserService : IUserService
             
             _logger.LogInformation("Delete User Async => User deleted successfully");
 
-            return new UserDeleteResponseModel
-            {
-                isSuccess = true,
-                Message = "Staff user deleted successfully."
-            };
+            return Result<UserModel>.Success(null, "Staff user deleted successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Delete User Async => Failed to delete user");
-            return new UserDeleteResponseModel { isSuccess = false, Message = "An unexpected error occurred: " + ex.Message };
+            return Result<UserModel>.SystemError("An unexpected error occurred: " + ex.Message);
         }
     }
 }

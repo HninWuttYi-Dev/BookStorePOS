@@ -1,4 +1,6 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
+using BookStorePOS.Shared.Models.Common;
 namespace BookStorePOS.MvcApp.Controllers
 {
     public class BookController : Controller
@@ -25,7 +27,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
 
-                if (response != null && response.isSuccess && response.Data != null)
+                if (response != null && response.IsSuccess && response.Data != null)
                 {
                     ViewData["Books"] = response.Data;
                     ViewData["CurrentPage"] = response.Page;
@@ -49,48 +51,57 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "BookListAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
         [ActionName("Detail")]
         public async Task<IActionResult> BookDetailAsync(int id, int? editionId = null)
         {
-        try
-        {
+            try
+            {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"Book Detail Async => Fetching book {id}");
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/book/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-                if (response == null || !response.isSuccess || response.Data == null)
+                if (response == null || !response.IsSuccess || response.Data == null)
                 {
                     _logger.LogWarning($"Book Detail Async => Failed to fetch book {id}");
-                    TempData["Message"] = "Book not found.";
-                    TempData["isSuccess"] = false;
-                    return RedirectToAction("Index");
+                    return NotFound();
                 }
 
-                if (editionId.HasValue && response.Data.Editions != null)
+                if (editionId.HasValue)
                 {
-                    var selectedEdition = response.Data.Editions.FirstOrDefault(e => e.BookEditionId == editionId.Value);
-                    if (selectedEdition != null)
+                    var selectedEdition = response.Data.Editions?.FirstOrDefault(e => e.BookEditionId == editionId.Value);
+                    if (selectedEdition == null)
                     {
-                        ViewData["SelectedEdition"] = selectedEdition;
+                        return NotFound();
                     }
+                    ViewData["SelectedEdition"] = selectedEdition;
                 }
 
                 ViewData["Book"] = response.Data;
                 return View("BookDetail");
-        
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BookDetailAsync => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "BookDetailAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
-    }
 
         [ActionName("Create")]
         public IActionResult BookCreate()
@@ -103,7 +114,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "BookCreate => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -120,27 +131,27 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (string.IsNullOrWhiteSpace(requestModel.Title))
                 {
                     _logger.LogWarning("Book Save Async => Title is required");
-                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Title is required" });
+                    return Json(new BookCreateResponseModel { IsSuccess = false, Message = "Title is required" });
                 }
                 if (string.IsNullOrWhiteSpace(requestModel.Author))
                 {
                     _logger.LogWarning("Book Save Async => Author is required");
-                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Author is required" });
+                    return Json(new BookCreateResponseModel { IsSuccess = false, Message = "Author is required" });
                 }
                 if (string.IsNullOrWhiteSpace(requestModel.Genre))
                 {
                     _logger.LogWarning("Book Save Async => Genre is required");
-                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Genre is required" });
+                    return Json(new BookCreateResponseModel { IsSuccess = false, Message = "Genre is required" });
                 }
                 if (requestModel.Price <= 0)
                 {
                     _logger.LogWarning("Book Save Async => Price must be greater than zero");
-                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "Price must be greater than zero" });
+                    return Json(new BookCreateResponseModel { IsSuccess = false, Message = "Price must be greater than zero" });
                 }
                 if (requestModel.StockQuantity < 0)
                 {
                     _logger.LogWarning("Book Save Async => StockQuantity must be greater or zero");
-                    return Json(new BookCreateResponseModel { isSuccess = false, Message = "StockQuantity must be greater or equal to zero" });
+                    return Json(new BookCreateResponseModel { IsSuccess = false, Message = "StockQuantity must be greater or equal to zero" });
                 }
 
                 if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
@@ -149,7 +160,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     if (isbn.Length != 10 && isbn.Length != 13)
                     {
                         _logger.LogWarning("Book Save Async => ISBN must be 10 or 13 digits");
-                        return Json(new BookCreateResponseModel { isSuccess = false, Message = "ISBN must be 10 or 13 digits." });
+                        return Json(new BookCreateResponseModel { IsSuccess = false, Message = "ISBN must be 10 or 13 digits." });
                     }
                 }
 
@@ -178,9 +189,9 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 var httpResponse = await client.PostAsync("api/book", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<BookCreateResponseModel>(jsonString) ?? new BookCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<BookCreateResponseModel>(jsonString) ?? new BookCreateResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Book Save Async => Book created successfully");
                     TempData["Message"] = model.Message ?? "Book created successfully.";
@@ -197,26 +208,35 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "BookSaveAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
         [ActionName("Edit")]
         public async Task<IActionResult> BookEditAsync(int id)
         {
-        try
-        {
+            try
+            {
+                if (id <= 0 || !ModelState.IsValid)
+                {
+                    return NotFound();
+                }
+
                 _logger.LogInformation($"Book Edit Async => Fetching book {id}");
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/book/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound();
+                }
+
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-                if (model == null || !model.isSuccess)
+                if (model == null || !model.IsSuccess || model.Data == null)
                 {
                     _logger.LogWarning($"Book Edit Async => Failed to fetch book {id}: {model?.Message}");
-                    TempData["isSuccess"] = false;
-                    TempData["Message"] = model?.Message;
-                    return Redirect("/Book");
+                    return NotFound();
                 }
 
                 ViewData["Id"] = model.Data.BookId;
@@ -243,7 +263,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "BookEditAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -261,7 +281,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     && string.IsNullOrWhiteSpace(requestModel.Description)
                     && photo == null)
                 {
-                    return Json(new BookPatchResponseModel { isSuccess = false, Message = "Please update at least one field." });
+                    return Json(new BookPatchResponseModel { IsSuccess = false, Message = "Please update at least one field." });
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -287,9 +307,9 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 var httpResponse = await client.PatchAsync($"api/book/{id}", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<BookPatchResponseModel>(jsonString) ?? new BookPatchResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<BookPatchResponseModel>(jsonString) ?? new BookPatchResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Book Update Async => Book updated successfully");
                     TempData["Message"] = model.Message ?? "Book updated successfully.";
@@ -306,7 +326,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "BookUpdateAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
         [HttpPost]
@@ -319,9 +339,9 @@ namespace BookStorePOS.MvcApp.Controllers
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.DeleteAsync($"api/book/{requestModel.BookId}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<BookDeleteResponseModel>(jsonString) ?? new BookDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<BookDeleteResponseModel>(jsonString) ?? new BookDeleteResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Book Delete Async => Book deleted successfully");
                     TempData["Message"] = model.Message ?? "Book deleted successfully.";
@@ -337,7 +357,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "BookDeleteAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -352,7 +372,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
 
@@ -366,11 +386,11 @@ namespace BookStorePOS.MvcApp.Controllers
             requestModel.BookId = id;
             if (string.IsNullOrWhiteSpace(requestModel.EditionName))
             {
-                return Json(new { isSuccess = false, Message = "Edition Name is required." });
+                return Json(new { IsSuccess = false, Message = "Edition Name is required." });
             }
             if (requestModel.Price <= 0)
             {
-                return Json(new { isSuccess = false, Message = "Price must be greater than zero." });
+                return Json(new { IsSuccess = false, Message = "Price must be greater than zero." });
             }
 
             var client = _httpClientFactory.CreateClient("WebAPI");
@@ -395,9 +415,9 @@ namespace BookStorePOS.MvcApp.Controllers
 
             var httpResponse = await client.PostAsync($"api/book/{id}/edition", content);
             var jsonString = await httpResponse.Content.ReadAsStringAsync();
-            var model = JsonConvert.DeserializeObject<BookEditionCreateResponseModel>(jsonString) ?? new BookEditionCreateResponseModel { isSuccess = false, Message = "Unknown error" };
+            var model = JsonConvert.DeserializeObject<BookEditionCreateResponseModel>(jsonString) ?? new BookEditionCreateResponseModel { IsSuccess = false, Message = "Unknown error" };
         
-            if (model != null && model.isSuccess)
+            if (model != null && model.IsSuccess)
             {
                 _logger.LogInformation("Book Create Edition Async => Edition created successfully");
                 TempData["Message"] = model.Message ?? "Edition created successfully.";
@@ -413,7 +433,7 @@ namespace BookStorePOS.MvcApp.Controllers
         catch (Exception ex)
         {
             _logger.LogError(ex, "CreateEditionAsync => Exception occurred");
-            return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
         }
     }
         [ActionName("CreateEdition")]
@@ -427,7 +447,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-                if (model == null || !model.isSuccess)
+                if (model == null || !model.IsSuccess)
                 {
                     _logger.LogWarning($"Book Create Edition Async => Failed to fetch book {id}: {model?.Message}");
                     TempData["isSuccess"] = false;
@@ -446,7 +466,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "BookCreateEditionAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
         [ActionName("EditEdition")]
@@ -460,7 +480,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var model = JsonConvert.DeserializeObject<BookByIdResponseModel>(jsonString);
             
-                if (model == null || !model.isSuccess)
+                if (model == null || !model.IsSuccess)
                 {
                     _logger.LogWarning($"Book Edit Edition Async => Failed to fetch book {id}: {model?.Message}");
                     TempData["isSuccess"] = false;
@@ -498,7 +518,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "BookEditEditionAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
 
@@ -530,9 +550,9 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 var httpResponse = await client.PatchAsync($"api/book/{id}/edition/{editionId}", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<BookEditionPatchResponseModel>(jsonString) ?? new BookEditionPatchResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<BookEditionPatchResponseModel>(jsonString) ?? new BookEditionPatchResponseModel { IsSuccess = false, Message = "Unknown error" };
 
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Book Update Edition Async => Edition updated successfully");
                     TempData["Message"] = model.Message ?? "Edition updated successfully.";
@@ -548,7 +568,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UpdateEditionSaveAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex?.InnerException?.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex?.InnerException?.Message });
             
             }
         }
@@ -563,9 +583,9 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 var httpResponse = await client.DeleteAsync($"api/book/{id}/edition/{editionId}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<BookEditionDeleteResponseModel>(jsonString) ?? new BookEditionDeleteResponseModel { isSuccess = false, Message = "Unknown error" };
+                var model = JsonConvert.DeserializeObject<BookEditionDeleteResponseModel>(jsonString) ?? new BookEditionDeleteResponseModel { IsSuccess = false, Message = "Unknown error" };
             
-                if (model != null && model.isSuccess)
+                if (model != null && model.IsSuccess)
                 {
                     _logger.LogInformation("Book Delete Edition Async => Edition deleted successfully");
                     TempData["Message"] = model.Message ?? "Edition deleted successfully.";
@@ -581,7 +601,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "DeleteEditionAsync => Exception occurred");
-                return StatusCode(500, new { isSuccess = false, Message = "Internal Server Error: " + ex.Message });
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
     }

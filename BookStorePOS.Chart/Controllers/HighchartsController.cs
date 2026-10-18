@@ -19,7 +19,7 @@ public class HighchartsController : Controller
     public async Task<IActionResult> Index()
     {
         var orderResponse = await _orderService.GetOrdersAsync(new OrderListRequestModel());
-        var orders = orderResponse.isSuccess ? orderResponse.Data : new List<OrderModel>();
+        var orders = orderResponse.IsSuccess ? orderResponse.Data : new List<OrderModel>();
 
         var groupedOrders = orders
             .Where(o => o.OrderDate.HasValue)

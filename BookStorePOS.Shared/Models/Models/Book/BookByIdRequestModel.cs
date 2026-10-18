@@ -1,3 +1,5 @@
+using BookStorePOS.Shared.Models.Common;
+
 namespace BookStorePOS.Shared.Models.Book;
 
 public class BookByIdRequestModel
@@ -5,9 +7,6 @@ public class BookByIdRequestModel
     public int BookId { get; set; }
 }
 
-public class BookByIdResponseModel
+public class BookByIdResponseModel : Result<BookModel>
 {
-    public bool isSuccess { get; set; }
-    public string Message { get; set; } = null!;
-    public BookModel Data { get; set; } = null!;
 }
