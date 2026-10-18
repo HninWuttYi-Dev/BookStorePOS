@@ -28,15 +28,21 @@ namespace BookStorePOS.CustomerApp.Controllers
         {
             try
             {
-                _logger.LogInformation("Customer Login => Attempting login for username: {Username}", requestModel.Username);
+                string rawIdentifier = !string.IsNullOrWhiteSpace(requestModel.Phone) ? requestModel.Phone : requestModel.Username;
+                _logger.LogInformation("Customer Login => Attempting login for phone/user: {Identifier}", rawIdentifier);
 
-                if (string.IsNullOrWhiteSpace(requestModel.Username) || string.IsNullOrWhiteSpace(requestModel.Password))
+                if (string.IsNullOrWhiteSpace(rawIdentifier) || string.IsNullOrWhiteSpace(requestModel.Password))
                 {
                     return Json(new LoginResponseModel
                     {
                         IsSuccess = false,
-                        Message = "Username and password are required."
+                        Message = "Phone number and password are required."
                     });
+                }
+
+                if (string.IsNullOrWhiteSpace(requestModel.Username) && !string.IsNullOrWhiteSpace(requestModel.Phone))
+                {
+                    requestModel.Username = requestModel.Phone;
                 }
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -50,7 +56,11 @@ namespace BookStorePOS.CustomerApp.Controllers
 
                 if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
                 {
-                    _logger.LogInformation("Customer Login => Login successful for username: {Username}", requestModel.Username);
+                    string displayUser = !string.IsNullOrWhiteSpace(model.FullName) 
+                        ? model.FullName 
+                        : (!string.IsNullOrWhiteSpace(model.Username) ? model.Username : rawIdentifier);
+
+                    _logger.LogInformation("Customer Login => Login successful for: {DisplayUser}", displayUser);
 
                     Response.Cookies.Append("customer_token", model.AccessToken, new CookieOptions
                     {
@@ -59,7 +69,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                         Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
 
-                    Response.Cookies.Append("customer_user", requestModel.Username, new CookieOptions
+                    Response.Cookies.Append("customer_user", Uri.EscapeDataString(displayUser), new CookieOptions
                     {
                         HttpOnly = false,
                         SameSite = SameSiteMode.Lax,
@@ -111,12 +121,12 @@ namespace BookStorePOS.CustomerApp.Controllers
                     });
                 }
 
-                if (requestModel.Username.Contains(' ') || !System.Text.RegularExpressions.Regex.IsMatch(requestModel.Username.Trim(), @"^[a-zA-Z0-9_.-]+$"))
+                if (requestModel.Username.Contains(' ') || requestModel.Username.Any(char.IsWhiteSpace))
                 {
                     return Json(new RegisterResponseModel
                     {
                         IsSuccess = false,
-                        Message = "Username cannot contain spaces or special characters. Please use letters, numbers, '.', '_', or '-' only."
+                        Message = "Username cannot contain spaces."
                     });
                 }
 
@@ -131,7 +141,13 @@ namespace BookStorePOS.CustomerApp.Controllers
 
                 if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
                 {
-                    _logger.LogInformation("Customer Register => Registration successful for username: {Username}", requestModel.Username);
+                    string displayUser = !string.IsNullOrWhiteSpace(model.FullName)
+                        ? model.FullName
+                        : (!string.IsNullOrWhiteSpace(requestModel.FullName)
+                            ? requestModel.FullName
+                            : (!string.IsNullOrWhiteSpace(model.Username) ? model.Username : requestModel.Username));
+
+                    _logger.LogInformation("Customer Register => Registration successful for: {DisplayUser}", displayUser);
 
                     Response.Cookies.Append("customer_token", model.AccessToken, new CookieOptions
                     {
@@ -140,7 +156,7 @@ namespace BookStorePOS.CustomerApp.Controllers
                         Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
 
-                    Response.Cookies.Append("customer_user", requestModel.Username, new CookieOptions
+                    Response.Cookies.Append("customer_user", Uri.EscapeDataString(displayUser), new CookieOptions
                     {
                         HttpOnly = false,
                         SameSite = SameSiteMode.Lax,

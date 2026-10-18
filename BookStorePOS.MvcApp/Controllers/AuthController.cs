@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BookStorePOS.MvcApp.Controllers
 {
@@ -28,19 +29,38 @@ namespace BookStorePOS.MvcApp.Controllers
         {
             try
             {
-                _logger.LogInformation("Staff Login => Attempting staff login for username: {Username}", requestModel.Username);
-
-                if (string.IsNullOrWhiteSpace(requestModel.Username) || string.IsNullOrWhiteSpace(requestModel.Password))
+                // Admin/Staff Portal strictly requires Phone number (usernames are not allowed)
+                if (string.IsNullOrWhiteSpace(requestModel.Phone) || string.IsNullOrWhiteSpace(requestModel.Password))
                 {
                     return Json(new LoginResponseModel
                     {
                         IsSuccess = false,
-                        Message = "Username and password are required."
+                        Message = "Phone number and password are required."
                     });
                 }
 
+                string normalizedPhone = NormalizeMyanmarPhone(requestModel.Phone);
+                _logger.LogInformation("Staff Login => Attempting staff login with phone: {Phone}", normalizedPhone);
+
+                if (!Regex.IsMatch(normalizedPhone, @"^09\d{7,9}$"))
+                {
+                    return Json(new LoginResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "A valid Myanmar phone number is required (e.g. 09789456123)."
+                    });
+                }
+
+                // Strictly authenticate using Phone
+                var apiRequest = new LoginRequestModel
+                {
+                    Phone = normalizedPhone,
+                    Username = null,
+                    Password = requestModel.Password
+                };
+
                 var client = _httpClientFactory.CreateClient("WebAPI");
-                string json = JsonConvert.SerializeObject(requestModel);
+                string json = JsonConvert.SerializeObject(apiRequest);
                 using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var httpResponse = await client.PostAsync("api/Auth/login", content);
@@ -50,7 +70,21 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
                 {
-                    _logger.LogInformation("Staff Login => Staff login succeeded for username: {Username}, Role: {Role}", requestModel.Username, model.Role);
+                    if (string.Equals(model.Role, "Customer", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger.LogWarning("Staff Login => Customer attempted to access Staff Portal: {Phone}", normalizedPhone);
+                        return Json(new LoginResponseModel
+                        {
+                            IsSuccess = false,
+                            Message = "Access denied. Customer accounts cannot access the Staff POS Portal."
+                        });
+                    }
+
+                    string displayUser = !string.IsNullOrWhiteSpace(model.FullName) 
+                        ? model.FullName 
+                        : (!string.IsNullOrWhiteSpace(model.Username) ? model.Username : normalizedPhone);
+
+                    _logger.LogInformation("Staff Login => Staff login succeeded for: {DisplayUser}, Role: {Role}", displayUser, model.Role);
 
                     Response.Cookies.Append("pos_token", model.AccessToken, new CookieOptions
                     {
@@ -59,7 +93,7 @@ namespace BookStorePOS.MvcApp.Controllers
                         Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
 
-                    Response.Cookies.Append("pos_user", requestModel.Username, new CookieOptions
+                    Response.Cookies.Append("pos_user", Uri.EscapeDataString(displayUser), new CookieOptions
                     {
                         HttpOnly = false,
                         SameSite = SameSiteMode.Lax,
@@ -99,6 +133,23 @@ namespace BookStorePOS.MvcApp.Controllers
             Response.Cookies.Delete("pos_user");
             Response.Cookies.Delete("pos_role");
             return RedirectToAction("Login", "Auth");
+        }
+
+        private static string NormalizeMyanmarPhone(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+                return string.Empty;
+
+            string p = phone.Trim().Replace(" ", "").Replace("-", "");
+            if (p.StartsWith("+959"))
+                p = "09" + p.Substring(4);
+            else if (p.StartsWith("959"))
+                p = "09" + p.Substring(3);
+            else if (p.StartsWith("9") && p.Length == 10)
+                p = "0" + p;
+            else if (p.Length == 9 && !p.StartsWith("0"))
+                p = "09" + p;
+            return p;
         }
     }
 }

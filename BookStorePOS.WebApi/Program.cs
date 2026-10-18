@@ -72,6 +72,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<TblUser>, Microsoft.AspNetCore.Identity.PasswordHasher<TblUser>>();
 builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IBookService, BookService>();

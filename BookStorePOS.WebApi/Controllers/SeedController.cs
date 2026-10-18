@@ -15,10 +15,12 @@ namespace BookStorePOS.WebApi.Controllers
     public class SeedController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly Microsoft.AspNetCore.Identity.IPasswordHasher<TblUser> _passwordHasher;
 
-        public SeedController(AppDbContext db)
+        public SeedController(AppDbContext db, Microsoft.AspNetCore.Identity.IPasswordHasher<TblUser> passwordHasher)
         {
             _db = db;
+            _passwordHasher = passwordHasher;
         }
 
         [HttpPost("RealBooks")]
@@ -262,33 +264,45 @@ namespace BookStorePOS.WebApi.Controllers
                 var adminUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.Username == "admin" && !u.IsDeleted);
                 if (adminUser == null)
                 {
-                    _db.TblUsers.Add(new TblUser
+                    adminUser = new TblUser
                     {
                         Username = "admin",
                         FullName = "System Administrator",
                         Phone = "09789456123",
                         Email = "admin@bookstore.com",
-                        PasswordHash = "123",
                         RoleId = roles["Admin"].RoleId,
                         IsDeleted = false,
                         CreatedAt = DateTime.Now
-                    });
+                    };
+                    adminUser.PasswordHash = _passwordHasher.HashPassword(adminUser, "123");
+                    _db.TblUsers.Add(adminUser);
                 }
 
                 var staffUser = await _db.TblUsers.FirstOrDefaultAsync(u => u.Username == "staff" && !u.IsDeleted);
                 if (staffUser == null)
                 {
-                    _db.TblUsers.Add(new TblUser
+                    staffUser = new TblUser
                     {
                         Username = "staff",
                         FullName = "Store Staff",
                         Phone = "09789456124",
                         Email = "staff@bookstore.com",
-                        PasswordHash = "123",
                         RoleId = roles["Staff"].RoleId,
                         IsDeleted = false,
                         CreatedAt = DateTime.Now
-                    });
+                    };
+                    staffUser.PasswordHash = _passwordHasher.HashPassword(staffUser, "123");
+                    _db.TblUsers.Add(staffUser);
+                }
+
+                // Upgrade any legacy plain-text "123" passwords in database
+                var plainUsers = await _db.TblUsers
+                    .Where(u => !u.IsDeleted && u.PasswordHash != null && u.PasswordHash == "123")
+                    .ToListAsync();
+
+                foreach (var user in plainUsers)
+                {
+                    user.PasswordHash = _passwordHasher.HashPassword(user, "123");
                 }
 
                 await _db.SaveChangesAsync();

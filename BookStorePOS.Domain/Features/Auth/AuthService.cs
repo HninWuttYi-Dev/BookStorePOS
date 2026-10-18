@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Identity;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Domain.Features.RolePermission;
 using BookStorePOS.Shared.Models.Auth;
@@ -22,56 +23,112 @@ public class AuthService : IAuthService
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly IRolePermissionService _rolePermissionService;
+    private readonly IPasswordHasher<TblUser> _passwordHasher;
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         AppDbContext context,
         IConfiguration configuration,
         IRolePermissionService rolePermissionService,
+        IPasswordHasher<TblUser> passwordHasher,
         ILogger<AuthService> logger)
     {
         _context = context;
         _configuration = configuration;
         _rolePermissionService = rolePermissionService;
+        _passwordHasher = passwordHasher;
         _logger = logger;
     }
 
     public async Task<LoginResponseModel> LoginAsync(LoginRequestModel request)
     {
-        _logger.LogInformation("LoginAsync => Attempting login for username: {Username}", request.Username);
+        string rawIdentifier = !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone : (request.Username ?? string.Empty);
+        _logger.LogInformation("LoginAsync => Attempting login for identifier: {Identifier}", rawIdentifier);
         try
         {
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+            if (string.IsNullOrWhiteSpace(rawIdentifier) || string.IsNullOrWhiteSpace(request.Password))
             {
                 return new LoginResponseModel
                 {
                     IsSuccess = false,
                     Type = EnumResType.ValidationError,
-                    Message = "Username and password are required."
+                    Message = "Phone number and password are required."
                 };
             }
 
-            var user = await _context.TblUsers
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(x =>
-                    !x.IsDeleted &&
-                    x.Username == request.Username.Trim() &&
-                    x.PasswordHash == request.Password);
+            string identifier = rawIdentifier.Trim();
+            string normalizedPhone = NormalizeMyanmarPhone(identifier);
+
+            TblUser? user = null;
+
+            if (!string.IsNullOrWhiteSpace(request.Phone))
+            {
+                string reqPhone = NormalizeMyanmarPhone(request.Phone);
+                user = await _context.TblUsers
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(x =>
+                        !x.IsDeleted &&
+                        ((!string.IsNullOrEmpty(reqPhone) && x.Phone == reqPhone) || x.Phone == request.Phone.Trim()));
+            }
+            else
+            {
+                user = await _context.TblUsers
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(x =>
+                        !x.IsDeleted &&
+                        ((!string.IsNullOrEmpty(normalizedPhone) && x.Phone == normalizedPhone) ||
+                         x.Phone == identifier ||
+                         x.Username == identifier));
+            }
 
             if (user is null)
             {
-                _logger.LogWarning("LoginAsync => Invalid credentials for username: {Username}", request.Username);
+                _logger.LogWarning("LoginAsync => User not found for identifier: {Identifier}", identifier);
                 return new LoginResponseModel
                 {
                     IsSuccess = false,
                     Type = EnumResType.Unauthorized,
-                    Message = "Invalid username or password."
+                    Message = "Invalid phone number or password."
                 };
+            }
+
+            PasswordVerificationResult verification;
+            try
+            {
+                verification = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash ?? string.Empty, request.Password);
+            }
+            catch
+            {
+                verification = PasswordVerificationResult.Failed;
+            }
+
+            // Fallback for legacy plain-text passwords (e.g. unhashed initial demo accounts)
+            if (verification == PasswordVerificationResult.Failed && user.PasswordHash == request.Password)
+            {
+                verification = PasswordVerificationResult.SuccessRehashNeeded;
+            }
+
+            if (verification == PasswordVerificationResult.Failed)
+            {
+                _logger.LogWarning("LoginAsync => Password verification failed for identifier: {Identifier}", identifier);
+                return new LoginResponseModel
+                {
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
+                    Message = "Invalid phone number or password."
+                };
+            }
+
+            if (verification == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                _logger.LogInformation("LoginAsync => Upgrading legacy/outdated password hash for user: {Username}", user.Username);
+                user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+                await _context.SaveChangesAsync();
             }
 
             if (user.Role != null && user.Role.IsDeleted)
             {
-                _logger.LogWarning("LoginAsync => User's assigned role is deactivated for username: {Username}", request.Username);
+                _logger.LogWarning("LoginAsync => User's assigned role is deactivated for identifier: {Identifier}", identifier);
                 return new LoginResponseModel
                 {
                     IsSuccess = false,
@@ -93,12 +150,14 @@ public class AuthService : IAuthService
                 Message = "Login successful.",
                 AccessToken = token,
                 Role = roleName,
+                Username = user.Username,
+                FullName = user.FullName,
                 Permissions = permissions
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "LoginAsync => Error during login for username: {Username}", request.Username);
+            _logger.LogError(ex, "LoginAsync => Error during login for identifier: {Identifier}", rawIdentifier);
             return new LoginResponseModel
             {
                 IsSuccess = false,
@@ -125,40 +184,30 @@ public class AuthService : IAuthService
             if (string.IsNullOrWhiteSpace(request.Password))
                 return new RegisterResponseModel { IsSuccess = false, Type = EnumResType.ValidationError, Message = "Password is required." };
 
-            if (request.Username.Contains(' ') || !Regex.IsMatch(request.Username.Trim(), @"^[a-zA-Z0-9_.-]+$"))
+            if (request.Username.Contains(' ') || request.Username.Any(char.IsWhiteSpace))
             {
-                _logger.LogWarning("RegisterCustomerAsync => Username contains spaces or invalid characters: {Username}", request.Username);
+                _logger.LogWarning("RegisterCustomerAsync => Username contains spaces: {Username}", request.Username);
                 return new RegisterResponseModel
                 {
                     IsSuccess = false,
                     Type = EnumResType.ValidationError,
-                    Message = "Username cannot contain spaces or special characters. Please use letters, numbers, '.', '_', or '-' only."
+                    Message = "Username cannot contain spaces."
                 };
             }
 
-            if (request.Username.Trim().Length < 3 || request.Username.Trim().Length > 30)
+            if (request.Username.Trim().Length < 2 || request.Username.Trim().Length > 30)
             {
                 return new RegisterResponseModel
                 {
                     IsSuccess = false,
                     Type = EnumResType.ValidationError,
-                    Message = "Username must be between 3 and 30 characters long."
+                    Message = "Username must be between 2 and 30 characters long."
                 };
             }
 
             string username = request.Username.Trim();
-            string phone = request.Phone.Trim().Replace(" ", "").Replace("-", "");
+            string phone = NormalizeMyanmarPhone(request.Phone);
             string? email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
-
-            // Myanmar phone normalization
-            if (phone.StartsWith("+959"))
-                phone = "09" + phone.Substring(4);
-            else if (phone.StartsWith("959"))
-                phone = "09" + phone.Substring(3);
-            else if (phone.StartsWith("9") && phone.Length == 10)
-                phone = "0" + phone;
-            else if (phone.Length == 9)
-                phone = "09" + phone;
 
             if (!Regex.IsMatch(phone, @"^09\d{9}$"))
             {
@@ -258,11 +307,11 @@ public class AuthService : IAuthService
                 FullName = request.FullName.Trim(),
                 Phone = phone,
                 Email = email,
-                PasswordHash = request.Password,
                 RoleId = customerRole.RoleId,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
             };
+            newUser.PasswordHash = _passwordHasher.HashPassword(newUser, request.Password);
 
             _context.TblUsers.Add(newUser);
             await _context.SaveChangesAsync();
@@ -279,6 +328,8 @@ public class AuthService : IAuthService
                 Message = "Registration successful.",
                 AccessToken = token,
                 Role = customerRole.RoleName,
+                Username = newUser.Username,
+                FullName = newUser.FullName,
                 Permissions = permissions
             };
         }
@@ -328,5 +379,22 @@ public class AuthService : IAuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+    }
+
+    private static string NormalizeMyanmarPhone(string phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+            return string.Empty;
+
+        string p = phone.Trim().Replace(" ", "").Replace("-", "");
+        if (p.StartsWith("+959"))
+            p = "09" + p.Substring(4);
+        else if (p.StartsWith("959"))
+            p = "09" + p.Substring(3);
+        else if (p.StartsWith("9") && p.Length == 10)
+            p = "0" + p;
+        else if (p.Length == 9 && !p.StartsWith("0"))
+            p = "09" + p;
+        return p;
     }
 }

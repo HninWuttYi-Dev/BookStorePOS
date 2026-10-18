@@ -130,12 +130,12 @@
                     <p class="text-xs text-slate-500 font-medium" id="sidebarUserRole">Admin Role</p>
                 </div>
             </div>
-            <a href="/Auth/Logout" title="Sign Out" onclick="localStorage.removeItem('pos_token'); localStorage.removeItem('pos_user'); localStorage.removeItem('pos_role'); localStorage.removeItem('pos_permissions');"
-               class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors shrink-0">
+            <button type="button" onclick="window.openLogoutConfirmModal()" title="Sign Out"
+               class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors shrink-0 cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                 </svg>
-            </a>
+            </button>
         </div>
     </aside>
 
@@ -147,10 +147,10 @@
                 <svg class="w-6 h-6 text-teal-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                 <span class="text-xl font-bold text-teal-700">POS System</span>
             </div>
-            <a href="/Auth/Logout" title="Sign Out" onclick="localStorage.removeItem('pos_token'); localStorage.removeItem('pos_user'); localStorage.removeItem('pos_role'); localStorage.removeItem('pos_permissions');"
-               class="text-slate-500 hover:text-red-600 transition-colors">
+            <button type="button" onclick="window.openLogoutConfirmModal()" title="Sign Out"
+               class="text-slate-500 hover:text-red-600 transition-colors p-1 cursor-pointer">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-            </a>
+            </button>
         </header>
 
         <!-- Content Area -->
@@ -158,6 +158,42 @@
             @RenderBody()
         </div>
     </main>
+
+    <!-- POS Logout Confirmation Modal -->
+    <dialog id="posLogoutModal" class="m-auto rounded-3xl p-0 border border-slate-200 bg-white shadow-2xl backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm max-w-md w-[92%] sm:w-full transition-all overflow-hidden" aria-labelledby="posLogoutTitle" aria-describedby="posLogoutDesc">
+        <div class="p-6 sm:p-8 text-center relative">
+            <!-- Close Button -->
+            <button type="button" onclick="window.closeLogoutConfirmModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" aria-label="Close modal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+
+            <!-- Warning Icon -->
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center shadow-xs">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+            </div>
+            
+            <h3 id="posLogoutTitle" class="text-xl font-bold text-slate-900 mb-2">Confirm Sign Out</h3>
+            <p id="posLogoutDesc" class="text-sm text-slate-500 leading-relaxed mb-6">
+                Are you sure you want to log out of the POS system? Make sure any open customer sales or stock updates are completed before leaving.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button type="button" onclick="window.closeLogoutConfirmModal()" class="w-full order-2 sm:order-1 inline-flex items-center justify-center py-2.5 px-5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-sm transition-all shadow-xs cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" onclick="window.performPosLogout()" class="w-full order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all shadow-sm text-sm cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </div>
+    </dialog>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Lucide Icons (Unified Icon Resource) -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -202,7 +238,46 @@
                     }
                 }
             } catch(e) {}
+
+            const logoutModal = document.getElementById('posLogoutModal');
+            if (logoutModal) {
+                logoutModal.addEventListener('click', function(e) {
+                    if (e.target === logoutModal) {
+                        window.closeLogoutConfirmModal();
+                    }
+                });
+            }
         });
+
+        window.openLogoutConfirmModal = function() {
+            const modal = document.getElementById('posLogoutModal');
+            if (!modal) return;
+            if (typeof modal.showModal === 'function') {
+                modal.showModal();
+            } else {
+                modal.setAttribute('open', '');
+            }
+        };
+
+        window.closeLogoutConfirmModal = function() {
+            const modal = document.getElementById('posLogoutModal');
+            if (!modal) return;
+            if (typeof modal.close === 'function') {
+                modal.close();
+            } else {
+                modal.removeAttribute('open');
+            }
+        };
+
+        window.performPosLogout = function() {
+            try {
+                localStorage.removeItem('pos_token');
+                localStorage.removeItem('pos_user');
+                localStorage.removeItem('pos_role');
+                localStorage.removeItem('pos_permissions');
+            } catch(e) {}
+            window.location.href = '/Auth/Logout';
+        };
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

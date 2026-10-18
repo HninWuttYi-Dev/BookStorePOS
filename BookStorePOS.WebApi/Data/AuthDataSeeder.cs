@@ -16,6 +16,7 @@ public static class AuthDataSeeder
         using var scope = serviceProvider.CreateScope();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("AuthDataSeeder");
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.IPasswordHasher<TblUser>>();
 
         try
         {
@@ -133,33 +134,45 @@ public static class AuthDataSeeder
             var adminUser = await db.TblUsers.FirstOrDefaultAsync(u => u.Username == "admin" && !u.IsDeleted);
             if (adminUser == null)
             {
-                db.TblUsers.Add(new TblUser
+                adminUser = new TblUser
                 {
                     Username = "admin",
                     FullName = "System Administrator",
                     Phone = "09789456123",
                     Email = "admin@bookstore.com",
-                    PasswordHash = "123",
                     RoleId = roles["Admin"].RoleId,
                     IsDeleted = false,
                     CreatedAt = DateTime.Now
-                });
+                };
+                adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "123");
+                db.TblUsers.Add(adminUser);
             }
 
             var staffUser = await db.TblUsers.FirstOrDefaultAsync(u => u.Username == "staff" && !u.IsDeleted);
             if (staffUser == null)
             {
-                db.TblUsers.Add(new TblUser
+                staffUser = new TblUser
                 {
                     Username = "staff",
                     FullName = "Store Staff",
                     Phone = "09789456124",
                     Email = "staff@bookstore.com",
-                    PasswordHash = "123",
                     RoleId = roles["Staff"].RoleId,
                     IsDeleted = false,
                     CreatedAt = DateTime.Now
-                });
+                };
+                staffUser.PasswordHash = passwordHasher.HashPassword(staffUser, "123");
+                db.TblUsers.Add(staffUser);
+            }
+
+            // Upgrade any legacy plain-text "123" passwords in database to secure hashes
+            var plainUsers = await db.TblUsers
+                .Where(u => !u.IsDeleted && u.PasswordHash != null && u.PasswordHash == "123")
+                .ToListAsync();
+
+            foreach (var user in plainUsers)
+            {
+                user.PasswordHash = passwordHasher.HashPassword(user, "123");
             }
 
             await db.SaveChangesAsync();

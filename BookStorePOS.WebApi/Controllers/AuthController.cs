@@ -24,7 +24,7 @@ public class AuthController : BaseController
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequestModel request)
     {
-        _logger.LogInformation("Login => Received login request for username: {Username}", request.Username);
+        _logger.LogInformation("Login => Received login request for identifier: {Identifier}", !string.IsNullOrWhiteSpace(request.Phone) ? request.Phone : request.Username);
         var response = await _authService.LoginAsync(request);
         return ExecuteResult(response);
     }

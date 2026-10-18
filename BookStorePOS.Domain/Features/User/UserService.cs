@@ -8,16 +8,21 @@ using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.User;
 
+using Microsoft.AspNetCore.Identity;
+using BookStorePOS.Domain.Features.Auth;
+
 namespace BookStorePOS.Domain.Features.User;
 
 public class UserService : IUserService
 {
     private readonly AppDbContext _db;
+    private readonly IPasswordHasher<TblUser> _passwordHasher;
     private readonly ILogger<UserService> _logger;
 
-    public UserService(AppDbContext db, ILogger<UserService> logger)
+    public UserService(AppDbContext db, IPasswordHasher<TblUser> passwordHasher, ILogger<UserService> logger)
     {
         _db = db;
+        _passwordHasher = passwordHasher;
         _logger = logger;
     }
 
@@ -127,11 +132,11 @@ public class UserService : IUserService
                 FullName = request.FullName.Trim(),
                 Phone = phone,
                 Email = email,
-                PasswordHash = password,
                 RoleId = roleId,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
             };
+            newUser.PasswordHash = _passwordHasher.HashPassword(newUser, password);
 
             _db.TblUsers.Add(newUser);
             await _db.SaveChangesAsync();
@@ -355,7 +360,7 @@ public class UserService : IUserService
                 {
                     return Result<UserModel>.ValidationError("New password must be at least 3 characters.");
                 }
-                user.PasswordHash = newPassword;
+                user.PasswordHash = _passwordHasher.HashPassword(user, newPassword);
             }
 
             // Update role if provided
