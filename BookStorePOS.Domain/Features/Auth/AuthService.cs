@@ -140,6 +140,7 @@ public class AuthService : IAuthService
             var roleName = user.Role?.RoleName ?? "";
             var permissions = await _rolePermissionService.GetUserPermissionsAsync(user.UserId);
             var token = GenerateToken(user, roleName, permissions);
+            var refreshToken = await GenerateAndSaveRefreshTokenAsync(user.UserId);
 
             _logger.LogInformation("LoginAsync => User {Username} logged in successfully with role: {RoleName}", user.Username, roleName);
 
@@ -149,6 +150,7 @@ public class AuthService : IAuthService
                 Type = EnumResType.Success,
                 Message = "Login successful.",
                 AccessToken = token,
+                RefreshToken = refreshToken,
                 Role = roleName,
                 Username = user.Username,
                 FullName = user.FullName,
@@ -320,6 +322,7 @@ public class AuthService : IAuthService
 
             var permissions = await _rolePermissionService.GetUserPermissionsAsync(newUser.UserId);
             var token = GenerateToken(newUser, customerRole.RoleName, permissions);
+            var refreshToken = await GenerateAndSaveRefreshTokenAsync(newUser.UserId);
 
             return new RegisterResponseModel
             {
@@ -327,6 +330,7 @@ public class AuthService : IAuthService
                 Type = EnumResType.Success,
                 Message = "Registration successful.",
                 AccessToken = token,
+                RefreshToken = refreshToken,
                 Role = customerRole.RoleName,
                 Username = newUser.Username,
                 FullName = newUser.FullName,
@@ -368,7 +372,7 @@ public class AuthService : IAuthService
             SecurityAlgorithms.HmacSha256
         );
 
-        var expireMinutes = Convert.ToDouble(_configuration["Jwt:ExpireMinutes"] ?? "60");
+        var expireMinutes = Convert.ToDouble(_configuration["Jwt:ExpireMinutes"] ?? "15");
 
         var tokenDescriptor = new JwtSecurityToken(
             issuer: _configuration["Jwt:Issuer"] ?? "BookStorePOS",
@@ -379,6 +383,178 @@ public class AuthService : IAuthService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
+    }
+
+    public async Task<RefreshTokenResponseModel> RefreshTokenAsync(RefreshTokenRequestModel request)
+    {
+        _logger.LogInformation("RefreshTokenAsync => Processing token refresh request.");
+        try
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Type = EnumResType.ValidationError,
+                    Message = "Refresh token is required."
+                };
+            }
+
+            string rawToken = request.RefreshToken.Trim();
+
+            var existingToken = await _context.TblRefreshTokens
+                .Include(t => t.User)
+                    .ThenInclude(u => u.Role)
+                .FirstOrDefaultAsync(t => t.Token == rawToken);
+
+            if (existingToken is null)
+            {
+                _logger.LogWarning("RefreshTokenAsync => Refresh token not found in database.");
+                return new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
+                    Message = "Invalid refresh token."
+                };
+            }
+
+            if (existingToken.RevokeAt is not null)
+            {
+                _logger.LogWarning("RefreshTokenAsync => Attempted reuse of revoked refresh token for UserId: {UserId}", existingToken.UserId);
+                return new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
+                    Message = "Refresh token has been revoked."
+                };
+            }
+
+            if (existingToken.ExpiresAt <= DateTime.UtcNow)
+            {
+                _logger.LogWarning("RefreshTokenAsync => Refresh token expired at {ExpiresAt} for UserId: {UserId}", existingToken.ExpiresAt, existingToken.UserId);
+                return new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
+                    Message = "Refresh token has expired. Please log in again."
+                };
+            }
+
+            var user = existingToken.User;
+            if (user is null || user.IsDeleted)
+            {
+                _logger.LogWarning("RefreshTokenAsync => User account is deleted or null for token.");
+                return new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
+                    Message = "User account not found or is deactivated."
+                };
+            }
+
+            if (user.Role != null && user.Role.IsDeleted)
+            {
+                _logger.LogWarning("RefreshTokenAsync => User role is deactivated for user: {Username}", user.Username);
+                return new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Type = EnumResType.Unauthorized,
+                    Message = "User role is deactivated."
+                };
+            }
+
+            // ROTATE: Revoke the old refresh token
+            existingToken.RevokeAt = DateTime.UtcNow;
+
+            // ROTATE: Issue a new refresh token for the same user
+            var refreshTokenLifetimeDays = Convert.ToDouble(_configuration["Jwt:RefreshTokenExpireDays"] ?? "7");
+            var newRefreshTokenValue = Ulid.NewUlid().ToString();
+            var newRefreshToken = new TblRefreshToken
+            {
+                UserId = user.UserId,
+                Token = newRefreshTokenValue,
+                ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenLifetimeDays),
+                CreateAt = DateTime.UtcNow,
+                RevokeAt = null
+            };
+            _context.TblRefreshTokens.Add(newRefreshToken);
+            await _context.SaveChangesAsync();
+
+            // Generate new short-lived access token with same claims & permissions
+            var roleName = user.Role?.RoleName ?? "";
+            var permissions = await _rolePermissionService.GetUserPermissionsAsync(user.UserId);
+            var newAccessToken = GenerateToken(user, roleName, permissions);
+
+            _logger.LogInformation("RefreshTokenAsync => Token rotated successfully for UserId: {UserId}, Username: {Username}", user.UserId, user.Username);
+
+            return new RefreshTokenResponseModel
+            {
+                IsSuccess = true,
+                Type = EnumResType.Success,
+                Message = "Token refreshed successfully.",
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshTokenValue,
+                Role = roleName,
+                Username = user.Username,
+                FullName = user.FullName,
+                Permissions = permissions
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RefreshTokenAsync => Unexpected error during token refresh");
+            return new RefreshTokenResponseModel
+            {
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
+                Message = $"An error occurred during token refresh: {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<Result> LogoutAsync(string? refreshToken)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return Result.Ok("Logged out successfully.");
+            }
+
+            var tokenRecord = await _context.TblRefreshTokens
+                .FirstOrDefaultAsync(t => t.Token == refreshToken.Trim() && t.RevokeAt == null);
+
+            if (tokenRecord is not null)
+            {
+                tokenRecord.RevokeAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("LogoutAsync => Revoked refresh token for UserId: {UserId}", tokenRecord.UserId);
+            }
+
+            return Result.Ok("Logged out successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "LogoutAsync => Error revoking refresh token");
+            return Result.Fail($"An error occurred during logout: {ex.Message}", EnumResType.SystemError);
+        }
+    }
+
+    private async Task<string> GenerateAndSaveRefreshTokenAsync(int userId)
+    {
+        var refreshTokenLifetimeDays = Convert.ToDouble(_configuration["Jwt:RefreshTokenExpireDays"] ?? "7");
+        var tokenValue = Ulid.NewUlid().ToString();
+        var refreshToken = new TblRefreshToken
+        {
+            UserId = userId,
+            Token = tokenValue,
+            ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenLifetimeDays),
+            CreateAt = DateTime.UtcNow,
+            RevokeAt = null
+        };
+        _context.TblRefreshTokens.Add(refreshToken);
+        await _context.SaveChangesAsync();
+        return tokenValue;
     }
 
     private static string NormalizeMyanmarPhone(string phone)

@@ -1,0 +1,6 @@
+namespace BookStorePOS.Shared.Models.Auth;
+
+public class RefreshTokenRequestModel
+{
+    public string RefreshToken { get; set; } = string.Empty;
+}

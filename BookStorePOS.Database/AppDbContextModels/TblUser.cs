@@ -28,4 +28,6 @@ public partial class TblUser
     public virtual TblRole? Role { get; set; }
 
     public virtual ICollection<TblOrder> TblOrders { get; set; } = new List<TblOrder>();
+
+    public virtual ICollection<TblRefreshToken> TblRefreshTokens { get; set; } = new List<TblRefreshToken>();
 }

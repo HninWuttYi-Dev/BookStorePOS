@@ -66,8 +66,18 @@ namespace BookStorePOS.CustomerApp.Controllers
                     {
                         HttpOnly = false,
                         SameSite = SameSiteMode.Lax,
-                        Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(15)
                     });
+
+                    if (!string.IsNullOrEmpty(model.RefreshToken))
+                    {
+                        Response.Cookies.Append("customer_refresh", model.RefreshToken, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
+                    }
 
                     Response.Cookies.Append("customer_user", Uri.EscapeDataString(displayUser), new CookieOptions
                     {
@@ -153,8 +163,18 @@ namespace BookStorePOS.CustomerApp.Controllers
                     {
                         HttpOnly = false,
                         SameSite = SameSiteMode.Lax,
-                        Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(15)
                     });
+
+                    if (!string.IsNullOrEmpty(model.RefreshToken))
+                    {
+                        Response.Cookies.Append("customer_refresh", model.RefreshToken, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
+                    }
 
                     Response.Cookies.Append("customer_user", Uri.EscapeDataString(displayUser), new CookieOptions
                     {
@@ -183,9 +203,27 @@ namespace BookStorePOS.CustomerApp.Controllers
 
         [HttpGet]
         [ActionName("Logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            try
+            {
+                var refreshToken = Request.Cookies["customer_refresh"];
+                if (!string.IsNullOrEmpty(refreshToken))
+                {
+                    var client = _httpClientFactory.CreateClient("WebAPI");
+                    var logoutModel = new LogoutRequestModel { RefreshToken = refreshToken };
+                    var json = JsonConvert.SerializeObject(logoutModel);
+                    using var content = new StringContent(json, Encoding.UTF8, "application/json");
+                    await client.PostAsync("api/Auth/logout", content);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Customer Logout => Error revoking refresh token on WebAPI");
+            }
+
             Response.Cookies.Delete("customer_token");
+            Response.Cookies.Delete("customer_refresh");
             Response.Cookies.Delete("customer_user");
             return RedirectToAction("Index", "Books");
         }

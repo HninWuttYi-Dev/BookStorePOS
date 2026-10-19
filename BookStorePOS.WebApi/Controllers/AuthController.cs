@@ -37,4 +37,22 @@ public class AuthController : BaseController
         var response = await _authService.RegisterCustomerAsync(request);
         return ExecuteResult(response);
     }
+
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestModel request)
+    {
+        _logger.LogInformation("Refresh => Received token refresh request");
+        var response = await _authService.RefreshTokenAsync(request);
+        return ExecuteResult(response);
+    }
+
+    [HttpPost("logout")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequestModel? request)
+    {
+        _logger.LogInformation("Logout => Received logout revocation request");
+        var response = await _authService.LogoutAsync(request?.RefreshToken);
+        return ExecuteResult(response);
+    }
 }

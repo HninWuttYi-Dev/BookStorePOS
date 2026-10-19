@@ -31,6 +31,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<TblPermission> TblPermissions { get; set; }
 
+    public virtual DbSet<TblRefreshToken> TblRefreshTokens { get; set; }
+
     public virtual DbSet<TblRole> TblRoles { get; set; }
 
     public virtual DbSet<TblRolePermission> TblRolePermissions { get; set; }
@@ -195,6 +197,26 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.CreateAt).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.Description).HasMaxLength(200);
             entity.Property(e => e.PermissionName).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<TblRefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.RefreshTokenId).HasName("PK__TblRefre__F5845E3937320B5F");
+
+            entity.ToTable("TblRefreshToken");
+
+            entity.HasIndex(e => e.Token, "Idx_TblRefreshToken_RefreshToken").IsUnique();
+
+            entity.HasIndex(e => e.UserId, "Idx_TblRefreshToken_UserId");
+
+            entity.Property(e => e.CreateAt).HasDefaultValueSql("(getdate())", "DF_TblRefreshToken_CreatedAt");
+            entity.Property(e => e.RevokeAt).HasColumnType("datetime");
+            entity.Property(e => e.Token).HasMaxLength(512);
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblRefreshTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TblRefreshToken_TblUser");
         });
 
         modelBuilder.Entity<TblRole>(entity =>
