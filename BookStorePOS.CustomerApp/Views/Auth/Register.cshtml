@@ -288,13 +288,7 @@
                     },
                     success: function(response) {
                         if (response.isSuccess) {
-                            const displayName = response.fullName || response.FullName || fullName || response.username || response.Username || username;
-                            // Store in client localStorage for auth headers
-                            localStorage.setItem('customer_token', response.accessToken || response.AccessToken);
-                            localStorage.setItem('customer_user', displayName);
-                            localStorage.setItem('customer_role', response.role || response.Role || 'Customer');
-
-                            // Redirect to bookstore home/browse
+                            // Redirect to bookstore home/browse (cookies are set by the server)
                             window.location.href = '/Books';
                         } else {
                             $('#registerAlertText').text(response.message || response.Message || "Failed to register account.");

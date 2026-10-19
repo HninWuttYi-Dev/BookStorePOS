@@ -242,8 +242,6 @@
                     success: function(response) {
                         if (response.isSuccess) {
                             const displayName = response.fullName || response.FullName || response.username || response.Username || normalizedPhone;
-                            // Store in client localStorage for auth headers
-                            localStorage.setItem('pos_token', response.accessToken || response.AccessToken);
                             localStorage.setItem('pos_user', displayName);
                             localStorage.setItem('pos_role', response.role || response.Role || 'Staff');
                             localStorage.setItem('pos_permissions', JSON.stringify(response.permissions || response.Permissions || []));

@@ -88,7 +88,7 @@ namespace BookStorePOS.MvcApp.Controllers
 
                     Response.Cookies.Append("pos_token", model.AccessToken, new CookieOptions
                     {
-                        HttpOnly = false,
+                        HttpOnly = true,
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddMinutes(15)
                     });
@@ -131,6 +131,67 @@ namespace BookStorePOS.MvcApp.Controllers
                 {
                     IsSuccess = false,
                     Message = "Unable to connect to POS Auth service: " + ex.Message
+                });
+            }
+        }
+
+        [HttpPost]
+        [ActionName("Refresh")]
+        public async Task<IActionResult> RefreshAsync()
+        {
+            try
+            {
+                var refreshToken = Request.Cookies["pos_refresh"];
+                if (string.IsNullOrEmpty(refreshToken))
+                {
+                    return Json(new RefreshTokenResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "No refresh token found in cookies."
+                    });
+                }
+
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var request = new RefreshTokenRequestModel { RefreshToken = refreshToken };
+                var json = JsonConvert.SerializeObject(request);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var httpResponse = await client.PostAsync("api/Auth/refresh", content);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<RefreshTokenResponseModel>(jsonString)
+                    ?? new RefreshTokenResponseModel { IsSuccess = false, Message = "Unexpected server response." };
+
+                if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
+                {
+                    Response.Cookies.Append("pos_token", model.AccessToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(15)
+                    });
+
+                    if (!string.IsNullOrEmpty(model.RefreshToken))
+                    {
+                        Response.Cookies.Append("pos_refresh", model.RefreshToken, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
+                    }
+
+                    _logger.LogInformation("Staff Refresh => Token refreshed successfully for: {Username}", model.Username);
+                }
+
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Staff Refresh => Exception occurred");
+                return StatusCode(500, new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "Unable to connect to refresh service: " + ex.Message
                 });
             }
         }

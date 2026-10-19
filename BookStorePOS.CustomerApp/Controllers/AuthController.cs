@@ -1,5 +1,13 @@
-using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using BookStorePOS.Shared.Models.Auth;
 
 namespace BookStorePOS.CustomerApp.Controllers
 {
@@ -28,8 +36,11 @@ namespace BookStorePOS.CustomerApp.Controllers
         {
             try
             {
-                string rawIdentifier = !string.IsNullOrWhiteSpace(requestModel.Phone) ? requestModel.Phone : requestModel.Username;
-                _logger.LogInformation("Customer Login => Attempting login for phone/user: {Identifier}", rawIdentifier);
+                string rawIdentifier = !string.IsNullOrWhiteSpace(requestModel.Phone)
+                    ? requestModel.Phone
+                    : (requestModel.Username ?? string.Empty);
+
+                _logger.LogInformation("Customer Login => Attempting login for identifier: {Identifier}", rawIdentifier);
 
                 if (string.IsNullOrWhiteSpace(rawIdentifier) || string.IsNullOrWhiteSpace(requestModel.Password))
                 {
@@ -60,11 +71,13 @@ namespace BookStorePOS.CustomerApp.Controllers
                         ? model.FullName 
                         : (!string.IsNullOrWhiteSpace(model.Username) ? model.Username : rawIdentifier);
 
+                    try { displayUser = Uri.UnescapeDataString(displayUser); } catch { }
+
                     _logger.LogInformation("Customer Login => Login successful for: {DisplayUser}", displayUser);
 
                     Response.Cookies.Append("customer_token", model.AccessToken, new CookieOptions
                     {
-                        HttpOnly = false,
+                        HttpOnly = true,
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddMinutes(15)
                     });
@@ -157,11 +170,13 @@ namespace BookStorePOS.CustomerApp.Controllers
                             ? requestModel.FullName
                             : (!string.IsNullOrWhiteSpace(model.Username) ? model.Username : requestModel.Username));
 
+                    try { displayUser = Uri.UnescapeDataString(displayUser); } catch { }
+
                     _logger.LogInformation("Customer Register => Registration successful for: {DisplayUser}", displayUser);
 
                     Response.Cookies.Append("customer_token", model.AccessToken, new CookieOptions
                     {
-                        HttpOnly = false,
+                        HttpOnly = true,
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddMinutes(15)
                     });
@@ -197,6 +212,67 @@ namespace BookStorePOS.CustomerApp.Controllers
                 {
                     IsSuccess = false,
                     Message = "Unable to connect to registration service: " + ex.Message
+                });
+            }
+        }
+
+        [HttpPost]
+        [ActionName("Refresh")]
+        public async Task<IActionResult> RefreshAsync()
+        {
+            try
+            {
+                var refreshToken = Request.Cookies["customer_refresh"];
+                if (string.IsNullOrEmpty(refreshToken))
+                {
+                    return Json(new RefreshTokenResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "No refresh token found in cookies."
+                    });
+                }
+
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var request = new RefreshTokenRequestModel { RefreshToken = refreshToken };
+                var json = JsonConvert.SerializeObject(request);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var httpResponse = await client.PostAsync("api/Auth/refresh", content);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<RefreshTokenResponseModel>(jsonString)
+                    ?? new RefreshTokenResponseModel { IsSuccess = false, Message = "Unexpected server response." };
+
+                if (model.IsSuccess && !string.IsNullOrEmpty(model.AccessToken))
+                {
+                    Response.Cookies.Append("customer_token", model.AccessToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTimeOffset.UtcNow.AddMinutes(15)
+                    });
+
+                    if (!string.IsNullOrEmpty(model.RefreshToken))
+                    {
+                        Response.Cookies.Append("customer_refresh", model.RefreshToken, new CookieOptions
+                        {
+                            HttpOnly = true,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
+                    }
+
+                    _logger.LogInformation("Customer Refresh => Token refreshed successfully for: {Username}", model.Username);
+                }
+
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Customer Refresh => Exception occurred");
+                return StatusCode(500, new RefreshTokenResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "Unable to connect to refresh service: " + ex.Message
                 });
             }
         }

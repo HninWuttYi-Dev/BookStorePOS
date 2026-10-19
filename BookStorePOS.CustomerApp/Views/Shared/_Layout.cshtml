@@ -257,17 +257,8 @@
         // Global Auth & Cart Modal Helpers
         window.isCustomerLoggedIn = function() {
             try {
-                const token = localStorage.getItem('customer_token');
-                const user = localStorage.getItem('customer_user');
-                if (token && user) return true;
-
-                const cookieToken = document.cookie
-                    .split(';')
-                    .map(c => c.trim())
-                    .find(c => c.startsWith('customer_token='));
-                if (cookieToken && cookieToken.split('=')[1]) return true;
-
-                return false;
+                const match = document.cookie.match(/customer_user=([^;]+)/);
+                return !!(match && match[1]);
             } catch(e) {
                 return false;
             }
@@ -319,11 +310,6 @@
         };
 
         window.performCustomerLogout = function() {
-            try {
-                localStorage.removeItem('customer_token');
-                localStorage.removeItem('customer_user');
-                localStorage.removeItem('customer_role');
-            } catch(e) {}
             window.location.href = '/Auth/Logout';
         };
 
@@ -402,23 +388,25 @@
                 }
             });
 
-            // Customer Auth state check from localStorage or cookies
+            // Customer Auth state check from cookie
             try {
-                let customerUser = localStorage.getItem('customer_user');
-                let customerToken = localStorage.getItem('customer_token');
+                const userMatch = document.cookie.match(/customer_user=([^;]+)/);
+                if (userMatch && userMatch[1]) {
+                    // Safe multi-pass URL decoder to clean any %20, %2520, or +
+                    let cleanUser = userMatch[1];
+                    try {
+                        cleanUser = decodeURIComponent(cleanUser);
+                        if (cleanUser.includes('%')) {
+                            cleanUser = decodeURIComponent(cleanUser);
+                        }
+                    } catch(e) {}
+                    cleanUser = cleanUser.replace(/%20/g, ' ').replace(/\+/g, ' ').trim();
 
-                if (!customerToken) {
-                    const cookieMatch = document.cookie.match(/customer_token=([^;]+)/);
-                    if (cookieMatch) customerToken = cookieMatch[1];
-                }
-                if (!customerUser) {
-                    const userMatch = document.cookie.match(/customer_user=([^;]+)/);
-                    if (userMatch) customerUser = decodeURIComponent(userMatch[1]);
-                }
-
-                if (customerToken && customerUser) {
-                    localStorage.setItem('customer_token', customerToken);
-                    localStorage.setItem('customer_user', customerUser);
+                    // Generate initials (e.g. "Harry Potter" -> "HP", "Harry" -> "HA")
+                    const words = cleanUser.split(/\s+/).filter(Boolean);
+                    const initials = words.length >= 2 
+                        ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+                        : cleanUser.substring(0, 2).toUpperCase();
 
                     const navLoginBtn = document.getElementById('navLoginBtn');
                     const navUserMenu = document.getElementById('navUserMenu');
@@ -435,16 +423,16 @@
                         navUserMenu.classList.remove('hidden');
                         navUserMenu.classList.add('flex');
                     }
-                    if (navUsername) navUsername.textContent = customerUser;
-                    if (navUserInitials) navUserInitials.textContent = customerUser.substring(0, 2).toUpperCase();
+                    if (navUsername) navUsername.textContent = cleanUser;
+                    if (navUserInitials) navUserInitials.textContent = initials;
 
                     if (mobileLoginBtn) mobileLoginBtn.classList.add('hidden');
                     if (mobileUserMenu) {
                         mobileUserMenu.classList.remove('hidden');
                         mobileUserMenu.classList.add('flex');
                     }
-                    if (mobileUsername) mobileUsername.textContent = customerUser;
-                    if (mobileUserInitials) mobileUserInitials.textContent = customerUser.substring(0, 2).toUpperCase();
+                    if (mobileUsername) mobileUsername.textContent = cleanUser;
+                    if (mobileUserInitials) mobileUserInitials.textContent = initials;
                 }
             } catch(e) {}
 
@@ -480,6 +468,7 @@
     </script>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="~/js/auth-api.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

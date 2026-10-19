@@ -185,13 +185,7 @@
                     },
                     success: function(response) {
                         if (response.isSuccess) {
-                            const displayName = response.fullName || response.FullName || response.username || response.Username || normalizedPhone;
-                            // Store in client localStorage for auth headers
-                            localStorage.setItem('customer_token', response.accessToken || response.AccessToken);
-                            localStorage.setItem('customer_user', displayName);
-                            localStorage.setItem('customer_role', response.role || response.Role || 'Customer');
-
-                            // Redirect to destination
+                            // Redirect to destination (cookies are set by the server)
                             window.location.href = returnUrl;
                         } else {
                             $('#loginAlertText').text(response.message || response.Message || "Invalid phone number or password.");
