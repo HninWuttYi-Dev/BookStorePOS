@@ -22,10 +22,29 @@ namespace BookStorePOS.CustomerApp.Controllers
             _logger = logger;
         }
 
+        private bool IsCustomerLoggedIn()
+        {
+            return !string.IsNullOrEmpty(Request.Cookies["customer_token"]) ||
+                   !string.IsNullOrEmpty(Request.Cookies["customer_refresh"]);
+        }
+
+        private void SetNoCacheHeaders()
+        {
+            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "-1";
+        }
+
         [HttpGet]
         [ActionName("Login")]
         public IActionResult Login(string? returnUrl = null)
         {
+            if (IsCustomerLoggedIn())
+            {
+                return Redirect(string.IsNullOrEmpty(returnUrl) ? "/Books" : returnUrl);
+            }
+
+            SetNoCacheHeaders();
             ViewData["ReturnUrl"] = returnUrl;
             return View("Login");
         }
@@ -121,6 +140,12 @@ namespace BookStorePOS.CustomerApp.Controllers
         [ActionName("Register")]
         public IActionResult Register()
         {
+            if (IsCustomerLoggedIn())
+            {
+                return Redirect("/Books");
+            }
+
+            SetNoCacheHeaders();
             return View("Register");
         }
 
@@ -308,6 +333,12 @@ namespace BookStorePOS.CustomerApp.Controllers
         [ActionName("ForgotPassword")]
         public IActionResult ForgotPassword()
         {
+            if (IsCustomerLoggedIn())
+            {
+                return Redirect("/Books");
+            }
+
+            SetNoCacheHeaders();
             return View("ForgotPassword");
         }
 
@@ -354,6 +385,12 @@ namespace BookStorePOS.CustomerApp.Controllers
         [ActionName("ResetPassword")]
         public IActionResult ResetPassword(string? phone = null, string? otp = null)
         {
+            if (IsCustomerLoggedIn())
+            {
+                return Redirect("/Books");
+            }
+
+            SetNoCacheHeaders();
             ViewData["Phone"] = phone ?? string.Empty;
             ViewData["Otp"] = otp ?? string.Empty;
             return View("ResetPassword");

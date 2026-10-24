@@ -122,43 +122,46 @@ public class OrderService : IOrderService
     {
         _logger.LogInformation("Create Order Async => Creating order");
 
+        if (requestModel.Items == null || !requestModel.Items.Any())
+        {
+            _logger.LogWarning("Create Order Async => Order items are required");
+            return Result<OrderModel>.ValidationError("Order must contain at least one item.");
+        }
+
+        foreach (var item in requestModel.Items)
+        {
+            if (item.Quantity <= 0)
+            {
+                return Result<OrderModel>.ValidationError("Quantity must be greater than 0.");
+            }
+        }
+
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            if (requestModel.Items == null || !requestModel.Items.Any())
-            {
-                _logger.LogWarning("Create Order Async => Order items are required");
-                return Result<OrderModel>.ValidationError("Order must contain at least one item.");
-            }
+            var editionIds = requestModel.Items.Select(i => i.BookEditionId).Distinct().ToList();
+            var editions = await _db.TblBookEditions
+                .Include(e => e.Book)
+                .Include(e => e.Edition)
+                .Where(e => editionIds.Contains(e.BookEditionId) && !e.IsDeleted)
+                .ToDictionaryAsync(e => e.BookEditionId);
 
             foreach (var item in requestModel.Items)
             {
-                if (item.Quantity <= 0)
-                {
-                    return Result<OrderModel>.ValidationError("Quantity must be greater than 0.");
-                }
-
-                var edition = await _db.TblBookEditions
-                    .Include(e => e.Book)
-                    .Include(e => e.Edition)
-                    .FirstOrDefaultAsync(e => e.BookEditionId == item.BookEditionId && !e.IsDeleted);
-
-                if (edition == null)
+                if (!editions.TryGetValue(item.BookEditionId, out var edition))
                 {
                     return Result<OrderModel>.NotFound($"Book Edition with ID {item.BookEditionId} not found or is deleted.");
                 }
 
                 if (edition.StockQuantity < item.Quantity)
                 {
-                    return Result<OrderModel>.ValidationError($"Insufficient stock for '{edition.Book.Title} ({edition.Edition.EditionName})'. Available: {edition.StockQuantity}");
+                    return Result<OrderModel>.ValidationError($"Insufficient stock for '{edition.Book?.Title ?? "Book"} ({edition.Edition?.EditionName ?? "Edition"})'. Available: {edition.StockQuantity}");
                 }
             }
 
             var order = new TblOrder
             {
                 OrderDate = DateTime.Now,
-                TotalPrice = 0,
-                TotalQuantity = 0,
                 OrderStatus = (byte)OrderStatus.Completed,
                 OrderSource = requestModel.OrderSource ?? "POS",
                 CustomerId = requestModel.CustomerId,
@@ -168,48 +171,34 @@ public class OrderService : IOrderService
                 CreatedAt = DateTime.Now
             };
 
-            _db.TblOrders.Add(order);
-            await _db.SaveChangesAsync();   // get OrderId
-
             decimal orderTotal = 0;
             int orderQuantity = 0;
             var orderModelItems = new List<OrderItemModel>();
 
             foreach (var item in requestModel.Items)
             {
-                var edition = await _db.TblBookEditions
-                    .Include(e => e.Book)
-                    .Include(e => e.Edition)
-                    .FirstOrDefaultAsync(e => e.BookEditionId == item.BookEditionId && !e.IsDeleted);
+                var edition = editions[item.BookEditionId];
+                edition.StockQuantity -= item.Quantity;
 
-                if (edition != null)
-                {
-                    edition.StockQuantity -= item.Quantity;
-                    _db.Entry(edition).State = EntityState.Modified;
-                }
-
-                decimal price = edition?.Price ?? 0;
+                decimal price = edition.Price;
                 decimal subtotal = price * item.Quantity;
                 orderTotal += subtotal;
                 orderQuantity += item.Quantity;
-                
 
                 var orderItem = new TblOrderItem
                 {
-                    OrderId = order.OrderId,
                     BookEditionId = item.BookEditionId,
                     Quantity = item.Quantity,
                     UnitPrice = price,
                     Subtotal = subtotal
                 };
-
-                _db.TblOrderItems.Add(orderItem);
+                order.TblOrderItems.Add(orderItem);
 
                 orderModelItems.Add(new OrderItemModel
                 {
                     BookEditionId = item.BookEditionId,
-                    BookTitle = edition?.Book?.Title,
-                    EditionName = edition?.Edition?.EditionName,
+                    BookTitle = edition.Book?.Title,
+                    EditionName = edition.Edition?.EditionName,
                     Quantity = item.Quantity,
                     UnitPrice = price,
                     Subtotal = subtotal
@@ -218,6 +207,8 @@ public class OrderService : IOrderService
 
             order.TotalPrice = orderTotal;
             order.TotalQuantity = orderQuantity;
+
+            _db.TblOrders.Add(order);
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 

@@ -10,23 +10,123 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
                     colors: {
-                        primary: '#0f766e', // teal-700
-                        'primary-dark': '#1e293b', // slate-800
-                        success: '#059669', // emerald-600
-                        warning: '#f59e0b', // amber-500
+                        primary: {
+                            DEFAULT: '#C86D56', // Warm Terracotta Clay
+                            50: '#FDF8F6',
+                            100: '#F9EFEA',     // Soft Blush Tint
+                            200: '#F3DDD4',
+                            300: '#E9C4B5',
+                            400: '#DC9D87',
+                            500: '#D27F67',
+                            600: '#C86D56',     // Hero CTA Clay
+                            700: '#B35D47',     // Deep Terracotta Hover
+                            800: '#914936',
+                            900: '#753B2B',
+                        },
+                        'primary-dark': '#2A2421', // Warm Espresso Charcoal
+                        success: '#7B9B73',        // Soft Botanical Sage Green
+                        warning: '#D89E4E',        // Warm Ochre Amber
+                        info: '#8B7B96',           // Muted Dusty Mauve
+                        // Alias teal to the Warm Terracotta Clay palette so all 29 views inherit this aesthetic instantly
+                        teal: {
+                            DEFAULT: '#C86D56',
+                            50: '#FDF8F6',
+                            100: '#F9EFEA',
+                            200: '#F3DDD4',
+                            300: '#E9C4B5',
+                            400: '#DC9D87',
+                            500: '#D27F67',
+                            600: '#C86D56',
+                            700: '#B35D47',
+                            800: '#914936',
+                            900: '#753B2B',
+                        },
+                        // Soft Botanical Sage Green
+                        emerald: {
+                            50: '#EDF3EB',
+                            100: '#DCE8D8',
+                            200: '#C2D7BB',
+                            500: '#7B9B73',
+                            600: '#64885B',
+                            700: '#55784C',
+                            800: '#43613B',
+                        },
+                        // Warm Ochre Amber
+                        amber: {
+                            50: '#FDF7ED',
+                            100: '#FBEED7',
+                            200: '#F7DBB0',
+                            500: '#D89E4E',
+                            600: '#C48637',
+                            700: '#A66B24',
+                        },
+                        // Warm Terracotta Clay Error / Danger
+                        red: {
+                            50: '#FDF2F0',
+                            100: '#FCE6E2',
+                            200: '#F8C8C0',
+                            500: '#E06A53',
+                            600: '#C86D56',
+                            700: '#B35D47',
+                            800: '#914936',
+                        },
+                        rose: {
+                            50: '#FDF2F0',
+                            100: '#FCE6E2',
+                            200: '#F8C8C0',
+                            500: '#E06A53',
+                            600: '#C86D56',
+                            700: '#B35D47',
+                        },
+                        // Warm Sand & Espresso Neutrals (replaces cool gray slate across all views)
+                        slate: {
+                            50: '#FAF8F5',
+                            100: '#F7F4EE',
+                            200: '#EDE7DF',
+                            300: '#E3D9CC',
+                            400: '#A59B94',
+                            500: '#7A716A',
+                            600: '#5A524C',
+                            700: '#423A34',
+                            800: '#2E2724',
+                            900: '#2A2421',
+                        },
+                        sand: {
+                            50: '#FAF8F5',
+                            100: '#F7F4EE',        // Canvas Background
+                            200: '#EDE7DF',        // Warm Soft Border
+                            300: '#E3D9CC',
+                            400: '#CFC2B2',
+                            500: '#B8A894',
+                        },
+                        espresso: {
+                            50: '#F6F5F4',
+                            100: '#E7E5E3',
+                            200: '#D0CBC7',
+                            300: '#B2ABA5',
+                            400: '#8E857E',
+                            500: '#6C635C',
+                            600: '#534B45',
+                            700: '#3E3732',
+                            800: '#2A2421',        // Dominant Text
+                            900: '#1A1614',
+                        }
                     }
                 }
             }
         }
     </script>
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* Lucide & SVG micro-interactions (inspired by lucide-animated.com) */
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        /* Lucide & SVG micro-interactions */
         .icon-hover-bounce {
             transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -47,12 +147,12 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden">
+<body class="bg-[#F7F4EE] text-[#2A2421] flex h-screen overflow-hidden">
     <!-- Sidebar -->
-    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
-        <div class="h-16 flex items-center px-6 border-b border-slate-100">
-            <svg class="w-8 h-8 text-teal-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-            <span class="text-xl font-bold text-teal-700">POS System</span>
+    <aside class="w-64 bg-white border-r border-[#EDE7DF] flex flex-col shrink-0">
+        <div class="h-16 flex items-center px-6 border-b border-[#F0EAE1]">
+            <svg class="w-8 h-8 text-[#C86D56] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <span class="text-xl font-bold tracking-tight text-[#2A2421]">POS <span class="text-[#C86D56]">System</span></span>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             @{
@@ -61,8 +161,8 @@
                 
                 string GetActiveClass(string controller) {
                     return currentController == controller 
-                        ? "bg-teal-50 text-teal-700 font-medium" 
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900";
+                        ? "bg-[#F9EFEA] text-[#C86D56] font-semibold shadow-2xs" 
+                        : "text-[#6C635C] hover:bg-[#FAF8F5] hover:text-[#2A2421] font-medium";
                 }
             }
             
@@ -104,7 +204,7 @@
             </div>
 
             <div class="nav-section-management">
-                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">SETTINGS</div>
+                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#A59B94] uppercase tracking-wider">SETTINGS</div>
                 <a href="/User" data-permission="User.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("User")">
                     <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -112,7 +212,7 @@
                         <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
-                    Staff & Cashiers
+                    Staff Management
                 </a>
                 <a href="/Role" data-permission="Role.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Role")">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
@@ -120,18 +220,18 @@
                 </a>
             </div>
         </nav>
-        <div class="p-4 border-t border-slate-100 flex items-center justify-between">
+        <div class="p-4 border-t border-[#EDE7DF] flex items-center justify-between">
             <div class="flex items-center gap-3 overflow-hidden">
-                <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-semibold shadow-sm shrink-0 uppercase" id="sidebarUserInitials">
-                    ST
+                <div class="w-10 h-10 rounded-full bg-[#F9EFEA] flex items-center justify-center text-[#C86D56] font-bold shadow-2xs shrink-0 uppercase" id="sidebarUserInitials">
+                    --
                 </div>
                 <div class="truncate">
-                    <p class="text-sm font-semibold text-slate-900 truncate" id="sidebarUsername">Staff Member</p>
-                    <p class="text-xs text-slate-500 font-medium" id="sidebarUserRole">Admin Role</p>
+                    <p class="text-sm font-semibold text-[#2A2421] truncate" id="sidebarUsername">Loading...</p>
+                    <p class="text-xs text-[#A59B94] font-medium" id="sidebarUserRole">Staff</p>
                 </div>
             </div>
             <button type="button" onclick="window.openLogoutConfirmModal()" title="Sign Out"
-               class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors shrink-0 cursor-pointer">
+               class="p-2 text-[#A59B94] hover:text-[#C86D56] hover:bg-[#FDF8F6] rounded-xl transition-colors shrink-0 cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                 </svg>
@@ -142,13 +242,13 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
         <!-- Top header for mobile -->
-        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 md:hidden shadow-sm z-10 relative">
+        <header class="h-16 bg-white border-b border-[#EDE7DF] flex items-center justify-between px-6 shrink-0 md:hidden shadow-sm z-10 relative">
             <div class="flex items-center">
-                <svg class="w-6 h-6 text-teal-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                <span class="text-xl font-bold text-teal-700">POS System</span>
+                <svg class="w-6 h-6 text-[#C86D56] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <span class="text-xl font-bold tracking-tight text-[#2A2421]">POS <span class="text-[#C86D56]">System</span></span>
             </div>
             <button type="button" onclick="window.openLogoutConfirmModal()" title="Sign Out"
-               class="text-slate-500 hover:text-red-600 transition-colors p-1 cursor-pointer">
+               class="text-[#A59B94] hover:text-[#C86D56] transition-colors p-1 cursor-pointer">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
             </button>
         </header>
@@ -208,6 +308,21 @@
                 const posRole = localStorage.getItem('pos_role');
                 const posPermsRaw = localStorage.getItem('pos_permissions');
                 const posPerms = posPermsRaw ? JSON.parse(posPermsRaw) : [];
+
+                if (!posUser && !getCookie('pos_user') && !getCookie('pos_token')) {
+                    // Not authenticated: bounce immediately to login instead of rendering broken UI
+                    window.location.replace('/Auth/Login');
+                    return;
+                }
+
+                // Detect browser Back/Forward (bfcache) navigation
+                window.addEventListener('pageshow', function (event) {
+                    if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+                        if (!getCookie('pos_user') && !localStorage.getItem('pos_user')) {
+                            window.location.replace('/Auth/Login');
+                        }
+                    }
+                });
 
                 if (posUser) {
                     let cleanUser = posUser;
@@ -288,9 +403,115 @@
                 localStorage.removeItem('pos_role');
                 localStorage.removeItem('pos_permissions');
             } catch(e) {}
-            window.location.href = '/Auth/Logout';
+            window.location.replace('/Auth/Logout');
         };
+
+        // Global Warm Clay & Linen Floating Card Toast System
+        let toastTimeout = null;
+        window.showToast = function(message, isSuccess = true) {
+            const container = document.getElementById('globalToastContainer');
+            const cardEl = document.getElementById('globalToastCard');
+            const titleEl = document.getElementById('globalToastTitle');
+            const messageEl = document.getElementById('globalToastMessage');
+            const iconContainer = document.getElementById('globalToastIconContainer');
+            if (!container || !messageEl || !iconContainer) return;
+
+            messageEl.textContent = message;
+
+            const isSuccessBool = (isSuccess === true || isSuccess === 'success' || isSuccess === 1 || isSuccess === '1');
+
+            if (isSuccessBool) {
+                if (titleEl) {
+                    titleEl.textContent = "SUCCESS";
+                    titleEl.className = "text-[10px] font-bold tracking-widest uppercase text-[#55784C] mb-0.5";
+                }
+                if (cardEl) {
+                    cardEl.className = "bg-white/95 backdrop-blur-md border border-[#DCE8D8] shadow-[0_12px_36px_rgba(42,36,33,0.09)] rounded-2xl px-5 py-3.5 flex items-center gap-3.5 max-w-md ring-1 ring-[#55784C]/10";
+                }
+                iconContainer.className = "w-9 h-9 rounded-xl bg-[#EDF3EB] text-[#55784C] border border-[#DCE8D8] flex items-center justify-center shrink-0 shadow-2xs";
+                iconContainer.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>';
+            } else {
+                if (titleEl) {
+                    titleEl.textContent = "ATTENTION";
+                    titleEl.className = "text-[10px] font-bold tracking-widest uppercase text-[#C86D56] mb-0.5";
+                }
+                if (cardEl) {
+                    cardEl.className = "bg-white/95 backdrop-blur-md border border-[#F6DDD8] shadow-[0_12px_36px_rgba(42,36,33,0.09)] rounded-2xl px-5 py-3.5 flex items-center gap-3.5 max-w-md ring-1 ring-[#C86D56]/15";
+                }
+                iconContainer.className = "w-9 h-9 rounded-xl bg-[#FDF2F0] text-[#C86D56] border border-[#F6DDD8] flex items-center justify-center shrink-0 shadow-2xs";
+                iconContainer.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+            }
+
+            container.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-3');
+            container.classList.add('opacity-100', 'translate-y-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                window.hideToast();
+            }, 4500);
+        };
+
+        window.hideToast = function() {
+            const container = document.getElementById('globalToastContainer');
+            if (container) {
+                container.classList.add('opacity-0', 'pointer-events-none', 'translate-y-3');
+                container.classList.remove('opacity-100', 'translate-y-0');
+            }
+        };
+
+        // Alias for compatibility
+        var showToast = window.showToast;
     </script>
+
+    @{
+        bool hasGlobalToast = false;
+        bool globalToastSuccess = true;
+        string globalToastMsg = "";
+
+        if (TempData["Message"] != null)
+        {
+            hasGlobalToast = true;
+            globalToastMsg = TempData["Message"]?.ToString() ?? "";
+            globalToastSuccess = TempData["isSuccess"] == null || Convert.ToBoolean(TempData["isSuccess"]);
+        }
+        else if (TempData["SuccessMessage"] != null)
+        {
+            hasGlobalToast = true;
+            globalToastMsg = TempData["SuccessMessage"]?.ToString() ?? "";
+            globalToastSuccess = true;
+        }
+        else if (TempData["ErrorMessage"] != null)
+        {
+            hasGlobalToast = true;
+            globalToastMsg = TempData["ErrorMessage"]?.ToString() ?? "";
+            globalToastSuccess = false;
+        }
+    }
+    @if (hasGlobalToast && !string.IsNullOrWhiteSpace(globalToastMsg))
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(globalToastMsg)), @(globalToastSuccess ? "true" : "false"));
+                }
+            });
+        </script>
+    }
+
+    <!-- Global Floating Card Toast -->
+    <div id="globalToastContainer" class="fixed bottom-6 right-6 z-[100] transition-all duration-300 opacity-0 pointer-events-none translate-y-3">
+        <div id="globalToastCard" class="bg-white/95 backdrop-blur-md border border-[#EDE7DF] shadow-[0_12px_36px_rgba(42,36,33,0.08)] rounded-2xl px-5 py-3.5 flex items-center gap-3.5 max-w-md ring-1 ring-[#2A2421]/5">
+            <div id="globalToastIconContainer" class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"></div>
+            <div class="flex-1 pr-2 min-w-0">
+                <p id="globalToastTitle" class="text-[10px] font-bold tracking-widest uppercase mb-0.5"></p>
+                <p id="globalToastMessage" class="text-sm font-semibold text-[#2A2421] leading-snug break-words"></p>
+            </div>
+            <button type="button" onclick="window.hideToast()" class="text-[#A59B94] hover:text-[#2A2421] transition-colors p-1 cursor-pointer shrink-0" aria-label="Close">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

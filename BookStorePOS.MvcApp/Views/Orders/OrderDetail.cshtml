@@ -26,11 +26,12 @@
     
     .receipt-font {
         font-family: 'Courier Prime', monospace;
+        color: #000000;
     }
     
     .receipt-container {
         position: relative;
-        background-color: #fcfaf5;
+        background-color: #ffffff;
     }
     
     .receipt-container::before {
@@ -41,7 +42,7 @@
         right: 0;
         height: 10px;
         background-size: 20px 20px;
-        background-image: radial-gradient(circle at 10px 0, transparent 10px, #fcfaf5 11px);
+        background-image: radial-gradient(circle at 10px 0, transparent 10px, #ffffff 11px);
     }
     
     .receipt-container::after {
@@ -52,14 +53,20 @@
         right: 0;
         height: 10px;
         background-size: 20px 20px;
-        background-image: radial-gradient(circle at 10px 20px, transparent 10px, #fcfaf5 11px);
+        background-image: radial-gradient(circle at 10px 20px, transparent 10px, #ffffff 11px);
     }
     
     .dashed-line {
-        border-top: 2px dashed #b5b5b5;
+        border-top: 1.5px dashed #000000;
     }
     
     @@media print {
+        * {
+            color: #000000 !important;
+            border-color: #000000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
         body { background-color: white !important; }
         .no-print { display: none !important; }
         .receipt-wrapper { 
@@ -70,7 +77,8 @@
         .receipt-container { 
             box-shadow: none !important; 
             margin: 0 auto !important; 
-            border: 1px solid #ddd;
+            border: 1px dashed #000000 !important;
+            background-color: white !important;
         }
         aside, header, nav { display: none !important; }
         main, .flex-1, .overflow-y-auto { 
@@ -82,7 +90,7 @@
 
 <div class="mb-4 flex items-center justify-between no-print">
     <div class="flex items-center gap-3">
-        <a href="/Orders" class="text-slate-400 hover:text-teal-600 transition-colors p-1.5 rounded-lg hover:bg-teal-50">
+        <a href="/Orders" class="text-neutral-500 hover:text-black transition-colors p-1.5 rounded-lg hover:bg-neutral-100">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
@@ -90,51 +98,51 @@
         <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Back to Orders</h1>
     </div>
     
-    <button onclick="window.print()" class="px-5 py-2.5 bg-slate-800 hover:bg-black text-white rounded-xl flex items-center gap-2 font-semibold text-sm transition-colors shadow-sm">
+    <button onclick="window.print()" class="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl flex items-center gap-2 font-semibold text-sm transition-colors shadow-sm cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
         Print Receipt
     </button>
 </div>
 
-<div class="bg-[#333333] min-h-[calc(100vh-12rem)] rounded-2xl flex justify-center py-12 px-4 overflow-y-auto receipt-wrapper">
-    <div class="w-full max-w-[420px] receipt-font text-[#333]">
-        <div class="receipt-container p-8 shadow-2xl relative mt-3 mb-3">
+<div class="bg-[#2A2421] min-h-[calc(100vh-12rem)] rounded-2xl flex justify-center py-12 px-4 overflow-y-auto receipt-wrapper">
+    <div class="w-full max-w-[420px] receipt-font text-black">
+        <div class="receipt-container p-8 shadow-2xl relative mt-3 mb-3 border border-black/10">
             
             <div class="text-center mb-6">
-                <h1 class="text-3xl font-bold tracking-[0.2em] mb-2 uppercase text-black">Bookstore</h1>
-                <p class="text-xs tracking-wider text-gray-500 uppercase">MONTHLY READING RECEIPT #@FormatOrderNo(order.OrderId, order.OrderDate)</p>
-                <p class="text-sm font-bold text-[#d49f3e] mt-3 uppercase tracking-widest">@FormatOrderDateOnly(order.OrderDate)</p>
+                <h1 class="text-3xl font-black tracking-[0.2em] mb-2 uppercase text-black">Bookstore</h1>
+                <p class="text-xs tracking-wider text-black uppercase font-medium">MONTHLY READING RECEIPT #@FormatOrderNo(order.OrderId, order.OrderDate)</p>
+                <p class="text-sm font-bold text-black mt-3 uppercase tracking-widest">@FormatOrderDateOnly(order.OrderDate)</p>
             </div>
             
             <div class="dashed-line my-5"></div>
             
-            <div class="flex justify-between text-sm my-2">
+            <div class="flex justify-between text-sm my-2 text-black">
                 <span class="uppercase tracking-wider">BOOKS PURCHASED</span>
                 <span class="font-bold">@order.TotalQuantity</span>
             </div>
-            <div class="flex justify-between text-sm my-2">
+            <div class="flex justify-between text-sm my-2 text-black">
                 <span class="uppercase tracking-wider">TOTAL AMOUNT</span>
-                <span class="font-bold">@order.TotalPrice.ToString("#,##0")</span>
+                <span class="font-bold">@order.TotalPrice.ToString("#,##0") MMK</span>
             </div>
-            <div class="flex justify-between text-sm my-2">
+            <div class="flex justify-between text-sm my-2 text-black">
                 <span class="uppercase tracking-wider">TIME</span>
                 <span class="font-bold">@FormatOrderTimeOnly(order.OrderDate)</span>
             </div>
-            <div class="flex justify-between text-sm my-2">
+            <div class="flex justify-between text-sm my-2 text-black">
                 <span class="uppercase tracking-wider">SOURCE</span>
                 <span class="font-bold">@order.OrderSource</span>
             </div>
-            <div class="flex justify-between text-sm my-2">
+            <div class="flex justify-between text-sm my-2 text-black">
                 <span class="uppercase tracking-wider">STATUS</span>
                 <span class="font-bold">@order.OrderStatus.ToString()</span>
             </div>
             
             <div class="dashed-line my-5"></div>
             
-            <h2 class="uppercase font-bold text-sm tracking-wider mb-3">ITEMS PURCHASED</h2>
+            <h2 class="uppercase font-bold text-sm tracking-wider mb-3 text-black">ITEMS PURCHASED</h2>
             
             <!-- Column Headers -->
-            <div class="flex text-xs font-bold uppercase tracking-wider mb-3 border-b border-dashed border-[#b5b5b5] pb-2">
+            <div class="flex text-xs font-bold uppercase tracking-wider mb-3 border-b border-dashed border-black pb-2 text-black">
                 <div class="w-6 shrink-0">No</div>
                 <div class="flex-1">Book</div>
                 <div class="w-10 text-center">Qty</div>
@@ -145,25 +153,25 @@
             <div class="space-y-4">
                 @if (order.Items == null || !order.Items.Any())
                 {
-                    <div class="text-center text-sm py-4">NO ITEMS</div>
+                    <div class="text-center text-sm py-4 text-black">NO ITEMS</div>
                 }
                 else
                 {
                     for (int i = 0; i < order.Items.Count; i++)
                     {
                         var item = order.Items[i];
-                        <div class="flex text-sm items-start gap-1">
-                            <div class="text-[#d49f3e] font-bold w-6 shrink-0 pt-0.5">@((i+1).ToString("D2"))</div>
+                        <div class="flex text-sm items-start gap-1 text-black">
+                            <div class="text-black font-bold w-6 shrink-0 pt-0.5">@((i+1).ToString("D2"))</div>
                             <div class="flex-1 leading-tight pr-2 flex flex-col justify-center">
-                                <span class="font-bold">@item.BookTitle</span>
+                                <span class="font-bold text-black">@item.BookTitle</span>
                                 @if (!string.IsNullOrEmpty(item.EditionName))
                                 {
-                                    <span class="text-[10px] text-gray-500 font-normal mt-0.5">@item.EditionName</span>
+                                    <span class="text-[10px] text-neutral-800 font-normal mt-0.5">@item.EditionName</span>
                                 }
                             </div>
-                            <div class="w-10 text-center pt-0.5 font-medium">@item.Quantity</div>
-                            <div class="w-[70px] text-right pt-0.5 text-xs">@item.UnitPrice.ToString("#,##0")</div>
-                            <div class="w-[75px] text-right font-bold pt-0.5">@((item.Subtotal ?? (item.Quantity * item.UnitPrice)).ToString("#,##0"))</div>
+                            <div class="w-10 text-center pt-0.5 font-medium text-black">@item.Quantity</div>
+                            <div class="w-[70px] text-right pt-0.5 text-xs text-black">@item.UnitPrice.ToString("#,##0")</div>
+                            <div class="w-[75px] text-right font-bold pt-0.5 text-black">@((item.Subtotal ?? (item.Quantity * item.UnitPrice)).ToString("#,##0"))</div>
                         </div>
                     }
                 }
@@ -171,27 +179,18 @@
             
             <div class="dashed-line my-6"></div>
             
-            <div class="flex justify-between items-end mt-2">
+            <div class="flex justify-between items-end mt-2 text-black">
                 <span class="uppercase font-bold text-lg tracking-widest">TOTAL</span>
-                <span class="text-[#d49f3e] font-bold text-2xl">@order.TotalPrice.ToString("#,##0") <span class="text-xs text-black font-bold ml-1">MMK</span></span>
+                <span class="text-black font-black text-2xl">@order.TotalPrice.ToString("#,##0") <span class="text-xs text-black font-bold ml-1">MMK</span></span>
             </div>
             
-            <div class="mt-12 text-center">
-                <p class="text-sm font-bold uppercase tracking-wider mb-2">Thank you for buying!</p>
-                <p class="text-xs text-gray-400 uppercase tracking-[0.2em]">ISSUED BY BOOKSTORE</p>
+            <div class="mt-12 text-center text-black">
+                <p class="text-sm font-bold uppercase tracking-wider mb-2 text-black">Thank you for buying!</p>
+                <p class="text-xs text-neutral-800 uppercase tracking-[0.2em]">ISSUED BY BOOKSTORE</p>
             </div>
             
-            <!-- Stamp effect -->
-            @{
-                var stampColor = order.OrderStatus switch {
-                    OrderStatus.Completed => "#e07a5f",
-                    OrderStatus.Pending => "#3b82f6",
-                    OrderStatus.Cancelled => "#ef4444",
-                    OrderStatus.Rejected => "#64748b",
-                    _ => "#000000"
-                };
-            }
-            <div class="absolute top-32 right-6 border-4 p-2 rotate-[-15deg] font-bold text-xl uppercase tracking-widest opacity-80 rounded-md pointer-events-none" style="color: @stampColor; border-color: @stampColor;">
+            <!-- Stamp effect: Monochrome Black -->
+            <div class="absolute top-32 right-6 border-4 border-black text-black px-3 py-1.5 rotate-[-12deg] font-black text-xl uppercase tracking-widest rounded-md pointer-events-none">
                 @order.OrderStatus.ToString()
             </div>
             

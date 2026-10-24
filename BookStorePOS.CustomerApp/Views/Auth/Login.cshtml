@@ -35,7 +35,7 @@
                 <span id="loginAlertText"></span>
             </div>
 
-            <form id="customerLoginForm" novalidate class="space-y-5">
+            <form id="customerLoginForm" autocomplete="off" novalidate class="space-y-5">
                 <!-- Phone Number -->
                 <div>
                     <label for="phoneInput" class="block text-xs font-semibold uppercase tracking-wider text-brand-inkLight mb-1.5">
@@ -113,6 +113,18 @@
     <script>
         $(document).ready(function() {
             const returnUrl = '@Html.Raw(returnUrl)';
+
+            // If restored from browser bfcache (Back/Forward cache) or user pressed Back button
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+                    $('#passwordInput').val('');
+                    if (document.cookie.indexOf('customer_token=') !== -1 || document.cookie.indexOf('customer_user=') !== -1) {
+                        window.location.replace(returnUrl || '/Books');
+                    } else {
+                        window.location.reload();
+                    }
+                }
+            });
 
             if (new URLSearchParams(window.location.search).get('reset') === 'true') {
                 $('#resetSuccessAlert').removeClass('hidden');
@@ -202,8 +214,11 @@
                     },
                     success: function(response) {
                         if (response.isSuccess) {
-                            // Redirect to destination (cookies are set by the server)
-                            window.location.href = returnUrl;
+                            // Clear sensitive password from memory & input immediately
+                            $('#passwordInput').val('');
+
+                            // Replace current history state so browser Back button does NOT return to Login
+                            window.location.replace(returnUrl);
                         } else {
                             $('#loginAlertText').text(response.message || response.Message || "Invalid phone number or password.");
                             $('#loginAlert').removeClass('hidden');

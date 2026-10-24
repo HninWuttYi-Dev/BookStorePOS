@@ -77,14 +77,22 @@ else
 {
 
 <!-- Top Greeting -->
-<div class="mb-8">
-    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Hi, Staff</h1>
-    <p class="text-slate-500 mt-2 text-sm font-medium">Let's manage the store today</p>
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-extrabold text-[#2A2421] tracking-tight" id="dashboardGreetingTitle">Hi, Staff</h1>
+        <p class="text-[#C86D56] font-semibold mt-1 text-sm">Let's finish your task today!</p>
+    </div>
+    <div class="hidden sm:flex items-center gap-3">
+        <a href="/Checkout" class="px-5 py-2.5 bg-[#C86D56] hover:bg-[#B35D47] text-white rounded-xl text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            New Sale
+        </a>
+    </div>
 </div>
 
 @if (hasMessage)
 {
-    <div class="p-4 mb-4 text-sm rounded-lg @(isSuccess ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800")" role="alert">
+    <div class="p-4 mb-4 text-sm rounded-xl border @(isSuccess ? "bg-[#EDF3EB] border-[#DCE8D8] text-[#55784C]" : "bg-[#FDF2F0] border-[#F6DDD8] text-[#C86D56]")" role="alert">
         @message
     </div>
 }
@@ -92,16 +100,16 @@ else
 <!-- Summary Cards -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <!-- Today Sales -->
-    <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1">
-        <div class="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 shrink-0">
+    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] flex items-center gap-5 transition-all hover:shadow-[0_12px_36px_-6px_rgba(42,36,33,0.08)] hover:-translate-y-0.5">
+        <div class="w-14 h-14 rounded-2xl bg-[#F9EFEA] flex items-center justify-center text-[#C86D56] shrink-0">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>
         <div>
             <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded">Revenue</span>
+                <span class="text-[10px] font-bold text-[#C86D56] uppercase tracking-wider bg-[#F9EFEA] px-2 py-0.5 rounded-full">Revenue</span>
             </div>
-            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">@todaySales.ToString("#,##0")</h3>
-            <p class="text-[10px] font-bold text-emerald-500 uppercase mt-1 flex items-center gap-1">
+            <h3 class="text-2xl font-bold text-[#2A2421] tracking-tight">@todaySales.ToString("#,##0")</h3>
+            <p class="text-[10px] font-bold text-[#C86D56] uppercase mt-1 flex items-center gap-1">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                 MMK Today
             </p>
@@ -109,16 +117,16 @@ else
     </div>
     
     <!-- This Month Sales -->
-    <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1">
-        <div class="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] flex items-center gap-5 transition-all hover:shadow-[0_12px_36px_-6px_rgba(42,36,33,0.08)] hover:-translate-y-0.5">
+        <div class="w-14 h-14 rounded-2xl bg-[#FDF7ED] flex items-center justify-center text-[#D89E4E] shrink-0">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
         </div>
         <div>
             <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded">This Month</span>
+                <span class="text-[10px] font-bold text-[#D89E4E] uppercase tracking-wider bg-[#FDF7ED] px-2 py-0.5 rounded-full">This Month</span>
             </div>
-            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">@thisMonthSales.ToString("#,##0")</h3>
-            <p class="text-[10px] font-bold text-emerald-500 uppercase mt-1 flex items-center gap-1">
+            <h3 class="text-2xl font-bold text-[#2A2421] tracking-tight">@thisMonthSales.ToString("#,##0")</h3>
+            <p class="text-[10px] font-bold text-[#D89E4E] uppercase mt-1 flex items-center gap-1">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
                 MMK Total
             </p>
@@ -126,13 +134,13 @@ else
     </div>
     
     <!-- Low Stock Items -->
-    <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1">
-        <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] flex items-center gap-5 transition-all hover:shadow-[0_12px_36px_-6px_rgba(42,36,33,0.08)] hover:-translate-y-0.5">
+        <div class="w-14 h-14 rounded-2xl bg-[#FAF5F2] flex items-center justify-center text-[#9C6452] shrink-0">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         </div>
         <div>
-            <p class="text-sm font-semibold text-slate-500 mb-1">Low Stock Items</p>
-            <h3 class="text-2xl font-bold text-slate-900 tracking-tight">@lowStockItemsCount</h3>
+            <p class="text-sm font-semibold text-[#7D736D] mb-1">Low Stock Items</p>
+            <h3 class="text-2xl font-bold text-[#2A2421] tracking-tight">@lowStockItemsCount</h3>
         </div>
     </div>
 </div>
@@ -140,27 +148,27 @@ else
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- Recent Orders -->
     <div class="lg:col-span-2">
-        <div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col h-full">
-            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
-                <h2 class="text-lg font-bold text-slate-900">Recent Orders</h2>
-                <a href="/Orders" class="text-sm font-semibold text-teal-600 hover:text-teal-700 hover:underline decoration-teal-600/30 underline-offset-4 transition-all">View All</a>
+        <div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] overflow-hidden flex flex-col h-full">
+            <div class="px-6 py-5 border-b border-[#EDE7DF] flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
+                <h2 class="text-lg font-bold text-[#2A2421]">Recent Orders</h2>
+                <a href="/Orders" class="text-sm font-semibold text-[#C86D56] hover:text-[#B35D47] hover:underline decoration-[#C86D56]/30 underline-offset-4 transition-all">View All</a>
             </div>
             <div class="overflow-x-auto flex-1 p-2">
                 <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="text-slate-500 bg-slate-50/50 rounded-lg">
+                    <thead class="text-[#7D736D] bg-[#FAF8F5] rounded-lg">
                         <tr>
                             <th class="px-4 py-3 font-semibold rounded-l-lg">Order ID</th>
                             <th class="px-4 py-3 font-semibold">Date & Time</th>
                             <th class="px-4 py-3 font-semibold">Items</th>
-                            <th class="px-4 py-3 font-semibold">Total</th>
+                            <th class="px-4 py-3 font-semibold">Total (MMK)</th>
                             <th class="px-4 py-3 font-semibold rounded-r-lg">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="text-slate-700">
+                    <tbody class="text-[#534B45]">
                         @if (recentOrders == null || recentOrders.Count == 0)
                         {
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-slate-500">
+                                <td colspan="5" class="px-4 py-8 text-center text-[#A59B94]">
                                     No recent orders found.
                                 </td>
                             </tr>
@@ -169,21 +177,21 @@ else
                         {
                             foreach (var order in recentOrders)
                             {
-                                <tr class="hover:bg-slate-50/80 transition-colors group">
-                                    <td class="px-4 py-4 font-semibold text-teal-700 rounded-l-xl group-hover:text-teal-800">
+                                <tr class="hover:bg-[#FAF8F5]/80 transition-colors group">
+                                    <td class="px-4 py-4 font-semibold text-[#C86D56] rounded-l-xl group-hover:text-[#B35D47]">
                                         <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
                                             @FormatOrderNo(order.OrderId, order.OrderDate)
                                         </a>
                                     </td>
                                     <td class="px-4 py-4">
-                                        <div class="font-medium text-slate-700">@FormatOrderDateOnly(order.OrderDate)</div>
-                                        <div class="text-xs text-slate-500 mt-0.5">@FormatOrderTimeOnly(order.OrderDate)</div>
+                                        <div class="font-medium text-[#2A2421]">@FormatOrderDateOnly(order.OrderDate)</div>
+                                        <div class="text-xs text-[#7D736D] mt-0.5">@FormatOrderTimeOnly(order.OrderDate)</div>
                                     </td>
-                                    <td class="px-4 py-4 text-slate-600 font-medium">@order.TotalQuantity</td>
-                                    <td class="px-4 py-4 font-semibold text-slate-900">@order.TotalPrice.ToString("#,##0") <span class="text-xs text-slate-400 font-bold ml-0.5">MMK</span></td>
+                                    <td class="px-4 py-4 text-[#6C635C] font-medium">@order.TotalQuantity</td>
+                                    <td class="px-4 py-4 font-semibold text-[#2A2421]">@order.TotalPrice.ToString("#,##0")</td>
                                     <td class="px-4 py-4 rounded-r-xl">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-800 border border-emerald-200/50">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#EDF3EB] text-[#55784C] border border-[#DCE8D8]">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#7B9B73] mr-1.5"></span>
                                             Completed
                                         </span>
                                     </td>
@@ -198,16 +206,16 @@ else
 
     <!-- Low Stock -->
     <div class="h-full">
-        <div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col h-full">
-            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
-                <h2 class="text-lg font-bold text-slate-900">Low Stock</h2>
-                <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">Action Needed</span>
+        <div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] overflow-hidden flex flex-col h-full">
+            <div class="px-6 py-5 border-b border-[#EDE7DF] flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
+                <h2 class="text-lg font-bold text-[#2A2421]">Low Stock</h2>
+                <span class="px-2.5 py-0.5 rounded-full bg-[#FAF5F2] text-[#9C6452] text-xs font-semibold border border-[#E8D7CD]">Action Needed</span>
             </div>
             <div class="p-3 flex-1 overflow-y-auto">
                 <ul class="space-y-1">
                     @if (lowStockBooks == null || lowStockBooks.Count == 0)
                     {
-                        <li class="p-6 text-center text-slate-500 text-sm">
+                        <li class="p-6 text-center text-[#A59B94] text-sm">
                             No low stock items. All good!
                         </li>
                     }
@@ -215,16 +223,16 @@ else
                     {
                         foreach (var book in lowStockBooks)
                         {
-                            var stockBg = book.TotalStockQuantity == 0 ? "bg-red-100 text-red-700 border-red-200" : "bg-amber-100 text-amber-700 border-amber-200";
+                            var stockBg = book.TotalStockQuantity == 0 ? "bg-[#FDF2F0] text-[#C86D56] border-[#F6DDD8]" : "bg-[#FDF7ED] text-[#D89E4E] border-[#F7EAD0]";
                             
-                            <li class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer group">
+                            <li class="flex items-center justify-between p-3 hover:bg-[#FAF8F5] rounded-xl transition-colors cursor-pointer group">
                                 <div class="flex items-center gap-4">
-                                    <div class="w-12 h-16 bg-slate-100 rounded-lg shadow-sm flex items-center justify-center shrink-0 border border-slate-200 group-hover:border-teal-200 transition-colors">
-                                        <svg class="w-6 h-6 text-slate-400 group-hover:text-teal-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                    <div class="w-12 h-16 bg-[#FAF8F5] rounded-lg shadow-2xs flex items-center justify-center shrink-0 border border-[#EDE7DF] group-hover:border-[#C86D56]/40 transition-colors">
+                                        <svg class="w-6 h-6 text-[#A59B94] group-hover:text-[#C86D56] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-bold text-slate-900 group-hover:text-teal-700 transition-colors">@book.Title</p>
-                                        <p class="text-xs text-slate-500 font-medium mt-0.5">@book.Author</p>
+                                        <p class="text-sm font-bold text-[#2A2421] group-hover:text-[#C86D56] transition-colors">@book.Title</p>
+                                        <p class="text-xs text-[#7D736D] font-medium mt-0.5">@book.Author</p>
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm shrink-0 border @stockBg">
@@ -235,12 +243,27 @@ else
                     }
                 </ul>
             </div>
-            <div class="p-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
-                <a href="/Books?filter=low-stock" class="flex items-center justify-center w-full py-2 px-4 rounded-xl text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors">
+            <div class="p-4 border-t border-[#EDE7DF] bg-[#FAF8F5]/50 shrink-0">
+                <a href="/Books?filter=low-stock" class="flex items-center justify-center w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-[#C86D56] bg-[#F9EFEA] hover:bg-[#F3DDD4] transition-colors">
                     Manage Inventory
                 </a>
             </div>
         </div>
     </div>
 </div>
+}
+
+@section Scripts {
+<script>
+    $(document).ready(function() {
+        const posRole = localStorage.getItem('pos_role');
+        if (posRole && posRole.trim().length > 0) {
+            let roleName = posRole.trim();
+            roleName = roleName.charAt(0).toUpperCase() + roleName.slice(1);
+            $('#dashboardGreetingTitle').text('Hi, ' + roleName);
+        } else {
+            $('#dashboardGreetingTitle').text('Hi, Staff');
+        }
+    });
+</script>
 }

@@ -42,32 +42,25 @@
     <p class="text-slate-500 mt-2 text-sm font-medium">View and manage all transaction history</p>
 </div>
 
-@if (hasMessage)
-{
-    <div class="p-4 mb-4 text-sm rounded-lg @(isSuccess ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-800")">
-        @message
-    </div>
-}
-
 @if (summary != null)
 {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
+        <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] border border-[#EDE7DF] flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
             <span class="text-sm font-semibold text-slate-500 mb-2">Total Orders</span>
             <span class="text-3xl font-bold text-slate-900">@summary.TotalOrders</span>
         </div>
-        <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
+        <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] border border-[#EDE7DF] flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
             <span class="text-sm font-semibold text-slate-500 mb-2">Total Revenue</span>
             <span class="text-3xl font-bold text-teal-700">@summary.TotalRevenue.ToString("#,##0") <span class="text-sm font-bold ml-1 text-teal-600">MMK</span></span>
         </div>
-        <div class="bg-white rounded-2xl p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
+        <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] border border-[#EDE7DF] flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
             <span class="text-sm font-semibold text-slate-500 mb-2">Average Order Value</span>
             <span class="text-3xl font-bold text-slate-900">@summary.AverageOrderValue.ToString("#,##0") <span class="text-sm font-bold ml-1 text-slate-500">MMK</span></span>
         </div>
     </div>
 }
 
-<form method="get" action="/Orders" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+<form method="get" action="/Orders" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-[#EDE7DF] shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)]">
     <div class="flex flex-col flex-1 w-full">
         <label for="startDate" class="text-xs font-semibold text-slate-500 mb-1.5 ml-1">Start Date</label>
         <input type="date" id="startDate" name="startDate" value="@startDate" max="@maxDate" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all w-full" />
@@ -80,13 +73,13 @@
         <button type="submit" class="flex-1 md:flex-none px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-sm">
             Filter
         </button>
-        <a href="/Orders" class="flex-1 md:flex-none px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors text-center">
+        <a href="/Orders" class="flex-1 md:flex-none px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-sm text-center">
             Clear
         </a>
     </div>
 </form>
 
-<div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col">
+<div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] border border-[#EDE7DF] overflow-hidden flex flex-col">
     <div class="overflow-x-auto p-2">
         <table class="w-full text-left text-sm">
             <thead class="text-slate-500 bg-slate-50/50 rounded-lg">
@@ -96,7 +89,7 @@
                     <th class="px-4 py-3 font-semibold">Date</th>
                     <th class="px-4 py-3 font-semibold">Time</th>
                     <th class="px-4 py-3 font-semibold">Items</th>
-                    <th class="px-4 py-3 font-semibold">Total</th>
+                    <th class="px-4 py-3 font-semibold">Total (MMK)</th>
                     <th class="px-4 py-3 font-semibold">Source</th>
                     <th class="px-4 py-3 font-semibold rounded-r-lg">Status</th>
                 </tr>
@@ -105,7 +98,7 @@
                 @if (orders == null || orders.Count == 0)
                 {
                     <tr>
-                        <td colspan="7" class="px-4 py-12 text-center text-slate-500 font-medium">
+                        <td colspan="8" class="px-4 py-12 text-center text-slate-500 font-medium">
                             No orders found.
                         </td>
                     </tr>
@@ -124,7 +117,7 @@
                             <td class="px-4 py-4 text-slate-700 font-medium">@FormatOrderDateOnly(order.OrderDate)</td>
                             <td class="px-4 py-4 text-slate-500">@FormatOrderTimeOnly(order.OrderDate)</td>
                             <td class="px-4 py-4 text-slate-600 font-medium">@order.TotalQuantity</td>
-                            <td class="px-4 py-4 font-semibold text-slate-900">@order.TotalPrice.ToString("#,##0") <span class="text-xs text-slate-400 font-bold ml-0.5">MMK</span></td>
+                            <td class="px-4 py-4 font-semibold text-slate-900">@order.TotalPrice.ToString("#,##0")</td>
                             <td class="px-4 py-4 text-slate-600 font-medium">@order.OrderSource</td>
                             <td class="px-4 py-4 rounded-r-xl">
                                 @if (order.OrderStatus == OrderStatus.Completed)
@@ -167,7 +160,7 @@
     @if (totalPages > 1)
     {
         <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-center bg-slate-50/30">
-            <div class="inline-flex items-center gap-1 bg-white rounded-full p-1.5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100">
+            <div class="inline-flex items-center gap-1 bg-white rounded-full p-1.5 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] border border-[#EDE7DF]">
                 @if (currentPage > 1)
                 {
                     <a href="/Orders?page=@(currentPage - 1)&startDate=@startDate&endDate=@endDate" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors mr-1">

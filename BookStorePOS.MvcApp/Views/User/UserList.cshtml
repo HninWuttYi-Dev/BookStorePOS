@@ -1,6 +1,6 @@
 @model UserListResponseModel
 @{
-    ViewData["Title"] = "Staff & Cashiers";
+    ViewData["Title"] = "Staff Management";
     var users = ViewData["Users"] as List<UserModel> ?? new List<UserModel>();
     var roles = ViewData["Roles"] as List<RoleModel> ?? new List<RoleModel>();
     int currentPage = ViewData["CurrentPage"] != null ? Convert.ToInt32(ViewData["CurrentPage"]) : 1;
@@ -27,7 +27,7 @@
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            Staff & Cashier Management
+            Staff Management
         </h1>
         <p class="text-slate-500 mt-1.5 text-sm font-medium">
             Manage cashier logins, assign store roles, and set staff access passwords.
@@ -44,27 +44,8 @@
     </a>
 </div>
 
-<!-- Toast Alert -->
-@if (hasMessage)
-{
-    <div id="toastMessage" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg flex items-center gap-3 transition-opacity duration-300 @(isSuccess ? "bg-emerald-600 text-white" : "bg-red-600 text-white")">
-        @if (isSuccess)
-        {
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        }
-        else
-        {
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        }
-        <span class="font-medium text-sm">@message</span>
-        <button onclick="document.getElementById('toastMessage').remove()" class="ml-2 hover:opacity-75 focus:outline-none">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-    </div>
-}
-
 <!-- Search & Role Filter Form -->
-<form method="get" action="/User" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+<form method="get" action="/User" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-[#EDE7DF] shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)]">
     <div class="flex flex-col flex-1 w-full">
         <label for="searchInput" class="text-xs font-semibold text-slate-500 mb-1.5 ml-1">Search Staff</label>
         <div class="relative">
@@ -90,14 +71,14 @@
         <button type="submit" class="px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-2xs">
             Search
         </button>
-        <a href="/User" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors text-center">
+        <a href="/User" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-2xs text-center">
             Clear
         </a>
     </div>
 </form>
 
 <!-- Staff Table Card -->
-<div class="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 overflow-hidden flex flex-col">
+<div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] border border-[#EDE7DF] overflow-hidden flex flex-col">
     <div class="overflow-x-auto p-2">
         <table class="w-full text-left text-sm">
             <thead class="text-slate-500 bg-slate-50/70 rounded-xl">
