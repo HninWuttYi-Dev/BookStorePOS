@@ -10,6 +10,7 @@ public interface IUserService
     Task<UserListResponseModel> GetUsersAsync(UserListRequestModel request);
     Task<Result<UserModel>> GetUserByIdAsync(int userId);
     Task<Result<UserModel>> UpdateUserAsync(UserUpdateRequestModel request);
+    Task<Result<bool>> ResetPasswordAsync(int userId, string newPassword);
     Task<Result<UserModel>> DeleteUserAsync(int userId);
 }
 

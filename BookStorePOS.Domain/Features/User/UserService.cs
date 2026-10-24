@@ -408,6 +408,49 @@ public class UserService : IUserService
         }
     }
 
+    public async Task<Result<bool>> ResetPasswordAsync(int userId, string newPassword)
+    {
+        _logger.LogInformation("ResetPasswordAsync => Admin resetting password for UserId: {UserId}", userId);
+        try
+        {
+            if (userId <= 0)
+                return Result<bool>.ValidationError("Invalid user ID.");
+
+            if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Trim().Length < 3)
+                return Result<bool>.ValidationError("Password must be at least 3 characters long.");
+
+            var user = await _db.TblUsers.FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
+            if (user == null)
+            {
+                _logger.LogWarning("ResetPasswordAsync => User not found: {UserId}", userId);
+                return Result<bool>.NotFound("Staff account not found.");
+            }
+
+            user.PasswordHash = _passwordHasher.HashPassword(user, newPassword.Trim());
+            user.UpdatedAt = DateTime.UtcNow;
+
+            // Revoke any active refresh tokens for this staff member
+            var activeTokens = await _db.TblRefreshTokens
+                .Where(t => t.UserId == userId && t.RevokeAt == null)
+                .ToListAsync();
+
+            foreach (var t in activeTokens)
+            {
+                t.RevokeAt = DateTime.UtcNow;
+            }
+
+            await _db.SaveChangesAsync();
+            _logger.LogInformation("ResetPasswordAsync => Password successfully reset and tokens revoked for UserId: {UserId}", userId);
+
+            return Result<bool>.Success(true, $"Password for @{user.Username} has been reset successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ResetPasswordAsync => Exception resetting password for UserId: {UserId}", userId);
+            return Result<bool>.SystemError("An unexpected error occurred: " + ex.Message);
+        }
+    }
+
     public async Task<Result<UserModel>> DeleteUserAsync(int userId)
     {
         _logger.LogInformation("Delete User Async => Deleting user");

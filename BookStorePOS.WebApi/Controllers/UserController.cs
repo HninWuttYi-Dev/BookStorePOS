@@ -90,6 +90,23 @@ public class UserController : BaseController
         }
     }
 
+    [HttpPost("{id}/reset-password")]
+    [Permission("User.Update")]
+    public async Task<IActionResult> ResetPasswordAsync(int id, [FromBody] ResetStaffPasswordRequestModel requestModel)
+    {
+        try
+        {
+            _logger.LogInformation("Reset Password Async => Resetting password for user {UserId}", id);
+            var response = await _userService.ResetPasswordAsync(id, requestModel.NewPassword);
+            return ExecuteResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ResetPasswordAsync => Exception occurred");
+            return ExecuteResult(Result<bool>.SystemError("Internal Server Error: " + ex.Message));
+        }
+    }
+
     [HttpDelete("{id}")]
     [Permission("User.Delete")]
     public async Task<IActionResult> DeleteUserAsync(int id)

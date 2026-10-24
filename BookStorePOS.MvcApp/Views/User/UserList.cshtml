@@ -211,12 +211,19 @@
                             <!-- Actions -->
                             <td class="px-4 py-3.5 text-left rounded-r-xl">
                                 <div class="flex items-center gap-2">
-                                    <a href="/User/Edit/@u.UserId" class="p-2 text-slate-500 hover:text-teal-600 border border-slate-200 rounded-lg hover:border-teal-200 hover:bg-teal-50 transition-all hover:scale-105" title="Edit Staff & Reset Password">
+                                    <a href="/User/Edit/@u.UserId" class="p-2 text-slate-500 hover:text-teal-600 border border-slate-200 rounded-lg hover:border-teal-200 hover:bg-teal-50 transition-all hover:scale-105" title="Edit Staff Details">
                                         <svg class="w-4 h-4 transition-transform duration-200 hover:rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
                                             <path d="m15 5 4 4"/>
                                         </svg>
                                     </a>
+
+                                    <button type="button" data-id="@u.UserId" data-name="@u.FullName" data-username="@u.Username" class="btnOpenResetModal p-2 text-slate-500 hover:text-amber-600 border border-slate-200 rounded-lg hover:border-amber-200 hover:bg-amber-50 transition-all hover:scale-105" title="Reset Staff Password">
+                                        <svg class="w-4 h-4 transition-transform duration-200 hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                        </svg>
+                                    </button>
 
                                     @if (isSystemAdmin)
                                     {
@@ -296,11 +303,79 @@
     </div>
 </div>
 
+<!-- Quick Reset Password Modal -->
+<div id="quickResetModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 text-left shadow-2xl border border-slate-100">
+        <!-- Icon & Title -->
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-slate-900">Reset Staff Password</h3>
+                <p class="text-xs text-slate-500">Set a new password for <span id="resetStaffDisplayName" class="font-semibold text-slate-800"></span> (<span id="resetStaffUsername" class="font-mono text-teal-700"></span>)</p>
+            </div>
+        </div>
+
+        <!-- Alert Error Banner -->
+        <div id="resetModalAlert" class="hidden mb-4 p-3 rounded-xl text-xs border flex items-center gap-2 bg-red-50 border-red-200 text-red-800">
+            <svg class="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span id="resetModalAlertText"></span>
+        </div>
+
+        <!-- Form Fields -->
+        <div class="space-y-3 mb-6">
+            <div>
+                <label for="newStaffPasswordInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+                    New Password <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <input type="password" id="newStaffPasswordInput" minlength="3" placeholder="Enter new password (min. 3 characters)"
+                           class="w-full pl-3.5 pr-20 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 transition-all font-medium" />
+                    <button type="button" id="btnToggleStaffPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-teal-700 font-medium transition-colors">
+                        Show
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Generate Buttons -->
+            <div class="flex items-center justify-between text-xs pt-1">
+                <span class="text-slate-400">Quick fill:</span>
+                <div class="flex gap-1.5">
+                    <button type="button" class="btnFillPreset px-2 py-1 rounded-md bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 font-mono text-[11px] transition-colors" data-pass="123">
+                        123
+                    </button>
+                    <button type="button" class="btnFillPreset px-2 py-1 rounded-md bg-slate-100 hover:bg-teal-50 hover:text-teal-700 text-slate-600 font-mono text-[11px] transition-colors" data-pass="Staff@123">
+                        Staff@123
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3">
+            <button type="button" id="btnCancelReset" class="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer">
+                Cancel
+            </button>
+            <button type="button" id="btnConfirmReset" class="flex-1 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-xl text-xs transition-colors shadow-2xs cursor-pointer flex items-center justify-center gap-1.5">
+                <span>Save New Password</span>
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
     $(document).ready(function() {
         let staffToDeleteId = null;
+        let staffToResetId = null;
 
+        // Delete Modal Handlers
         $('.btnDeleteStaff').on('click', function() {
             staffToDeleteId = $(this).data('id');
             const staffName = $(this).data('name');
@@ -329,6 +404,83 @@
                     alert('Failed to delete staff member.');
                     $btn.prop('disabled', false).text('Delete Staff');
                     $('#deleteModal').addClass('hidden');
+                }
+            });
+        });
+
+        // Quick Reset Password Handlers
+        $('.btnOpenResetModal').on('click', function() {
+            staffToResetId = $(this).data('id');
+            const staffName = $(this).data('name');
+            const staffUsername = $(this).data('username');
+
+            $('#resetStaffDisplayName').text(staffName);
+            $('#resetStaffUsername').text('@@' + staffUsername);
+            $('#newStaffPasswordInput').val('').attr('type', 'password');
+            $('#btnToggleStaffPassword').text('Show');
+            $('#resetModalAlert').addClass('hidden');
+            $('#quickResetModal').removeClass('hidden');
+            $('#newStaffPasswordInput').focus();
+        });
+
+        $('#btnCancelReset').on('click', function() {
+            $('#quickResetModal').addClass('hidden');
+            staffToResetId = null;
+        });
+
+        $('#btnToggleStaffPassword').on('click', function() {
+            const $input = $('#newStaffPasswordInput');
+            const isPassword = $input.attr('type') === 'password';
+            $input.attr('type', isPassword ? 'text' : 'password');
+            $(this).text(isPassword ? 'Hide' : 'Show');
+        });
+
+        $('.btnFillPreset').on('click', function() {
+            const pass = $(this).data('pass');
+            $('#newStaffPasswordInput').val(pass).focus();
+            $('#resetModalAlert').addClass('hidden');
+        });
+
+        $('#btnConfirmReset').on('click', function() {
+            if (!staffToResetId) return;
+
+            const newPass = $('#newStaffPasswordInput').val();
+            if (!newPass || newPass.trim().length < 3) {
+                $('#resetModalAlertText').text('New password must be at least 3 characters.');
+                $('#resetModalAlert').removeClass('hidden');
+                return;
+            }
+
+            const $btn = $(this);
+            $btn.prop('disabled', true).html(`
+                <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span>Saving...</span>
+            `);
+
+            $.ajax({
+                type: 'POST',
+                url: '/User/ResetPassword/' + staffToResetId,
+                contentType: 'application/json',
+                data: JSON.stringify({ NewPassword: newPass.trim() }),
+                success: function(res) {
+                    if (res.isSuccess) {
+                        $('#quickResetModal').addClass('hidden');
+                        alert(res.message || 'Password has been reset successfully!');
+                        window.location.reload();
+                    } else {
+                        $('#resetModalAlertText').text(res.message || 'Failed to reset password.');
+                        $('#resetModalAlert').removeClass('hidden');
+                        $btn.prop('disabled', false).html('<span>Save New Password</span>');
+                    }
+                },
+                error: function(xhr) {
+                    const msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Error occurred while resetting password.';
+                    $('#resetModalAlertText').text(msg);
+                    $('#resetModalAlert').removeClass('hidden');
+                    $btn.prop('disabled', false).html('<span>Save New Password</span>');
                 }
             });
         });

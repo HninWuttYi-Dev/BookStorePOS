@@ -303,5 +303,121 @@ namespace BookStorePOS.CustomerApp.Controllers
             Response.Cookies.Delete("customer_user");
             return RedirectToAction("Index", "Books");
         }
+
+        [HttpGet]
+        [ActionName("ForgotPassword")]
+        public IActionResult ForgotPassword()
+        {
+            return View("ForgotPassword");
+        }
+
+        [HttpPost]
+        [ActionName("ForgotPassword")]
+        public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordRequestModel requestModel)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(requestModel?.Phone))
+                {
+                    return Json(new ForgotPasswordResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "Phone number is required."
+                    });
+                }
+
+                _logger.LogInformation("Customer ForgotPassword => Requesting OTP for phone: {Phone}", requestModel.Phone);
+
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                string json = JsonConvert.SerializeObject(requestModel);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var httpResponse = await client.PostAsync("api/Auth/forgot-password", content);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<ForgotPasswordResponseModel>(jsonString)
+                    ?? new ForgotPasswordResponseModel { IsSuccess = false, Message = "Unexpected server response." };
+
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Customer ForgotPassword => Exception occurred");
+                return StatusCode(500, new ForgotPasswordResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "Unable to connect to authentication service: " + ex.Message
+                });
+            }
+        }
+
+        [HttpGet]
+        [ActionName("ResetPassword")]
+        public IActionResult ResetPassword(string? phone = null, string? otp = null)
+        {
+            ViewData["Phone"] = phone ?? string.Empty;
+            ViewData["Otp"] = otp ?? string.Empty;
+            return View("ResetPassword");
+        }
+
+        [HttpPost]
+        [ActionName("ResetPassword")]
+        public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordRequestModel requestModel)
+        {
+            try
+            {
+                if (requestModel == null ||
+                    string.IsNullOrWhiteSpace(requestModel.Phone) || 
+                    string.IsNullOrWhiteSpace(requestModel.Otp) || 
+                    string.IsNullOrWhiteSpace(requestModel.NewPassword) || 
+                    string.IsNullOrWhiteSpace(requestModel.ConfirmPassword))
+                {
+                    return Json(new ResetPasswordResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "All fields (phone, OTP, new password, confirm password) are required."
+                    });
+                }
+
+                if (requestModel.NewPassword != requestModel.ConfirmPassword)
+                {
+                    return Json(new ResetPasswordResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "New password and confirmation password do not match."
+                    });
+                }
+
+                if (requestModel.NewPassword.Length < 6)
+                {
+                    return Json(new ResetPasswordResponseModel
+                    {
+                        IsSuccess = false,
+                        Message = "Password must be at least 6 characters long."
+                    });
+                }
+
+                _logger.LogInformation("Customer ResetPassword => Submitting reset request for phone: {Phone}", requestModel.Phone);
+
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                string json = JsonConvert.SerializeObject(requestModel);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var httpResponse = await client.PostAsync("api/Auth/reset-password", content);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<ResetPasswordResponseModel>(jsonString)
+                    ?? new ResetPasswordResponseModel { IsSuccess = false, Message = "Unexpected server response." };
+
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Customer ResetPassword => Exception occurred");
+                return StatusCode(500, new ResetPasswordResponseModel
+                {
+                    IsSuccess = false,
+                    Message = "Unable to connect to authentication service: " + ex.Message
+                });
+            }
+        }
     }
 }

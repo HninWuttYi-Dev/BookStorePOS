@@ -304,5 +304,41 @@ namespace BookStorePOS.MvcApp.Controllers
                 return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
+
+        [HttpPost]
+        [ActionName("ResetPassword")]
+        public async Task<IActionResult> ResetPasswordAsync(int id, [FromBody] ResetStaffPasswordRequestModel requestModel)
+        {
+            try
+            {
+                if (id <= 0 || requestModel == null || string.IsNullOrWhiteSpace(requestModel.NewPassword))
+                {
+                    return Json(new { isSuccess = false, message = "A valid new password is required." });
+                }
+
+                if (requestModel.NewPassword.Length < 3)
+                {
+                    return Json(new { isSuccess = false, message = "Password must be at least 3 characters long." });
+                }
+
+                _logger.LogInformation("Reset Staff Password => Admin resetting password for UserId: {UserId}", id);
+
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                string json = JsonConvert.SerializeObject(new { NewPassword = requestModel.NewPassword.Trim() });
+                using var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var httpResponse = await client.PostAsync($"api/user/{id}/reset-password", stringContent);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<Result<bool>>(jsonString)
+                    ?? Result<bool>.SystemError("Unexpected server response.");
+
+                return Json(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ResetPasswordAsync => Exception occurred for UserId {UserId}", id);
+                return StatusCode(500, new { isSuccess = false, message = "Internal Server Error: " + ex.Message });
+            }
+        }
     }
 }
