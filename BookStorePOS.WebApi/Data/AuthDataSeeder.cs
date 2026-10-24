@@ -147,6 +147,17 @@ public static class AuthDataSeeder
                 adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "123");
                 db.TblUsers.Add(adminUser);
             }
+            else
+            {
+                adminUser.Phone = "09789456123";
+                adminUser.RoleId = roles["Admin"].RoleId;
+                if (string.IsNullOrWhiteSpace(adminUser.PasswordHash) ||
+                    adminUser.PasswordHash == "123" ||
+                    (passwordHasher.VerifyHashedPassword(adminUser, adminUser.PasswordHash, "123") == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed && adminUser.PasswordHash.Length < 80))
+                {
+                    adminUser.PasswordHash = passwordHasher.HashPassword(adminUser, "123");
+                }
+            }
 
             var staffUser = await db.TblUsers.FirstOrDefaultAsync(u => u.Username == "staff" && !u.IsDeleted);
             if (staffUser == null)
@@ -163,6 +174,17 @@ public static class AuthDataSeeder
                 };
                 staffUser.PasswordHash = passwordHasher.HashPassword(staffUser, "123");
                 db.TblUsers.Add(staffUser);
+            }
+            else
+            {
+                staffUser.Phone = "09789456124";
+                staffUser.RoleId = roles["Staff"].RoleId;
+                if (string.IsNullOrWhiteSpace(staffUser.PasswordHash) ||
+                    staffUser.PasswordHash == "123" ||
+                    (passwordHasher.VerifyHashedPassword(staffUser, staffUser.PasswordHash, "123") == Microsoft.AspNetCore.Identity.PasswordVerificationResult.Failed && staffUser.PasswordHash.Length < 80))
+                {
+                    staffUser.PasswordHash = passwordHasher.HashPassword(staffUser, "123");
+                }
             }
 
             // Upgrade any legacy plain-text "123" passwords in database to secure hashes

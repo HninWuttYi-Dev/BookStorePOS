@@ -29,5 +29,7 @@ public partial class TblUser
 
     public virtual ICollection<TblOrder> TblOrders { get; set; } = new List<TblOrder>();
 
+    public virtual ICollection<TblPasswordReset> TblPasswordResets { get; set; } = new List<TblPasswordReset>();
+
     public virtual ICollection<TblRefreshToken> TblRefreshTokens { get; set; } = new List<TblRefreshToken>();
 }

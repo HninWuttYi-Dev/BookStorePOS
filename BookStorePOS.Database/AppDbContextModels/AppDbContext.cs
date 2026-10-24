@@ -29,6 +29,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<TblOrderItem> TblOrderItems { get; set; }
 
+    public virtual DbSet<TblPasswordReset> TblPasswordResets { get; set; }
+
     public virtual DbSet<TblPermission> TblPermissions { get; set; }
 
     public virtual DbSet<TblRefreshToken> TblRefreshTokens { get; set; }
@@ -184,6 +186,23 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK_OrderItems_Orders");
         });
 
+        modelBuilder.Entity<TblPasswordReset>(entity =>
+        {
+            entity.HasKey(e => e.PasswordResetId).HasName("PK__TblPassw__2CA0AE5C198C0108");
+
+            entity.ToTable("TblPasswordReset");
+
+            entity.HasIndex(e => e.PasswordResetId, "Idx_TblPasswordReset_PasswordResetId").IsUnique();
+
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())", "DF_TblPasswordReset_CreatedAt");
+            entity.Property(e => e.OtpCodeHash).HasMaxLength(255);
+
+            entity.HasOne(d => d.User).WithMany(p => p.TblPasswordResets)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TblPasswordReset_User");
+        });
+
         modelBuilder.Entity<TblPermission>(entity =>
         {
             entity.HasKey(e => e.PermissionId).HasName("PK__TblPermi__EFA6FB2F4B1BABFD");
@@ -257,6 +276,8 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.UserId).HasName("PK__TblUser__1788CC4C06ADC7F1");
 
             entity.ToTable("TblUser");
+
+            entity.HasIndex(e => e.UserId, "Idx_TblPasswordReset_TblUser");
 
             entity.HasIndex(e => e.Email, "Idx_TblUser_Email")
                 .IsUnique()

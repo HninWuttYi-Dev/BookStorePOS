@@ -55,4 +55,22 @@ public class AuthController : BaseController
         var response = await _authService.LogoutAsync(request?.RefreshToken);
         return ExecuteResult(response);
     }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestModel request)
+    {
+        _logger.LogInformation("ForgotPassword => Received request for phone: {Phone}", request.Phone);
+        var response = await _authService.ForgotPasswordAsync(request);
+        return ExecuteResult(response);
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestModel request)
+    {
+        _logger.LogInformation("ResetPassword => Received reset request for phone: {Phone}", request.Phone);
+        var response = await _authService.ResetPasswordAsync(request);
+        return ExecuteResult(response);
+    }
 }
