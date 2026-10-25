@@ -82,7 +82,7 @@
                 }
 
                 const $btn = $(this);
-                $btn.prop('disabled', true).text('Updating...');
+                $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Updating...');
 
                 const _requestModel = {
                     AuthorName: authorName
@@ -94,18 +94,20 @@
                     url: '/Author/Update/@authorId',
                     data: { requestModel: _requestModel },
                     success: function(response) {
-                        if (response.isSuccess) {
+                        const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
+                        if (isSuccess) {
+                            $btn.text('Updated!');
                             window.location.href = '/Author';
                         } else {
                             showToast(response.message || response.Message || "Failed to update author.");
                             isSubmitting = false;
-                            $btn.prop('disabled', false).text('Update Author');
+                            $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Update Author');
                         }
                     },
                     error: function(xhr) {
                         showToast("Error: " + xhr.statusText);
                         isSubmitting = false;
-                        $btn.prop('disabled', false).text('Update Author');
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Update Author');
                     }
                 });
             });

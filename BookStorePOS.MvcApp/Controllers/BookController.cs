@@ -43,6 +43,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     _logger.LogWarning($"Book List Async => Failed to fetch books: {response?.Message}");
                     TempData["Message"] = response?.Message;
                     TempData["isSuccess"] = false;
+                    TempData["IsSuccess"] = false;
                 }
 
                 return View("BookList");
@@ -169,7 +170,9 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
                 if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
+                if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0) content.Add(new StringContent(requestModel.AuthorId.Value.ToString()), "AuthorId");
                 if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
+                if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0) content.Add(new StringContent(requestModel.GenreId.Value.ToString()), "GenreId");
                 if (requestModel.Isbn != null) content.Add(new StringContent(requestModel.Isbn), "Isbn");
                 content.Add(new StringContent(requestModel.Price.ToString()), "Price");
                 content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
@@ -196,6 +199,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     _logger.LogInformation("Book Save Async => Book created successfully");
                     TempData["Message"] = model.Message ?? "Book created successfully.";
                     TempData["isSuccess"] = true;
+                    TempData["IsSuccess"] = true;
                 }
                 else
                 {
@@ -314,6 +318,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     _logger.LogInformation("Book Update Async => Book updated successfully");
                     TempData["Message"] = model.Message ?? "Book updated successfully.";
                     TempData["isSuccess"] = true;
+                    TempData["IsSuccess"] = true;
                 }
                 else
                 {
@@ -346,6 +351,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     _logger.LogInformation("Book Delete Async => Book deleted successfully");
                     TempData["Message"] = model.Message ?? "Book deleted successfully.";
                     TempData["isSuccess"] = true;
+                    TempData["IsSuccess"] = true;
                 }
                 else
                 {
@@ -422,6 +428,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 _logger.LogInformation("Book Create Edition Async => Edition created successfully");
                 TempData["Message"] = model.Message ?? "Edition created successfully.";
                 TempData["isSuccess"] = true;
+                TempData["IsSuccess"] = true;
             }
             else
             {
@@ -534,23 +541,38 @@ namespace BookStorePOS.MvcApp.Controllers
                 using var content = new MultipartFormDataContent();
                 content.Add(new StringContent(requestModel.EditionName ?? ""), "EditionName");
                 content.Add(new StringContent(requestModel.Isbn ?? ""), "Isbn");
-                content.Add(new StringContent(requestModel.Price.ToString()), "Price");
+                content.Add(new StringContent(requestModel.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)), "Price");
                 content.Add(new StringContent(requestModel.StockQuantity.ToString()), "StockQuantity");
                 content.Add(new StringContent(requestModel.ReorderLevel.ToString()), "ReorderLevel");
                 if (requestModel.EditionNote != null) content.Add(new StringContent(requestModel.EditionNote), "EditionNote");
-                if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("O")), "PublishDate");
+                if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("yyyy-MM-dd")), "PublishDate");
                 if (requestModel.PageCount.HasValue) content.Add(new StringContent(requestModel.PageCount.Value.ToString()), "PageCount");
 
                 if (photo != null && photo.Length > 0)
                 {
                     var streamContent = new StreamContent(photo.OpenReadStream());
-                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                    var contentType = string.IsNullOrWhiteSpace(photo.ContentType) ? "application/octet-stream" : photo.ContentType;
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
                     content.Add(streamContent, "photo", photo.FileName);
                 }
 
                 var httpResponse = await client.PatchAsync($"api/book/{id}/edition/{editionId}", content);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<BookEditionPatchResponseModel>(jsonString) ?? new BookEditionPatchResponseModel { IsSuccess = false, Message = "Unknown error" };
+
+                var model = JsonConvert.DeserializeObject<BookEditionPatchResponseModel>(jsonString) 
+                            ?? new BookEditionPatchResponseModel { IsSuccess = false, Message = "Unknown error" };
+
+                if (!httpResponse.IsSuccessStatusCode && (string.IsNullOrWhiteSpace(model.Message) || model.Message == "Unknown error"))
+                {
+                    model.IsSuccess = false;
+                    model.Message = httpResponse.StatusCode switch
+                    {
+                        System.Net.HttpStatusCode.Unauthorized => "Your session has expired. Please log in again.",
+                        System.Net.HttpStatusCode.Forbidden => "You do not have permission to update book editions.",
+                        System.Net.HttpStatusCode.NotFound => "Book or edition not found.",
+                        _ => "Failed to update edition."
+                    };
+                }
 
                 if (model != null && model.IsSuccess)
                 {
@@ -560,7 +582,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 }
                 else
                 {
-                    _logger.LogWarning($"Book Update Edition Async => Failed to update edition: {model?.Message}");
+                    _logger.LogWarning("Book Update Edition Async => Failed to update edition: {Message}", model?.Message);
                 }
 
                 return Json(model);
@@ -568,8 +590,7 @@ namespace BookStorePOS.MvcApp.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "UpdateEditionSaveAsync => Exception occurred");
-                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex?.InnerException?.Message });
-            
+                return StatusCode(500, new BookEditionPatchResponseModel { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
         [HttpPost]
@@ -590,6 +611,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     _logger.LogInformation("Book Delete Edition Async => Edition deleted successfully");
                     TempData["Message"] = model.Message ?? "Edition deleted successfully.";
                     TempData["isSuccess"] = true;
+                    TempData["IsSuccess"] = true;
                 }
                 else
                 {

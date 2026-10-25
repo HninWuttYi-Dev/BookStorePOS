@@ -359,7 +359,7 @@
             }
 
             const $btn = $(this);
-            $btn.prop('disabled', true).text('Updating...');
+            $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Updating...');
 
             const formData = new FormData();
             formData.append("Title", title);
@@ -377,19 +377,20 @@
                 processData: false,
                 contentType: false,
                 success: function(response) {
-                    if (response.isSuccess) {
-                        // TempData in controller will handle the success toast on redirect
+                    const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
+                    if (isSuccess) {
+                        $btn.text('Updated!');
                         window.location.href = '/Book';
                     } else {
                         showToast(response.message || response.Message || "Failed to update book.");
                         isSubmitting = false;
-                        $btn.prop('disabled', false).text('Update Book');
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Update Book');
                     }
                 },
                 error: function(xhr) {
                     showToast("Server Error: " + xhr.statusText);
                     isSubmitting = false;
-                    $btn.prop('disabled', false).text('Update Book');
+                    $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Update Book');
                 }
             });
         });
