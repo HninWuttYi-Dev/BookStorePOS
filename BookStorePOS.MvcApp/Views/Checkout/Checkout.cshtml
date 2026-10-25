@@ -392,22 +392,26 @@
         let currentOrderTotal = 0;
 
         function openPaymentModal() {
-            if (cart.length === 0) return;
+            if (cart.length === 0 || isSubmitting) return;
             isSubmitting = false;
             currentOrderTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             $('#modalTotalDisplay').text(currentOrderTotal.toLocaleString() + ' MMK');
-            $('#cashReceived').val('');
+            $('#cashReceived').val('').prop('disabled', false);
             $('#changeDueDisplay').html('<span class="text-base font-bold text-slate-900">0 MMK</span>');
-            $('#btnConfirmPayment').prop('disabled', true).text('Confirm Payment');
+            $('#btnConfirmPayment').prop('disabled', true).removeClass('pointer-events-none opacity-50 cursor-not-allowed').text('Confirm Payment');
+            $('#paymentModal button').prop('disabled', false);
             $('#paymentModal').removeClass('hidden');
             setTimeout(() => $('#cashReceived').focus(), 100);
         }
 
         function closePaymentModal() {
+            if (isSubmitting) return; // Prevent closing while payment is in-flight
             $('#paymentModal').addClass('hidden');
         }
 
         function calculateChange() {
+            if (isSubmitting) return; // Prevent re-enabling button while processing
+
             const rawCash = $('#cashReceived').val().trim();
             const cash = parseFloat(rawCash) || 0;
             const change = cash - currentOrderTotal;
@@ -415,10 +419,10 @@
             
             if (!rawCash || cash === 0) {
                 $changeContainer.html('<span class="text-base font-bold text-slate-900">0 MMK</span>');
-                $('#btnConfirmPayment').prop('disabled', true);
+                $('#btnConfirmPayment').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
             } else if (cash >= currentOrderTotal) {
                 $changeContainer.html(`<span class="text-base font-bold text-[#55784C]">${change.toLocaleString()} MMK</span>`);
-                $('#btnConfirmPayment').prop('disabled', false);
+                $('#btnConfirmPayment').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
             } else {
                 $changeContainer.html(`
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#FDF2F0] text-[#C86D56] text-xs font-semibold rounded-full border border-[#F6DDD8]">
@@ -426,24 +430,38 @@
                         Insufficient Cash
                     </span>
                 `);
-                $('#btnConfirmPayment').prop('disabled', true);
+                $('#btnConfirmPayment').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
             }
         }
+
+        $('#cashReceived').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!$('#btnConfirmPayment').prop('disabled') && !isSubmitting) {
+                    $('#btnConfirmPayment').trigger('click');
+                }
+            }
+        });
 
         $('#btnConfirmPayment').on('click', function() {
             if (isSubmitting) return;
             if (cart.length === 0) return;
 
+            isSubmitting = true;
             const $btn = $(this);
-            const originalText = $btn.text();
-            $btn.prop('disabled', true).html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...');
+            const originalText = 'Confirm Payment';
+
+            // Fully disable payment button, cash input, checkout button, and modal controls
+            $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').html('<svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...');
+            $('#cashReceived').prop('disabled', true);
+            $('#btnCheckout').prop('disabled', true);
+            $('#paymentModal button').prop('disabled', true);
 
             const requestModel = {
                 OrderSource: "POS",
                 Items: cart.map(i => ({ BookEditionId: i.bookEditionId, Quantity: i.quantity }))
             };
 
-            isSubmitting = true;
             $.ajax({
                 url: '/Orders/Create',
                 type: 'POST',
@@ -479,7 +497,10 @@
                             }
                         } catch (e) {}
                         isSubmitting = false;
-                        $btn.prop('disabled', false).text(originalText);
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text(originalText);
+                        $('#cashReceived').prop('disabled', false);
+                        $('#btnCheckout').prop('disabled', false);
+                        $('#paymentModal button').prop('disabled', false);
                         closePaymentModal();
                     }
                 },
@@ -495,7 +516,10 @@
                         }
                     } catch (e) {}
                     isSubmitting = false;
-                    $btn.prop('disabled', false).text(originalText);
+                    $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text(originalText);
+                    $('#cashReceived').prop('disabled', false);
+                    $('#btnCheckout').prop('disabled', false);
+                    $('#paymentModal button').prop('disabled', false);
                     closePaymentModal();
                 }
             });

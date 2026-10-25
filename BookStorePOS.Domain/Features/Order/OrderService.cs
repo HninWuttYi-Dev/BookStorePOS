@@ -25,21 +25,19 @@ public class OrderService : IOrderService
         _logger.LogInformation("Get Orders Async => Fetching all orders");
         try
         {
-            var lst = await _db.TblOrders
-                    .AsNoTracking()
-                    .ToListAsync();
-            List<OrderModel> orders = new List<OrderModel>();
-            foreach (var item in lst)
-            {
-                orders.Add(new OrderModel
+            var orders = await _db.TblOrders
+                .AsNoTracking()
+                .OrderByDescending(o => o.OrderId)
+                .Select(item => new OrderModel
                 {
                     OrderId = item.OrderId,
                     OrderDate = item.OrderDate,
                     TotalPrice = item.TotalPrice,
+                    TotalQuantity = item.TotalQuantity,
                     OrderStatus = (OrderStatus)item.OrderStatus,
                     OrderSource = item.OrderSource
-                });
-            }
+                })
+                .ToListAsync();
 
             _logger.LogInformation("Get Orders Async => Orders fetched successfully");
             return new OrderListResponseModel
@@ -122,46 +120,57 @@ public class OrderService : IOrderService
     {
         _logger.LogInformation("Create Order Async => Creating order");
 
-        if (requestModel.Items == null || !requestModel.Items.Any())
-        {
-            _logger.LogWarning("Create Order Async => Order items are required");
-            return Result<OrderModel>.ValidationError("Order must contain at least one item.");
-        }
-
-        foreach (var item in requestModel.Items)
-        {
-            if (item.Quantity <= 0)
-            {
-                return Result<OrderModel>.ValidationError("Quantity must be greater than 0.");
-            }
-        }
-
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            var editionIds = requestModel.Items.Select(i => i.BookEditionId).Distinct().ToList();
+            if (requestModel.Items == null || !requestModel.Items.Any())
+            {
+                _logger.LogWarning("Create Order Async => Order items are required");
+                return Result<OrderModel>.ValidationError("Order must contain at least one item.");
+            }
+
+            // 1. Collect distinct IDs
+            var bookEditionIds = requestModel.Items
+                .Select(i => i.BookEditionId)
+                .Distinct()
+                .ToList();
+
+            // 2. Single query to load everything needed
             var editions = await _db.TblBookEditions
                 .Include(e => e.Book)
                 .Include(e => e.Edition)
-                .Where(e => editionIds.Contains(e.BookEditionId) && !e.IsDeleted)
-                .ToDictionaryAsync(e => e.BookEditionId);
+                .Where(e => bookEditionIds.Contains(e.BookEditionId) && !e.IsDeleted)
+                .ToListAsync();
 
+            var editionLookup = editions.ToDictionary(e => e.BookEditionId);
+
+            // 3. Validation (now pure in-memory)
             foreach (var item in requestModel.Items)
             {
-                if (!editions.TryGetValue(item.BookEditionId, out var edition))
+                if (item.Quantity <= 0)
                 {
-                    return Result<OrderModel>.NotFound($"Book Edition with ID {item.BookEditionId} not found or is deleted.");
+                    return Result<OrderModel>.ValidationError("Quantity must be greater than 0.");
+                }
+
+                if (!editionLookup.TryGetValue(item.BookEditionId, out var edition))
+                {
+                    return Result<OrderModel>.NotFound(
+                        $"Book Edition with ID {item.BookEditionId} not found or is deleted.");
                 }
 
                 if (edition.StockQuantity < item.Quantity)
                 {
-                    return Result<OrderModel>.ValidationError($"Insufficient stock for '{edition.Book?.Title ?? "Book"} ({edition.Edition?.EditionName ?? "Edition"})'. Available: {edition.StockQuantity}");
+                    return Result<OrderModel>.ValidationError(
+                        $"Insufficient stock for '{edition.Book?.Title ?? "Book"} ({edition.Edition?.EditionName ?? "Edition"})'. Available: {edition.StockQuantity}");
                 }
             }
 
+            // 4. Create order header
             var order = new TblOrder
             {
                 OrderDate = DateTime.Now,
+                TotalPrice = 0,
+                TotalQuantity = 0,
                 OrderStatus = (byte)OrderStatus.Completed,
                 OrderSource = requestModel.OrderSource ?? "POS",
                 CustomerId = requestModel.CustomerId,
@@ -171,13 +180,16 @@ public class OrderService : IOrderService
                 CreatedAt = DateTime.Now
             };
 
+            // 5. Process items + deduct stock (still in-memory lookup)
             decimal orderTotal = 0;
             int orderQuantity = 0;
             var orderModelItems = new List<OrderItemModel>();
 
             foreach (var item in requestModel.Items)
             {
-                var edition = editions[item.BookEditionId];
+                var edition = editionLookup[item.BookEditionId];
+
+                // Deduct stock on tracked EF Core entity
                 edition.StockQuantity -= item.Quantity;
 
                 decimal price = edition.Price;
@@ -209,6 +221,8 @@ public class OrderService : IOrderService
             order.TotalQuantity = orderQuantity;
 
             _db.TblOrders.Add(order);
+
+            // Single atomic save for order, order items, and stock updates
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -241,27 +255,23 @@ public class OrderService : IOrderService
             var tomorrow = today.AddDays(1);
             var thisMonth = new DateTime(today.Year, today.Month, 1);
 
-            var _todayOrderCount = await _db.TblOrders
-                                  .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow)
-                                  .CountAsync();
-            
-            var _todayTotal = await _db.TblOrders
-                             .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow)
-                             .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
-           
-            var _thisMonthOrderCount = await _db.TblOrders
-                                      .Where(o => o.OrderDate >= thisMonth)
-                                      .CountAsync();
-           
-            var _thisMonthTotal = await _db.TblOrders
-                                 .Where(o => o.OrderDate >= thisMonth)
-                                 .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+            // Single query to fetch this month's order summaries instead of 4 separate queries
+            var monthOrders = await _db.TblOrders
+                .AsNoTracking()
+                .Where(o => o.OrderDate >= thisMonth)
+                .Select(o => new { o.OrderDate, o.TotalPrice })
+                .ToListAsync();
+
+            var todayOrders = monthOrders
+                .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow)
+                .ToList();
+
             var summary = new OrderSummaryModel
             {
-                todayTotalRevenue = _todayTotal,
-                todayOrderCount = _todayOrderCount,
-                thisMonthTotalRevenue = _thisMonthTotal,
-                thisMonthOrderCount = _thisMonthOrderCount
+                todayTotalRevenue = todayOrders.Sum(o => o.TotalPrice),
+                todayOrderCount = todayOrders.Count,
+                thisMonthTotalRevenue = monthOrders.Sum(o => o.TotalPrice),
+                thisMonthOrderCount = monthOrders.Count
             };
 
             _logger.LogInformation("Get Order Summary Async => Order summary fetched successfully");
