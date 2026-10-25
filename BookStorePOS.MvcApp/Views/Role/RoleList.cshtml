@@ -289,10 +289,18 @@
             }
 
             // Delete Modal Logic
+            function showToast(message, isSuccess = false) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(message, isSuccess);
+                }
+            }
+
+            let isDeleting = false;
             let roleIdToDelete = null;
             const $deleteModal = $('#deleteModal');
 
             function closeDeleteModal() {
+                if (isDeleting) return;
                 $deleteModal.addClass('hidden');
                 roleIdToDelete = null;
             }
@@ -307,27 +315,36 @@
             $('#btnCancelDelete, #deleteModalBackdrop').on('click', closeDeleteModal);
 
             $('#btnConfirmDelete').on('click', function() {
-                if (!roleIdToDelete) return;
+                if (!roleIdToDelete || isDeleting) return;
 
+                isDeleting = true;
                 const $btn = $(this);
-                $btn.prop('disabled', true).text('Deleting...');
+                const $cancelBtn = $('#btnCancelDelete');
+                $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Deleting...');
+                $cancelBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none');
 
                 $.ajax({
                     type: 'POST',
                     url: '/Role/Delete',
                     data: { RoleId: roleIdToDelete },
                     success: function(response) {
-                        if (response.isSuccess) {
+                        const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
+                        if (isSuccess) {
+                            $btn.text('Deleted!');
                             window.location.reload();
                         } else {
-                            alert(response.message || response.Message || "Failed to delete role.");
-                            $btn.prop('disabled', false).text('Confirm Delete');
+                            showToast(response.message || response.Message || "Failed to delete role.");
+                            isDeleting = false;
+                            $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Confirm Delete');
+                            $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                             closeDeleteModal();
                         }
                     },
                     error: function(xhr) {
-                        alert("Server Error: " + (xhr.statusText || "Unable to delete role."));
-                        $btn.prop('disabled', false).text('Confirm Delete');
+                        showToast("Server Error: " + (xhr.statusText || "Unable to delete role."));
+                        isDeleting = false;
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Confirm Delete');
+                        $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                         closeDeleteModal();
                     }
                 });

@@ -6,7 +6,8 @@
     int totalPages = ViewData["TotalPages"] != null ? Convert.ToInt32(ViewData["TotalPages"]) : 1;
     
     bool hasMessage = TempData["Message"] != null;
-    bool isSuccess = TempData["isSuccess"] != null ? Convert.ToBoolean(TempData["isSuccess"]) : false;
+    var rawSuccess = TempData["isSuccess"] ?? TempData["IsSuccess"];
+    bool isSuccess = rawSuccess != null ? Convert.ToBoolean(rawSuccess) : false;
     string message = TempData["Message"]?.ToString() ?? string.Empty;
 
     int count = (currentPage - 1) * 20;
@@ -300,10 +301,13 @@
                 }, 4000);
             }
 
+            // Delete Modal Logic
+            let isDeletingBook = false;
             let bookIdToDelete = null;
             const $deleteModal = $('#deleteModal');
 
             function closeDeleteModal() {
+                if (isDeletingBook) return;
                 $deleteModal.addClass('hidden');
                 bookIdToDelete = null;
             }
@@ -318,35 +322,44 @@
             });
 
             $('#btnConfirmDelete').on('click', function() {
-                if (!bookIdToDelete) return;
+                if (!bookIdToDelete || isDeletingBook) return;
                 
+                isDeletingBook = true;
                 const $btn = $(this);
-                $btn.prop('disabled', true).text('Deleting...');
+                const $cancelBtn = $('#btnCancelDelete');
+                $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Deleting...');
+                $cancelBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none');
 
                 $.ajax({
                     type: 'POST',
                     url: '/Book/Delete',
                     data: { BookId: bookIdToDelete },
                     success: function(response) {
-                        if (response.isSuccess) {
+                        const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
+                        if (isSuccess) {
+                            $btn.text('Deleted!');
                             window.location.reload();
                         } else {
-                            if (window.showToast) {
-                                window.showToast(response.message || response.Message || "Failed to delete book.", 'error');
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(response.message || response.Message || "Failed to delete book.", false);
                             } else {
                                 alert(response.message || response.Message || "Failed to delete book.");
                             }
-                            $btn.prop('disabled', false).text('Delete');
+                            isDeletingBook = false;
+                            $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                            $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                             closeDeleteModal();
                         }
                     },
                     error: function(xhr) {
-                        if (window.showToast) {
-                            window.showToast("Server Error: " + (xhr.responseJSON?.message || xhr.statusText), 'error');
+                        if (typeof window.showToast === 'function') {
+                            window.showToast("Server Error: " + (xhr.responseJSON?.message || xhr.statusText), false);
                         } else {
                             alert("Server Error: " + xhr.statusText);
                         }
-                        $btn.prop('disabled', false).text('Delete');
+                        isDeletingBook = false;
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                        $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                         closeDeleteModal();
                     }
                 });
@@ -355,11 +368,13 @@
 
 
             // Delete Edition Logic
+            let isDeletingEdition = false;
             let editionIdToDelete = null;
             let bookIdForEdition = null;
             const $deleteEditionModal = $('#deleteEditionModal');
 
             function closeDeleteEditionModal() {
+                if (isDeletingEdition) return;
                 $deleteEditionModal.addClass('hidden');
                 editionIdToDelete = null;
                 bookIdForEdition = null;
@@ -376,34 +391,43 @@
             });
 
             $('#btnConfirmDeleteEdition').on('click', function() {
-                if (!editionIdToDelete || !bookIdForEdition) return;
+                if (!editionIdToDelete || !bookIdForEdition || isDeletingEdition) return;
                 
+                isDeletingEdition = true;
                 const $btn = $(this);
-                $btn.prop('disabled', true).text('Deleting...');
+                const $cancelBtn = $('#btnCancelDeleteEdition');
+                $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Deleting...');
+                $cancelBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none');
 
                 $.ajax({
                     type: 'POST',
                     url: '/Book/DeleteEdition/' + bookIdForEdition + '?editionId=' + editionIdToDelete,
                     success: function(response) {
-                        if (response.isSuccess) {
+                        const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
+                        if (isSuccess) {
+                            $btn.text('Deleted!');
                             window.location.reload();
                         } else {
-                            if (window.showToast) {
-                                window.showToast(response.message || response.Message || "Failed to delete edition.", 'error');
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(response.message || response.Message || "Failed to delete edition.", false);
                             } else {
                                 alert(response.message || response.Message || "Failed to delete edition.");
                             }
-                            $btn.prop('disabled', false).text('Delete');
+                            isDeletingEdition = false;
+                            $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                            $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                             closeDeleteEditionModal();
                         }
                     },
                     error: function(xhr) {
-                        if (window.showToast) {
-                            window.showToast("Server Error: " + (xhr.responseJSON?.message || xhr.statusText), 'error');
+                        if (typeof window.showToast === 'function') {
+                            window.showToast("Server Error: " + (xhr.responseJSON?.message || xhr.statusText), false);
                         } else {
                             alert("Server Error: " + xhr.statusText);
                         }
-                        $btn.prop('disabled', false).text('Delete');
+                        isDeletingEdition = false;
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                        $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                         closeDeleteEditionModal();
                     }
                 });

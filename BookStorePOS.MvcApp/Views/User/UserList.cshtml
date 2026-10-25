@@ -353,8 +353,15 @@
 @section Scripts {
 <script>
     $(document).ready(function() {
+        let isDeleting = false;
         let staffToDeleteId = null;
         let staffToResetId = null;
+
+        function showToast(message, isSuccess = false) {
+            if (typeof window.showToast === 'function') {
+                window.showToast(message, isSuccess);
+            }
+        }
 
         // Delete Modal Handlers
         $('.btnDeleteStaff').on('click', function() {
@@ -365,25 +372,41 @@
         });
 
         $('#btnCancelDelete').on('click', function() {
+            if (isDeleting) return;
             $('#deleteModal').addClass('hidden');
             staffToDeleteId = null;
         });
 
         $('#btnConfirmDelete').on('click', function() {
-            if (!staffToDeleteId) return;
+            if (!staffToDeleteId || isDeleting) return;
 
+            isDeleting = true;
             const $btn = $(this);
-            $btn.prop('disabled', true).text('Deleting...');
+            const $cancelBtn = $('#btnCancelDelete');
+            $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Deleting...');
+            $cancelBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none');
 
             $.ajax({
                 type: 'POST',
                 url: '/User/Delete/' + staffToDeleteId,
                 success: function(res) {
-                    window.location.reload();
+                    const isSuccess = res && (res.isSuccess === true || res.IsSuccess === true || res.isSuccess === 'true' || res.IsSuccess === 'true');
+                    if (isSuccess) {
+                        $btn.text('Deleted!');
+                        window.location.reload();
+                    } else {
+                        showToast(res.message || res.Message || "Failed to delete staff member.");
+                        isDeleting = false;
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete Staff');
+                        $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
+                        $('#deleteModal').addClass('hidden');
+                    }
                 },
-                error: function() {
-                    alert('Failed to delete staff member.');
-                    $btn.prop('disabled', false).text('Delete Staff');
+                error: function(xhr) {
+                    showToast("Server Error: " + (xhr.statusText || "Failed to delete staff member."));
+                    isDeleting = false;
+                    $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete Staff');
+                    $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                     $('#deleteModal').addClass('hidden');
                 }
             });

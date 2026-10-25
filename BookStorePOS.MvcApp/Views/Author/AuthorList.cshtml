@@ -180,11 +180,19 @@
 
 
 
+            function showToast(message, isSuccess = false) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(message, isSuccess);
+                }
+            }
+
             // Delete Modal Logic
+            let isDeleting = false;
             let authorIdToDelete = null;
             const $deleteModal = $('#deleteModal');
 
             function closeDeleteModal() {
+                if (isDeleting) return;
                 $deleteModal.addClass('hidden');
                 authorIdToDelete = null;
             }
@@ -197,27 +205,36 @@
             $('#btnCancelDelete, #deleteModalBackdrop').on('click', closeDeleteModal);
 
             $('#btnConfirmDelete').on('click', function() {
-                if (!authorIdToDelete) return;
+                if (!authorIdToDelete || isDeleting) return;
                 
+                isDeleting = true;
                 const $btn = $(this);
-                $btn.prop('disabled', true).text('Deleting...');
+                const $cancelBtn = $('#btnCancelDelete');
+                $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Deleting...');
+                $cancelBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none');
 
                 $.ajax({
                     type: 'POST',
                     url: '/Author/Delete',
                     data: { AuthorId: authorIdToDelete },
                     success: function(response) {
-                        if (response.isSuccess) {
+                        const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
+                        if (isSuccess) {
+                            $btn.text('Deleted!');
                             window.location.reload();
                         } else {
-                            alert(response.message || response.Message || "Failed to delete author.");
-                            $btn.prop('disabled', false).text('Delete');
+                            showToast(response.message || response.Message || "Failed to delete author.");
+                            isDeleting = false;
+                            $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                            $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                             closeDeleteModal();
                         }
                     },
                     error: function(xhr) {
-                        alert("Server Error: " + xhr.statusText);
-                        $btn.prop('disabled', false).text('Delete');
+                        showToast("Server Error: " + xhr.statusText);
+                        isDeleting = false;
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                        $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                         closeDeleteModal();
                     }
                 });
