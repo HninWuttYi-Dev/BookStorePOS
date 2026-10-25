@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -88,7 +88,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Isbn, "Idx_TblEdition_ISBN")
                 .IsUnique()
-                .HasFilter("([IsDeleted]=(0))");
+                .HasFilter("([IsDeleted]=(0) AND [ISBN] IS NOT NULL)");
 
             entity.Property(e => e.CoverImageUrl).HasMaxLength(500);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())");
