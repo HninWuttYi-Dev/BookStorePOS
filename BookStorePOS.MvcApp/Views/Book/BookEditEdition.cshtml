@@ -52,8 +52,8 @@
                     <input type="number" name="ReorderLevel" value="@reorderLevel" min="0" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all">
                 </div>
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Publish Date</label>
-                    <input type="date" name="PublishDate" value="@publishDate" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all">
+                    <label for="publishDate" class="block text-sm font-semibold text-slate-700 mb-2">Publication Date</label>
+                    <input type="text" id="publishDate" name="PublishDate" value="@publishDate" placeholder="dd/mm/yyyy" max="@DateTime.Today.ToString("yyyy-MM-dd")" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all bg-white" autocomplete="off">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-2">Page Count</label>
@@ -126,9 +126,27 @@
                 $(this).addClass('hidden');
             });
 
+            if (typeof flatpickr === 'function') {
+                flatpickr('#publishDate', {
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    maxDate: "today",
+                    @if (!string.IsNullOrEmpty(publishDate))
+                    {
+                        <text>defaultDate: "@publishDate",</text>
+                    }
+                    altInputClass: "w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all bg-white cursor-pointer"
+                });
+            }
+
             const initialFormData = $('#editEditionForm').serialize();
 
+            let isSubmitting = false;
+
             $('#btnSaveEdition').on('click', function() {
+                if (isSubmitting) return;
+
                 const $btn = $(this);
                 const $form = $('#editEditionForm');
                 
@@ -138,13 +156,25 @@
                     return;
                 }
 
+                const pubDateVal = $('#publishDate').val();
+                if (pubDateVal) {
+                    const selectedDate = new Date(pubDateVal);
+                    const today = new Date();
+                    today.setHours(23, 59, 59, 999);
+                    if (selectedDate > today) {
+                        showToast("Publication Date cannot be in the future.");
+                        return;
+                    }
+                }
+
                 // Check if anything actually changed
                 if ($form.serialize() === initialFormData && !$('#photo').val()) {
                     showToast('Please update at least one field to update edition.');
                     return;
                 }
 
-                $btn.prop('disabled', true).text('Saving...');
+                isSubmitting = true;
+                $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Updating...');
                 
                 const formData = new FormData($form[0]);
 
@@ -154,17 +184,26 @@
                     data: formData,
                     processData: false,
                     contentType: false,
+                    dataType: 'json',
                     success: function(response) {
-                        if (response.isSuccess) {
+                        if (response && (response.isSuccess || response.IsSuccess)) {
+                            $btn.text('Updated!');
                             window.location.href = '/Book';
                         } else {
-                            showToast(response.message || response.Message || "Failed to update edition.");
-                            $btn.prop('disabled', false).text('Update Edition');
+                            showToast(response?.message || response?.Message || "Failed to update edition.");
+                            isSubmitting = false;
+                            $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Update Edition');
                         }
                     },
                     error: function(xhr) {
-                        showToast("Server Error: " + xhr.statusText);
-                        $btn.prop('disabled', false).text('Update Edition');
+                        let errMsg = "Server Error: " + (xhr.statusText || "Failed to update edition");
+                        try {
+                            const errObj = JSON.parse(xhr.responseText);
+                            if (errObj?.message) errMsg = errObj.message;
+                        } catch (e) {}
+                        showToast(errMsg);
+                        isSubmitting = false;
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Update Edition');
                     }
                 });
             });

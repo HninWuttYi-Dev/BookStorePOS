@@ -92,8 +92,8 @@
                     
                     <div class="grid grid-cols-2 gap-4 border-t border-slate-200 pt-3">
                         <div>
-                            <span class="text-slate-500 font-medium block text-xs uppercase">Publish Date</span>
-                            <span class="font-semibold text-slate-800">@(selectedEdition?.PublishDate != null && selectedEdition.PublishDate != default(DateTime) ? selectedEdition.PublishDate.ToString("MMMM dd, yyyy") : "N/A")</span>
+                            <span class="text-slate-500 font-medium block text-xs uppercase">Publication Date</span>
+                            <span class="font-semibold text-slate-800">@(selectedEdition?.PublishDate != null && selectedEdition.PublishDate != default(DateTime) ? selectedEdition.PublishDate.ToString("dd/MM/yyyy") : "N/A")</span>
                         </div>
                         <div>
                             <span class="text-slate-500 font-medium block text-xs uppercase">Page Count</span>
@@ -125,11 +125,19 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            function showToast(message, isSuccess = false) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(message, isSuccess);
+                }
+            }
+
+            let isDeleting = false;
             let editionIdToDelete = null;
             let bookIdForEdition = null;
             const $deleteModal = $('#deleteModal');
 
             function closeDeleteModal() {
+                if (isDeleting) return;
                 $deleteModal.addClass('hidden');
                 editionIdToDelete = null;
                 bookIdForEdition = null;
@@ -146,25 +154,35 @@
             });
 
             $('#btnConfirmDelete').on('click', function() {
-                if (!editionIdToDelete || !bookIdForEdition) return;
+                if (!editionIdToDelete || !bookIdForEdition || isDeleting) return;
+                
+                isDeleting = true;
                 const $btn = $(this);
-                $btn.prop('disabled', true).text('Deleting...');
+                const $cancelBtn = $('#btnCancelDelete');
+                $btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none').text('Deleting...');
+                $cancelBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed pointer-events-none');
 
                 $.ajax({
                     type: 'POST',
                     url: '/Book/DeleteEdition/' + bookIdForEdition + '?editionId=' + editionIdToDelete,
                     success: function(response) {
-                        if (response.isSuccess) {
+                        const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
+                        if (isSuccess) {
+                            $btn.text('Deleted!');
                             window.location.href = '/Book';
                         } else {
-                            alert(response.message || response.Message || "Failed to delete edition.");
-                            $btn.prop('disabled', false).text('Delete');
+                            showToast(response.message || response.Message || "Failed to delete edition.");
+                            isDeleting = false;
+                            $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                            $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                             closeDeleteModal();
                         }
                     },
                     error: function(xhr) {
-                        alert("Server Error: " + xhr.statusText);
-                        $btn.prop('disabled', false).text('Delete');
+                        showToast("Server Error: " + xhr.statusText);
+                        isDeleting = false;
+                        $btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none').text('Delete');
+                        $cancelBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed pointer-events-none');
                         closeDeleteModal();
                     }
                 });

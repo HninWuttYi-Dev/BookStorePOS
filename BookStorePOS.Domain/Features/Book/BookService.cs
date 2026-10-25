@@ -26,55 +26,56 @@ public class BookService : IBookService
         _logger.LogInformation("Get Books Async => Fetching all books");
         try
         {
-            var query = _db.TblBooks
-                    .Include(b => b.Author)
-                    .Include(b => b.Genre)
-                    .Include(b => b.TblBookEditions)
-                        .ThenInclude(e => e.Edition)
-                    .AsNoTracking()
-                    .Where(b => !b.IsDeleted);
+            var baseQuery = _db.TblBooks
+                .AsNoTracking()
+                .Where(b => !b.IsDeleted);
 
-            //apply filters if the user sent a value
+            // Apply filters if the user sent a value
             if (!string.IsNullOrWhiteSpace(requestModel.SearchQuery))
             {
                 var queryTerm = requestModel.SearchQuery.Trim().ToLower();
-                query = query.Where(b => b.Title.ToLower().Contains(queryTerm) ||
-                                         (b.Author != null && b.Author.AuthorName.ToLower().Contains(queryTerm)) ||
-                                         b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.ToLower().Contains(queryTerm)));
+                baseQuery = baseQuery.Where(b => b.Title.ToLower().Contains(queryTerm) ||
+                                                 (b.Author != null && b.Author.AuthorName.ToLower().Contains(queryTerm)) ||
+                                                 b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.ToLower().Contains(queryTerm)));
             }
             if (!string.IsNullOrWhiteSpace(requestModel.Title))
             {
-                query = query.Where(b => b.Title.Contains(requestModel.Title));
+                baseQuery = baseQuery.Where(b => b.Title.Contains(requestModel.Title));
             }
             if (!string.IsNullOrWhiteSpace(requestModel.Author))
             {
-                query = query.Where(b => b.Author != null && b.Author.AuthorName.Contains(requestModel.Author));
+                baseQuery = baseQuery.Where(b => b.Author != null && b.Author.AuthorName.Contains(requestModel.Author));
             }
             if (requestModel.AuthorId.HasValue)
             {
-                query = query.Where(b => b.AuthorId == requestModel.AuthorId);
+                baseQuery = baseQuery.Where(b => b.AuthorId == requestModel.AuthorId);
             }
             if (!string.IsNullOrWhiteSpace(requestModel.Genre))
             {
-                query = query.Where(b => b.Genre != null && b.Genre.GenreName.Contains(requestModel.Genre));
+                baseQuery = baseQuery.Where(b => b.Genre != null && b.Genre.GenreName.Contains(requestModel.Genre));
             }
             if (requestModel.GenreId.HasValue)
             {
-                query = query.Where(b => b.GenreId == requestModel.GenreId);
+                baseQuery = baseQuery.Where(b => b.GenreId == requestModel.GenreId);
             }
             if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
             {
-                query = query.Where(b => b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.Contains(requestModel.Isbn)));
+                baseQuery = baseQuery.Where(b => b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.Contains(requestModel.Isbn)));
             }
 
-            var totalCount = await query.CountAsync();
+            var totalCount = await baseQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
             if (totalPages == 0) totalPages = 1;
 
-            var lst = await query.OrderByDescending(b => b.BookId)
-                            .Skip((requestModel.Page - 1) * requestModel.Limit)
-                            .Take(requestModel.Limit)
-                            .ToListAsync();
+            var lst = await baseQuery
+                .Include(b => b.Author)
+                .Include(b => b.Genre)
+                .Include(b => b.TblBookEditions)
+                    .ThenInclude(e => e.Edition)
+                .OrderByDescending(b => b.BookId)
+                .Skip((requestModel.Page - 1) * requestModel.Limit)
+                .Take(requestModel.Limit)
+                .ToListAsync();
 
             List<BookModel> books = new List<BookModel>();
             foreach (var item in lst)
@@ -198,145 +199,152 @@ public class BookService : IBookService
     public async Task<Result<BookModel>> CreateBookAsync(BookCreateRequestModel requestModel)
     {
         _logger.LogInformation("Create Book Async => Creating book");
+
+        // 1. Pure in-memory validation
+        if (string.IsNullOrWhiteSpace(requestModel.Title))
+        {
+            _logger.LogWarning("Create Book Async => Title is required");
+            return Result<BookModel>.ValidationError("Title is required.");
+        }
+        if ((!requestModel.AuthorId.HasValue || requestModel.AuthorId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Author))
+        {
+            _logger.LogWarning("Create Book Async => Author is required");
+            return Result<BookModel>.ValidationError("Author is required.");
+        }
+        if ((!requestModel.GenreId.HasValue || requestModel.GenreId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Genre))
+        {
+            _logger.LogWarning("Create Book Async => Genre is required");
+            return Result<BookModel>.ValidationError("Genre is required.");
+        }
+        if (requestModel.Price <= 0)
+        {
+            _logger.LogWarning("Create Book Async => Price must be greater than 0");
+            return Result<BookModel>.ValidationError("Price must be greater than 0.");
+        }
+        if (requestModel.StockQuantity < 0)
+        {
+            _logger.LogWarning("Create Book Async => StockQuantity cannot be negative");
+            return Result<BookModel>.ValidationError("StockQuantity cannot be negative.");
+        }
+        if (requestModel.ReorderLevel < 0)
+        {
+            _logger.LogWarning("Create Book Async => ReorderLevel cannot be negative");
+            return Result<BookModel>.ValidationError("ReorderLevel cannot be negative.");
+        }
+
+        if (requestModel.PublishDate.HasValue && requestModel.PublishDate.Value.Date > DateTime.Today)
+        {
+            _logger.LogWarning("Create Book Async => Publication Date cannot be in the future");
+            return Result<BookModel>.ValidationError("Publication Date cannot be in the future.");
+        }
+
+        // ISBN validation
+        if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+        {
+            var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
+            if (isbn.Length != 10 && isbn.Length != 13)
+                return Result<BookModel>.ValidationError("ISBN must be 10 or 13 digits.");
+
+            bool isbnExists = await _db.TblBookEditions.AnyAsync(e => e.Isbn == requestModel.Isbn && !e.IsDeleted);
+            if (isbnExists)
+                return Result<BookModel>.Conflict("A book edition with this ISBN already exists.");
+        }
+
+        // 2. Resolve Author (in-memory entity or existing tracked entity)
+        string authorName = (requestModel.Author ?? "").Trim();
+        TblAuthor? authorEntity = null;
+        if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0)
+        {
+            authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId && !a.IsDeleted);
+            if (authorEntity == null)
+                return Result<BookModel>.ValidationError("Invalid Author.");
+            authorName = authorEntity.AuthorName;
+        }
+        else if (!string.IsNullOrWhiteSpace(authorName))
+        {
+            authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == authorName.ToLower() && !a.IsDeleted);
+            if (authorEntity == null)
+            {
+                authorEntity = new TblAuthor { AuthorName = authorName, CreateAt = DateTime.Now, IsDeleted = false };
+                _db.TblAuthors.Add(authorEntity);
+            }
+            else
+            {
+                authorName = authorEntity.AuthorName;
+            }
+        }
+
+        // 3. Resolve Genre (in-memory entity or existing tracked entity)
+        string genreName = (requestModel.Genre ?? "").Trim();
+        TblGenre? genreEntity = null;
+        if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0)
+        {
+            genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId && !g.IsDeleted);
+            if (genreEntity == null)
+                return Result<BookModel>.ValidationError("Invalid Genre.");
+            genreName = genreEntity.GenreName;
+        }
+        else if (!string.IsNullOrWhiteSpace(genreName))
+        {
+            genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == genreName.ToLower() && !g.IsDeleted);
+            if (genreEntity == null)
+            {
+                genreEntity = new TblGenre { GenreName = genreName, CreatedAt = DateTime.Now, IsDeleted = false };
+                _db.TblGenres.Add(genreEntity);
+            }
+            else
+            {
+                genreName = genreEntity.GenreName;
+            }
+        }
+
+        // 4. Resolve Edition Type
+        var editionName = string.IsNullOrWhiteSpace(requestModel.EditionName) ? "1st Edition" : requestModel.EditionName.Trim();
+        var editionType = await _db.TblEditions.FirstOrDefaultAsync(e => e.EditionName.ToLower() == editionName.ToLower() && !e.IsDeleted);
+        if (editionType == null)
+        {
+            editionType = new TblEdition { EditionName = editionName, CreatedAt = DateTime.Now, IsDeleted = false };
+            _db.TblEditions.Add(editionType);
+        }
+
+        // 5. Build entity navigation graph in memory
+        var book = new TblBook
+        {
+            Title = requestModel.Title.Trim(),
+            Author = authorEntity,
+            Genre = genreEntity,
+            AuthorId = authorEntity?.AuthorId,
+            GenreId = genreEntity?.GenreId,
+            Description = requestModel.Description,
+            IsDeleted = false,
+            CreatedAt = DateTime.Now
+        };
+
+        var bookEdition = new TblBookEdition
+        {
+            Book = book,
+            Edition = editionType,
+            EditionId = editionType.EditionId,
+            Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn.Trim(),
+            Price = requestModel.Price,
+            StockQuantity = requestModel.StockQuantity,
+            ReorderLevel = requestModel.ReorderLevel,
+            EditionNote = requestModel.EditionNote,
+            PublishDate = requestModel.PublishDate ?? DateTime.Now,
+            PageCount = requestModel.PageCount,
+            CoverImageUrl = requestModel.CoverImageUrl,
+            IsDeleted = false,
+            CreatedAt = DateTime.Now
+        };
+
+        book.TblBookEditions.Add(bookEdition);
+        _db.TblBooks.Add(book);
+
+        // 6. Single atomic SaveChangesAsync and transaction commit
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            if (string.IsNullOrWhiteSpace(requestModel.Title))
-            {
-                _logger.LogWarning("Create Book Async => Title is required");
-                return Result<BookModel>.ValidationError("Title is required.");
-            }
-            if ((!requestModel.AuthorId.HasValue || requestModel.AuthorId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Author))
-            {
-                _logger.LogWarning("Create Book Async => Author is required");
-                return Result<BookModel>.ValidationError("Author is required.");
-            }
-            if ((!requestModel.GenreId.HasValue || requestModel.GenreId.Value <= 0) && string.IsNullOrWhiteSpace(requestModel.Genre))
-            {
-                _logger.LogWarning("Create Book Async => Genre is required");
-                return Result<BookModel>.ValidationError("Genre is required.");
-            }
-            if (requestModel.ReorderLevel < 0)
-            {
-                _logger.LogWarning("Create Book Async => ReorderLevel cannot be negative");
-                return Result<BookModel>.ValidationError("ReorderLevel cannot be negative.");
-            }
-            if (requestModel.Price <= 0)
-            {
-                _logger.LogWarning("Create Book Async => Price must be greater than 0");
-                return Result<BookModel>.ValidationError("Price must be greater than 0.");
-            }
-
-            // Handle Author
-            string authorName = requestModel.Author ?? "";
-            if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0)
-            {
-                var authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId);
-                if (authorEntity != null) authorName = authorEntity.AuthorName;
-                else return Result<BookModel>.ValidationError("Invalid Author.");
-            }
-            else if (!string.IsNullOrWhiteSpace(authorName))
-            {
-                var existingAuthor = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == authorName.ToLower() && !a.IsDeleted);
-                if (existingAuthor != null)
-                {
-                    requestModel.AuthorId = existingAuthor.AuthorId;
-                    authorName = existingAuthor.AuthorName;
-                }
-                else
-                {
-                    var newAuthor = new TblAuthor { AuthorName = authorName, CreateAt = DateTime.Now, IsDeleted = false };
-                    _db.TblAuthors.Add(newAuthor);
-                    await _db.SaveChangesAsync();
-                    requestModel.AuthorId = newAuthor.AuthorId;
-                }
-            }
-            else requestModel.AuthorId = null;
-
-            // Handle Genre
-            string genreName = requestModel.Genre ?? "";
-            if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0)
-            {
-                var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
-                if (genreEntity != null) genreName = genreEntity.GenreName;
-                else return Result<BookModel>.ValidationError("Invalid Genre.");
-            }
-            else if (!string.IsNullOrWhiteSpace(genreName))
-            {
-                var existingGenre = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == genreName.ToLower() && !g.IsDeleted);
-                if (existingGenre != null)
-                {
-                    requestModel.GenreId = existingGenre.GenreId;
-                    genreName = existingGenre.GenreName;
-                }
-                else
-                {
-                    var newGenre = new TblGenre { GenreName = genreName, CreatedAt = DateTime.Now, IsDeleted = false };
-                    _db.TblGenres.Add(newGenre);
-                    await _db.SaveChangesAsync();
-                    requestModel.GenreId = newGenre.GenreId;
-                    genreName = newGenre.GenreName;
-                }
-            }
-            else requestModel.GenreId = null;
-
-            // Handle ISBN
-            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
-            {
-                var isbn = requestModel.Isbn.Replace("-", "").Replace(" ", "");
-                if (isbn.Length != 10 && isbn.Length != 13)
-                    return Result<BookModel>.ValidationError("ISBN must be 10 or 13 digits.");
-
-                bool isbnExists = await _db.TblBookEditions.AnyAsync(e => e.Isbn == requestModel.Isbn && !e.IsDeleted);
-                if (isbnExists)
-                    return Result<BookModel>.Conflict("A book edition with this ISBN already exists.");
-            }
-
-            if (requestModel.StockQuantity < 0)
-                return Result<BookModel>.ValidationError("StockQuantity cannot be negative.");
-
-            // Create Book
-            TblBook book = new TblBook
-            {
-                Title = requestModel.Title,
-                AuthorId = requestModel.AuthorId,
-                GenreId = requestModel.GenreId,
-                Description = requestModel.Description,
-                IsDeleted = false,
-                CreatedAt = DateTime.Now
-            };
-            _db.TblBooks.Add(book);
             await _db.SaveChangesAsync();
-
-            // Create or get Edition Type
-            var editionName = string.IsNullOrWhiteSpace(requestModel.EditionName) ? "1st Edition" : requestModel.EditionName;
-            var editionType = await _db.TblEditions.FirstOrDefaultAsync(e => e.EditionName.ToLower() == editionName.ToLower());
-            if (editionType == null)
-            {
-                editionType = new TblEdition { EditionName = editionName, CreatedAt = DateTime.Now, IsDeleted = false };
-                _db.TblEditions.Add(editionType);
-                await _db.SaveChangesAsync();
-            }
-
-            // Create Book Edition
-            TblBookEdition bookEdition = new TblBookEdition
-            {
-                BookId = book.BookId,
-                EditionId = editionType.EditionId,
-                Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn,
-                Price = requestModel.Price,
-                StockQuantity = requestModel.StockQuantity,
-                ReorderLevel = requestModel.ReorderLevel,
-                EditionNote = requestModel.EditionNote,
-                PublishDate = requestModel.PublishDate ?? DateTime.Now,
-                PageCount = requestModel.PageCount,
-                CoverImageUrl = requestModel.CoverImageUrl,
-                IsDeleted = false,
-                CreatedAt = DateTime.Now
-            };
-            _db.TblBookEditions.Add(bookEdition);
-            await _db.SaveChangesAsync();
-
             await transaction.CommitAsync();
 
             _logger.LogInformation("Create Book Async => Book is created successfully");
@@ -352,8 +360,10 @@ public class BookService : IBookService
                 IsDeleted = book.IsDeleted,
                 StartingPrice = bookEdition.Price,
                 TotalStockQuantity = bookEdition.StockQuantity,
-                Editions = new List<BookEditionModel> {
-                    new BookEditionModel {
+                Editions = new List<BookEditionModel>
+                {
+                    new BookEditionModel
+                    {
                         BookEditionId = bookEdition.BookEditionId,
                         BookId = bookEdition.BookId,
                         EditionId = bookEdition.EditionId,
@@ -634,22 +644,28 @@ public class BookService : IBookService
                     return Result<BookEditionModel>.Conflict("A book edition with this ISBN already exists.");
             }
 
+            if (requestModel.PublishDate.HasValue && requestModel.PublishDate.Value.Date > DateTime.Today)
+            {
+                _logger.LogWarning("Create Edition Async => Publication Date cannot be in the future");
+                return Result<BookEditionModel>.ValidationError("Publication Date cannot be in the future.");
+            }
+
             // Create or get Edition Type
-            var editionName = requestModel.EditionName;
-            var editionType = await _db.TblEditions.FirstOrDefaultAsync(e => e.EditionName.ToLower() == editionName.ToLower());
+            var editionName = requestModel.EditionName.Trim();
+            var editionType = await _db.TblEditions.FirstOrDefaultAsync(e => e.EditionName.ToLower() == editionName.ToLower() && !e.IsDeleted);
             if (editionType == null)
             {
                 editionType = new TblEdition { EditionName = editionName, CreatedAt = DateTime.Now, IsDeleted = false };
                 _db.TblEditions.Add(editionType);
-                await _db.SaveChangesAsync();
             }
 
-            // Create Book Edition
+            // Create Book Edition linked to editionType
             TblBookEdition bookEdition = new TblBookEdition
             {
                 BookId = requestModel.BookId,
+                Edition = editionType,
                 EditionId = editionType.EditionId,
-                Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn,
+                Isbn = string.IsNullOrWhiteSpace(requestModel.Isbn) ? null : requestModel.Isbn.Trim(),
                 Price = requestModel.Price,
                 StockQuantity = requestModel.StockQuantity,
                 ReorderLevel = requestModel.ReorderLevel,
@@ -661,8 +677,9 @@ public class BookService : IBookService
                 CreatedAt = DateTime.Now
             };
             _db.TblBookEditions.Add(bookEdition);
-            await _db.SaveChangesAsync();
 
+            // Single atomic save
+            await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 
             _logger.LogInformation("Create Book Edition Async => Book Edition is created successfully");
@@ -747,6 +764,12 @@ public class BookService : IBookService
                     await _db.SaveChangesAsync();
                 }
                 bookEdition.EditionId = editionType.EditionId;
+            }
+
+            if (requestModel.PublishDate.HasValue && requestModel.PublishDate.Value.Date > DateTime.Today)
+            {
+                _logger.LogWarning("Patch Edition Async => Publication Date cannot be in the future");
+                return Result<BookEditionModel>.ValidationError("Publication Date cannot be in the future.");
             }
 
             bookEdition.Price = requestModel.Price;

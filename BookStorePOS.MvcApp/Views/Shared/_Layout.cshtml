@@ -124,6 +124,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Flatpickr Date Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         /* Lucide & SVG micro-interactions */
@@ -144,6 +147,27 @@
         }
         .icon-hover-scale:hover {
             transform: scale(1.12);
+        }
+        /* Flatpickr Warm Clay Theme Overrides */
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected:focus, .flatpickr-day.selected:hover {
+            background: #C86D56 !important;
+            border-color: #C86D56 !important;
+        }
+        .flatpickr-day.today {
+            border-color: #C86D56 !important;
+        }
+        .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover {
+            color: rgba(57,57,57,0.25) !important;
+            cursor: not-allowed !important;
+        }
+        /* Ensure number input spin buttons (up/down stepper arrows) are always visible without focus or hover */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1 !important;
+            cursor: pointer;
+        }
+        input[type="number"] {
+            -moz-appearance: number-input;
         }
     </style>
 </head>
@@ -472,7 +496,8 @@
         {
             hasGlobalToast = true;
             globalToastMsg = TempData["Message"]?.ToString() ?? "";
-            globalToastSuccess = TempData["isSuccess"] == null || Convert.ToBoolean(TempData["isSuccess"]);
+            var rawSuccess = TempData["isSuccess"] ?? TempData["IsSuccess"];
+            globalToastSuccess = rawSuccess == null || Convert.ToBoolean(rawSuccess);
         }
         else if (TempData["SuccessMessage"] != null)
         {
