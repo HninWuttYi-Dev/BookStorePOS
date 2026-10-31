@@ -49,6 +49,17 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
+    @{
+        var rawPath = Context.Request.Path.Value?.TrimEnd('/')?.ToLower() ?? "";
+        var currentController = ViewContext.RouteData.Values["Controller"]?.ToString()?.ToLower() ?? "";
+        var currentAction = ViewContext.RouteData.Values["Action"]?.ToString()?.ToLower() ?? "";
+
+        bool isHome = string.IsNullOrEmpty(rawPath) || rawPath == "/home" || (currentController == "home" && currentAction == "index");
+        bool isBrowse = rawPath == "/books" || rawPath.StartsWith("/books/") || (currentController == "books" && rawPath != "/authors" && rawPath != "/genres");
+        bool isAuthors = rawPath == "/authors" || rawPath.StartsWith("/authors/") || currentController == "authors" || currentController == "author";
+        bool isGenres = rawPath == "/genres" || rawPath.StartsWith("/genres/") || currentController == "genres" || currentController == "genre";
+    }
+
     <header class="bg-brand-surface border-b border-brand-border shadow-sm sticky top-0 z-50">
         <!-- Desktop & Mobile Container -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center h-20">
@@ -60,10 +71,23 @@
             </a>
 
             <!-- Desktop Navigation -->
-            <nav class="hidden md:flex items-center gap-2 ml-8">
-                <a href="/Books" class="text-brand-ink hover:text-brand-accent hover:bg-brand-accent/10 px-4 py-2 rounded-lg transition-all font-semibold text-base tracking-wider uppercase">Browse</a>
-                <a href="/Authors" class="text-brand-ink hover:text-brand-accent hover:bg-brand-accent/10 px-4 py-2 rounded-lg transition-all font-semibold text-base tracking-wider uppercase">Authors</a>
-                <a href="/Genres" class="text-brand-ink hover:text-brand-accent hover:bg-brand-accent/10 px-4 py-2 rounded-lg transition-all font-semibold text-base tracking-wider uppercase">Genres</a>
+            <nav class="hidden md:flex items-center gap-1 sm:gap-2 ml-6 lg:ml-10">
+                <a href="/" class="group relative py-2 px-3 font-semibold text-base tracking-wider uppercase transition-colors @(isHome ? "text-brand-accent font-bold" : "text-brand-ink hover:text-brand-accent")">
+                    <span>Home</span>
+                    <span class="absolute bottom-0 left-3 right-3 h-[2.5px] bg-brand-accent rounded-full transition-all duration-200 @(isHome ? "opacity-100" : "opacity-0 group-hover:opacity-40")"></span>
+                </a>
+                <a href="/Books" class="group relative py-2 px-3 font-semibold text-base tracking-wider uppercase transition-colors @(isBrowse ? "text-brand-accent font-bold" : "text-brand-ink hover:text-brand-accent")">
+                    <span>Browse</span>
+                    <span class="absolute bottom-0 left-3 right-3 h-[2.5px] bg-brand-accent rounded-full transition-all duration-200 @(isBrowse ? "opacity-100" : "opacity-0 group-hover:opacity-40")"></span>
+                </a>
+                <a href="/Authors" class="group relative py-2 px-3 font-semibold text-base tracking-wider uppercase transition-colors @(isAuthors ? "text-brand-accent font-bold" : "text-brand-ink hover:text-brand-accent")">
+                    <span>Authors</span>
+                    <span class="absolute bottom-0 left-3 right-3 h-[2.5px] bg-brand-accent rounded-full transition-all duration-200 @(isAuthors ? "opacity-100" : "opacity-0 group-hover:opacity-40")"></span>
+                </a>
+                <a href="/Genres" class="group relative py-2 px-3 font-semibold text-base tracking-wider uppercase transition-colors @(isGenres ? "text-brand-accent font-bold" : "text-brand-ink hover:text-brand-accent")">
+                    <span>Genres</span>
+                    <span class="absolute bottom-0 left-3 right-3 h-[2.5px] bg-brand-accent rounded-full transition-all duration-200 @(isGenres ? "opacity-100" : "opacity-0 group-hover:opacity-40")"></span>
+                </a>
             </nav>
 
             <!-- Search, Cart, Login (Desktop) -->
@@ -76,7 +100,7 @@
 
                 <!-- Guest State -->
                 <a href="/Auth/Login" id="navLoginBtn" class="text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-2.5 rounded-full transition-all font-medium text-sm shadow-sm hover:shadow">
-                    Login
+                    Sign In
                 </a>
 
                 <!-- Logged In State (Upgraded Modern UI) -->
@@ -111,15 +135,28 @@
         
         <!-- Mobile Drawer / Menu -->
         <div id="mobileMenu" class="hidden md:hidden bg-brand-surface border-t border-brand-border absolute w-full left-0 shadow-lg">
-            <div class="flex flex-col px-6 py-4 gap-4">
-                <a href="/Books" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Browse</a>
-                <a href="/Authors" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Authors</a>
-                <a href="/Genres" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Genres</a>
-                <a href="/Cart" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2 border-b border-brand-border/50">Cart</a>
+            <div class="flex flex-col px-6 py-4 gap-3">
+                <a href="/" class="flex items-center justify-between font-medium text-base tracking-wide uppercase py-2.5 transition-colors @(isHome ? "text-brand-accent font-bold border-b-2 border-brand-accent" : "text-brand-ink border-b border-brand-border/50 hover:text-brand-accent")">
+                    <span>Home</span>
+                    @if (isHome) { <span class="w-1.5 h-1.5 rounded-full bg-brand-accent"></span> }
+                </a>
+                <a href="/Books" class="flex items-center justify-between font-medium text-base tracking-wide uppercase py-2.5 transition-colors @(isBrowse ? "text-brand-accent font-bold border-b-2 border-brand-accent" : "text-brand-ink border-b border-brand-border/50 hover:text-brand-accent")">
+                    <span>Browse</span>
+                    @if (isBrowse) { <span class="w-1.5 h-1.5 rounded-full bg-brand-accent"></span> }
+                </a>
+                <a href="/Authors" class="flex items-center justify-between font-medium text-base tracking-wide uppercase py-2.5 transition-colors @(isAuthors ? "text-brand-accent font-bold border-b-2 border-brand-accent" : "text-brand-ink border-b border-brand-border/50 hover:text-brand-accent")">
+                    <span>Authors</span>
+                    @if (isAuthors) { <span class="w-1.5 h-1.5 rounded-full bg-brand-accent"></span> }
+                </a>
+                <a href="/Genres" class="flex items-center justify-between font-medium text-base tracking-wide uppercase py-2.5 transition-colors @(isGenres ? "text-brand-accent font-bold border-b-2 border-brand-accent" : "text-brand-ink border-b border-brand-border/50 hover:text-brand-accent")">
+                    <span>Genres</span>
+                    @if (isGenres) { <span class="w-1.5 h-1.5 rounded-full bg-brand-accent"></span> }
+                </a>
+                <a href="/Cart" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2.5 border-b border-brand-border/50 hover:text-brand-accent">Cart</a>
                 
                 <!-- Guest Mobile -->
                 <a href="/Auth/Login" id="mobileLoginBtn" class="text-center mt-2 text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-3 rounded-xl transition-colors font-medium text-base w-full shadow-sm">
-                    Login
+                    Sign In
                 </a>
 
                 <!-- Logged In Mobile (Upgraded Modern UI) -->
@@ -434,6 +471,24 @@
                     if (mobileUsername) mobileUsername.textContent = cleanUser;
                     if (mobileUserInitials) mobileUserInitials.textContent = initials;
                 }
+            } catch(e) {}
+
+            // Active Navigation Tab Indicator based on URL
+            try {
+                const currentPath = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+                document.querySelectorAll('nav a, #mobileMenu a').forEach(function(link) {
+                    const href = (link.getAttribute('href') || '').toLowerCase().replace(/\/$/, '') || '/';
+                    const isCurrent = (href === '/' && (currentPath === '/' || currentPath === '/home')) ||
+                                      (href !== '/' && currentPath.startsWith(href));
+                    if (isCurrent) {
+                        link.classList.add('text-brand-accent', 'font-bold');
+                        const line = link.querySelector('span.absolute');
+                        if (line) {
+                            line.classList.remove('opacity-0');
+                            line.classList.add('opacity-100');
+                        }
+                    }
+                });
             } catch(e) {}
 
             // Close modal when clicking backdrop
