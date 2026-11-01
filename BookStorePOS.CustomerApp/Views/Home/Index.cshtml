@@ -1,356 +1,688 @@
 @model BookListResponseModel
 @{
     ViewData["Title"] = "Home";
+
+    var allBooks = Model?.Data ?? new List<BookModel>();
+    var trendingBooks = allBooks.Take(3).ToList();
+    var bestsellerBooks = allBooks.Skip(3).Take(4).ToList();
+    if (!bestsellerBooks.Any() && allBooks.Any())
+    {
+        bestsellerBooks = allBooks.Take(4).ToList();
+    }
 }
 
 <!-- 1. Hero Section: Editorial Literary Spread & Botanical Open Book with Quote -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-16">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-        
-        <!-- Left: Editorial Story & Actions -->
-        <div class="lg:col-span-7 flex flex-col justify-center text-center lg:text-left">
-            <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-brand-surface border border-brand-border/70 text-brand-accent text-xs font-semibold uppercase tracking-widest font-body mb-6 shadow-2xs self-center lg:self-start">
-                <span class="w-2 h-2 rounded-full bg-brand-accent animate-pulse"></span>
-                <span>Curated Literary Haven • Babylon</span>
-            </div>
-
-            <h1 class="text-4xl sm:text-6xl lg:text-7xl font-heading font-bold text-brand-ink mb-6 tracking-tight leading-[1.08]">
-                Discover Your Next <br class="hidden sm:inline" />
-                <span class="relative inline-block">
-                    <span class="relative z-10">Great Story</span>
-                    <span class="absolute bottom-1.5 left-0 right-0 h-3 bg-brand-accent/20 -rotate-1 rounded-sm -z-0"></span>
-                </span>
-            </h1>
-
-            <p class="text-brand-inkLight text-base sm:text-lg md:text-xl leading-relaxed font-body mb-8 max-w-xl mx-auto lg:mx-0">
-                Browse through our carefully curated selection of fine literature, rare editions, and modern classics bound for discerning readers.
-            </p>
-
-            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-10">
-                <a href="/Books" class="inline-flex items-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg px-8 py-3.5 rounded-full text-sm font-semibold font-body transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5">
-                    <span>Browse Books</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </a>
-                <a href="/Authors" class="inline-flex items-center gap-2 bg-brand-surface hover:bg-brand-surface/80 border border-brand-border text-brand-ink hover:text-brand-accent px-7 py-3.5 rounded-full text-sm font-semibold font-body transition-colors">
-                    <span>Explore Authors</span>
-                </a>
-            </div>
-
-            <!-- Literary Stats -->
-            <div class="grid grid-cols-3 gap-4 pt-6 border-t border-brand-border/60 max-w-lg mx-auto lg:mx-0">
-                <div>
-                    <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">10,000+</span>
-                    <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Curated Titles</span>
+<section class="relative bg-brand-bg pt-6 sm:pt-10 pb-12 sm:pb-16 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+            
+            <!-- Left: Editorial Story & Actions -->
+            <div class="lg:col-span-7 flex flex-col justify-center text-center lg:text-left">
+                <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-brand-surface border border-brand-border/70 text-brand-accent text-xs font-semibold uppercase tracking-widest font-body mb-6 shadow-2xs self-center lg:self-start">
+                    <span class="w-2 h-2 rounded-full bg-brand-accent animate-pulse"></span>
+                    <span>Curated Literary Haven • Babylon</span>
                 </div>
-                <div>
-                    <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">500+</span>
-                    <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Acclaimed Authors</span>
-                </div>
-                <div>
-                    <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">100%</span>
-                    <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Authentic Editions</span>
-                </div>
-            </div>
-        </div>
 
-        <!-- Right: Botanical Watercolor Open Book with Myanmar Quote Above -->
-        <div class="lg:col-span-5 flex flex-col items-center justify-center py-6">
-            <style>
-                @@keyframes openBookFloat {
-                    0%, 100% {
-                        transform: translateY(0px) rotate(0deg);
-                    }
-                    50% {
-                        transform: translateY(-8px) rotate(0.6deg);
-                    }
-                }
-                .animate-open-book {
-                    animation: openBookFloat 5.5s ease-in-out infinite;
-                }
-            </style>
-
-            <div class="relative w-full max-w-[420px] sm:max-w-[460px] flex flex-col items-center justify-center group animate-open-book">
-                
-                <!-- Ambient Warm Parchment Glow -->
-                <div class="absolute inset-0 bg-gradient-to-tr from-[#EADBC8]/30 via-[#F5EBE1]/50 to-transparent rounded-full blur-3xl -z-10 transform scale-95 pointer-events-none"></div>
-
-                <!-- Myanmar Quote from User Image (Above the Book) -->
-                <div class="mb-4 bg-brand-surface/95 backdrop-blur-md border border-brand-border/80 px-5 py-3 rounded-2xl shadow-sm text-center max-w-sm sm:max-w-md transition-transform duration-300 group-hover:-translate-y-1">
-                    <p class="text-xs sm:text-sm font-body text-brand-ink leading-relaxed">
-                        &ldquo;မေတ္တာဆိုတာ ပြန်ရဖို့မျှော်လင့်ပြီး ပေးရတဲ့ အရာမဟုတ်ဘူး ပေးလိုက်ရရုံနဲ့တင် စိတ်ချမ်းသာရတဲ့အရာ.....။&rdquo;
-                    </p>
-                    <span class="text-[11px] font-semibold text-brand-accent font-body mt-1.5 block">
-                        &mdash; &ldquo;လယ်တွင်းသားစောချစ်&rdquo;
+                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-heading font-bold text-brand-ink mb-6 tracking-tight leading-[1.08]">
+                    Discover Your Next <br class="hidden sm:inline" />
+                    <span class="relative inline-block">
+                        <span class="relative z-10">Great Story</span>
+                        <span class="absolute bottom-1.5 left-0 right-0 h-3 bg-brand-accent/20 -rotate-1 rounded-sm -z-0"></span>
                     </span>
+                </h1>
+
+                <p class="text-brand-inkLight text-base sm:text-lg md:text-xl leading-relaxed font-body mb-8 max-w-xl mx-auto lg:mx-0">
+                    Browse through our carefully curated selection of fine literature, rare editions, and modern classics bound for discerning readers.
+                </p>
+
+                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 mb-10">
+                    <a href="/Books" class="inline-flex items-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg px-8 py-3.5 rounded-full text-sm font-semibold font-body transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                        <span>Browse Books</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <a href="/Authors" class="inline-flex items-center gap-2 bg-brand-surface hover:bg-brand-surface/80 border border-brand-border text-brand-ink hover:text-brand-accent px-7 py-3.5 rounded-full text-sm font-semibold font-body transition-colors">
+                        <span>Explore Authors</span>
+                    </a>
                 </div>
 
-                <!-- The Watercolor Open Book with Sprouting Flowers & Butterfly -->
-                <div class="relative w-full flex items-center justify-center transition-transform duration-500 group-hover:scale-[1.03]">
-                    <img src="/images/hero-open-book-floral.png" 
-                         alt="Open book with wildflowers and fluttering butterfly" 
-                         class="w-full h-auto max-h-[380px] sm:max-h-[420px] object-contain drop-shadow-[0_22px_36px_rgba(44,38,33,0.16)] select-none">
+                <!-- Literary Stats -->
+                <div class="grid grid-cols-3 gap-4 pt-6 border-t border-brand-border/60 max-w-lg mx-auto lg:mx-0">
+                    <div>
+                        <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">10,000+</span>
+                        <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Curated Titles</span>
+                    </div>
+                    <div>
+                        <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">500+</span>
+                        <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Acclaimed Authors</span>
+                    </div>
+                    <div>
+                        <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">100%</span>
+                        <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Authentic Editions</span>
+                    </div>
                 </div>
-
-                <!-- Ground Ambient Shadow -->
-                <div class="w-56 sm:w-68 h-6 bg-black/15 rounded-full blur-lg -mt-3 pointer-events-none"></div>
-
             </div>
-        </div>
 
+            <!-- Right: Botanical Watercolor Open Book with Myanmar Quote Above -->
+            <div class="lg:col-span-5 flex flex-col items-center justify-center py-6">
+                <style>
+                    @@keyframes openBookFloat {
+                        0%, 100% {
+                            transform: translateY(0px) rotate(0deg);
+                        }
+                        50% {
+                            transform: translateY(-8px) rotate(0.6deg);
+                        }
+                    }
+                    .animate-open-book {
+                        animation: openBookFloat 5.5s ease-in-out infinite;
+                    }
+                </style>
+
+                <div class="relative w-full max-w-[420px] sm:max-w-[460px] flex flex-col items-center justify-center group animate-open-book">
+                    
+                    <!-- Ambient Warm Parchment Glow -->
+                    <div class="absolute inset-0 bg-gradient-to-tr from-[#EADBC8]/30 via-[#F5EBE1]/50 to-transparent rounded-full blur-3xl -z-10 transform scale-95 pointer-events-none"></div>
+
+                    <!-- Myanmar Quote from User Image (Above the Book) -->
+                    <div class="mb-4 bg-brand-surface/95 backdrop-blur-md border border-brand-border/80 px-5 py-3 rounded-2xl shadow-sm text-center max-w-sm sm:max-w-md transition-transform duration-300 group-hover:-translate-y-1">
+                        <p class="text-xs sm:text-sm font-body text-brand-ink leading-relaxed">
+                            &ldquo;မေတ္တာဆိုတာ ပြန်ရဖို့မျှော်လင့်ပြီး ပေးရတဲ့ အရာမဟုတ်ဘူး ပေးလိုက်ရရုံနဲ့တင် စိတ်ချမ်းသာရတဲ့အရာ.....။&rdquo;
+                        </p>
+                        <span class="text-[11px] font-semibold text-brand-accent font-body mt-1.5 block">
+                            &mdash; &ldquo;လယ်တွင်းသားစောချစ်&rdquo;
+                        </span>
+                    </div>
+
+                    <!-- The Watercolor Open Book with Sprouting Flowers & Butterfly -->
+                    <div class="relative w-full flex items-center justify-center transition-transform duration-500 group-hover:scale-[1.03]">
+                        <img src="/images/hero-open-book-floral.png" 
+                             alt="Open book with wildflowers and fluttering butterfly" 
+                             class="w-full h-auto max-h-[380px] sm:max-h-[420px] object-contain drop-shadow-[0_22px_36px_rgba(44,38,33,0.16)] select-none">
+                    </div>
+
+                    <!-- Ground Ambient Shadow -->
+                    <div class="w-56 sm:w-68 h-6 bg-black/15 rounded-full blur-lg -mt-3 pointer-events-none"></div>
+
+                </div>
+            </div>
+
+        </div>
     </div>
 </section>
 
-<!-- 2. Search Bar Section -->
-<section class="max-w-3xl mx-auto mb-16 px-4">
-    <form action="/Books" method="get" class="debounce-search-form">
-        <div class="relative flex-1">
-            <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-brand-inkLight/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input type="text" name="SearchQuery" placeholder="Search by title, author, or ISBN..." class="w-full pl-12 pr-12 py-3.5 bg-brand-surface rounded-full focus:outline-none text-brand-ink placeholder:text-brand-inkLight/60 debounce-search-input font-body text-sm border border-brand-border/40">
-            <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-brand-inkLight hover:text-brand-accent hidden debounce-clear-btn" aria-label="Clear">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-    </form>
-</section>
+<!-- WAVE DIVIDER 1: Hero (Ivory #FDFBF7) into Curated Categories & Search (Parchment #F4F1EA) -->
+<div class="w-full overflow-hidden leading-none pointer-events-none bg-brand-bg -mb-px">
+    <svg viewBox="0 0 1440 84" fill="none" preserveAspectRatio="none" class="w-full h-10 sm:h-16 lg:h-20 block text-brand-surface">
+        <path d="M0,32 C280,78 520,12 800,52 C1080,92 1280,22 1440,42 L1440,84 L0,84 Z" fill="currentColor"></path>
+    </svg>
+</div>
 
-<!-- 3. Explore by Genre (Curated Categories directly under Search Bar) -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
-    <div class="flex justify-between items-end mb-6">
-        <div>
-            <span class="text-xs font-semibold uppercase tracking-widest text-brand-accent font-body">Curated Categories</span>
-            <h2 class="text-2xl sm:text-3xl font-heading font-bold text-brand-ink mt-1">Explore by Genre</h2>
+<!-- 2. Curated Categories & Search Section (Parchment Surface Island) -->
+<section class="bg-brand-surface pt-4 sm:pt-6 pb-12 sm:pb-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Search Bar -->
+        <div class="max-w-3xl mx-auto mb-12 sm:mb-14">
+            <form action="/Books" method="get" class="debounce-search-form">
+                <div class="relative flex-1">
+                    <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-brand-inkLight/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input type="text" name="SearchQuery" placeholder="Search by title, author, or ISBN..." class="w-full pl-12 pr-12 py-3.5 bg-white/95 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-accent/30 text-brand-ink placeholder:text-brand-inkLight/60 debounce-search-input font-body text-sm border border-brand-border/70 shadow-xs transition-shadow">
+                    <button type="button" class="absolute right-4 top-1/2 -translate-y-1/2 text-brand-inkLight hover:text-brand-accent hidden debounce-clear-btn" aria-label="Clear">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
         </div>
-        <a href="/Genres" class="text-brand-accent hover:text-brand-ink font-medium text-xs sm:text-sm flex items-center gap-1 transition-colors uppercase tracking-widest font-body">
-            View All
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </a>
-    </div>
-    
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        @foreach(var genre in new[] { "Fiction", "History", "Philosophy", "Science", "Biography", "Poetry" })
-        {
-            <a href="/Books?genre=@genre" class="bg-brand-surface border border-brand-border/60 rounded-xl p-5 text-center hover:border-brand-accent hover:shadow-md transition-all group">
-                <span class="font-heading font-semibold text-base sm:text-lg text-brand-ink group-hover:text-brand-accent transition-colors">@genre</span>
+
+        <!-- Curated Categories -->
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <span class="text-xs font-semibold uppercase tracking-widest text-brand-accent font-body">Curated Categories</span>
+                <h2 class="text-2xl sm:text-3xl font-heading font-bold text-brand-ink mt-1">Explore by Genre</h2>
+            </div>
+            <a href="/Genres" class="text-brand-accent hover:text-brand-ink font-medium text-xs sm:text-sm flex items-center gap-1 transition-colors uppercase tracking-widest font-body">
+                View All
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </a>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            @foreach(var genre in new[] { "Fiction", "History", "Philosophy", "Science", "Biography", "Poetry" })
+            {
+                <a href="/Books?genre=@genre" class="bg-white/90 hover:bg-white border border-brand-border/70 hover:border-brand-accent rounded-xl p-5 text-center shadow-xs hover:shadow-md transition-all group hover:-translate-y-0.5">
+                    <span class="font-heading font-semibold text-base sm:text-lg text-brand-ink group-hover:text-brand-accent transition-colors">@genre</span>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- WAVE DIVIDER 2: Categories (Parchment #F4F1EA) into New & Trending (Ivory #FDFBF7) -->
+<div class="w-full overflow-hidden leading-none pointer-events-none bg-brand-bg -mt-px">
+    <svg viewBox="0 0 1440 84" fill="none" preserveAspectRatio="none" class="w-full h-10 sm:h-16 lg:h-20 block text-brand-surface">
+        <path d="M0,0 L1440,0 L1440,38 C1200,82 960,15 680,58 C420,92 200,18 0,42 Z" fill="currentColor"></path>
+    </svg>
+</div>
+
+<!-- 3. New & Trending (Overlapping 3-Card Fan Stack beside Editorial Text) -->
+<section class="bg-brand-bg pt-10 sm:pt-14 pb-16 sm:pb-22 overflow-hidden" id="trendingSection">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+            
+            <!-- Left Column: Editorial Information & Controls -->
+            <div class="lg:col-span-5 flex flex-col justify-center text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 mb-3.5 self-center lg:self-start">
+                    <span class="w-2 h-2 rounded-full bg-brand-accent inline-block"></span>
+                    <span class="text-xs font-semibold uppercase tracking-widest text-brand-accent font-body">Curated Collection</span>
+                </div>
+                
+                <h2 class="text-3xl sm:text-5xl lg:text-6xl font-heading font-bold text-brand-ink leading-[1.08] tracking-tight mb-4">
+                    New &amp;<br class="hidden lg:inline" /> Trending
+                </h2>
+                
+                <p class="text-brand-inkLight text-sm sm:text-base leading-relaxed font-body mb-8 max-w-md mx-auto lg:mx-0">
+                    Handpicked literary masterpieces that are capturing readers&rsquo; hearts this week.
+                </p>
+
+                <!-- Stack Switcher & Replay Controls -->
+                @if (trendingBooks.Any())
+                {
+                    <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 mb-8">
+                        <div class="inline-flex p-1 bg-brand-surface rounded-full border border-brand-border/80 shadow-2xs">
+                            @for (int i = 0; i < trendingBooks.Count; i++)
+                            {
+                                var b = trendingBooks[i];
+                                var pillActive = i == 0 ? "bg-brand-ink text-brand-bg shadow-xs" : "text-brand-inkLight hover:text-brand-ink";
+                                <button type="button" class="fan-pill px-3 py-1.5 text-xs font-semibold rounded-full transition-all duration-300 font-body @pillActive truncate max-w-[130px]" data-index="@i">
+                                    0@(i + 1) • @(b.Genre ?? "Book")
+                                </button>
+                            }
+                        </div>
+                        
+                        <!-- Quick Prev/Next Shuffle -->
+                        <div class="inline-flex items-center gap-1">
+                            <button type="button" id="fanPrevBtn" class="w-8 h-8 rounded-full bg-brand-surface hover:bg-brand-ink hover:text-white border border-brand-border/80 text-brand-ink flex items-center justify-center text-xs transition-colors shadow-2xs" aria-label="Previous card">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+                            <button type="button" id="fanNextBtn" class="w-8 h-8 rounded-full bg-brand-surface hover:bg-brand-ink hover:text-white border border-brand-border/80 text-brand-ink flex items-center justify-center text-xs transition-colors shadow-2xs" aria-label="Next card">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                            
+                            <!-- Replay Drop Animation Button -->
+                            <button type="button" id="fanReplayBtn" title="Replay Drop Animation" class="w-8 h-8 rounded-full bg-brand-surface hover:bg-brand-accent hover:text-white border border-brand-border/80 text-brand-ink flex items-center justify-center text-xs transition-colors shadow-2xs ml-1" aria-label="Replay fall animation">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                <!-- View All Trending Books Action -->
+                <div class="flex items-center justify-center lg:justify-start">
+                    <a href="/Books" class="inline-flex items-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold font-body transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                        <span>View All Trending Books</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Column: Overlapping 3-Card Stack (Mirrors Reference Photo) -->
+            <div class="lg:col-span-7 flex justify-center items-center py-6 sm:py-8 overflow-visible relative">
+                
+                <!-- Subtle Diamond / Dot Grid Backdrop Matching Photo Canvas -->
+                <div class="absolute inset-0 max-w-[480px] mx-auto rounded-3xl opacity-30 pointer-events-none -z-10" 
+                     style="background-image: radial-gradient(#8C6F45 1.2px, transparent 1.2px); background-size: 20px 20px;"></div>
+
+                <style>
+                    /* 3D Overlapping Fan/Stack Container */
+                    .fan-stack-wrapper {
+                        position: relative;
+                        width: 320px;
+                        height: 480px;
+                        perspective: 1200px;
+                    }
+                    @@media (min-width: 640px) {
+                        .fan-stack-wrapper {
+                            width: 360px;
+                            height: 500px;
+                        }
+                    }
+                    .fan-card {
+                        position: absolute;
+                        top: 20px;
+                        left: 50%;
+                        margin-left: -135px;
+                        width: 270px;
+                        transform-origin: 50% 90%;
+                        transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, opacity 0.4s ease;
+                        will-change: transform, opacity;
+                        cursor: pointer;
+                        user-select: none;
+                        opacity: 0;
+                        transform: translate3d(0, -700px, 0) scale(0.85);
+                    }
+                    @@media (min-width: 640px) {
+                        .fan-card {
+                            width: 284px;
+                            margin-left: -142px;
+                        }
+                    }
+
+                    /* Falling Entrance Keyframes from Above (Cascading Drop & Settle) */
+                    @@keyframes dropLeftCard {
+                        0% {
+                            transform: translate3d(-64px, -750px, 0) rotate(0deg) scale(0.88);
+                            opacity: 0;
+                        }
+                        65% {
+                            transform: translate3d(-64px, 14px, 0) rotate(-16deg) scale(0.97);
+                            opacity: 1;
+                        }
+                        82% {
+                            transform: translate3d(-64px, -6px, 0) rotate(-13deg) scale(0.95);
+                        }
+                        100% {
+                            transform: translate3d(-64px, 2px, 0) rotate(-14deg) scale(0.95);
+                            opacity: 1;
+                        }
+                    }
+
+                    @@keyframes dropRightCard {
+                        0% {
+                            transform: translate3d(64px, -750px, 10px) rotate(0deg) scale(0.88);
+                            opacity: 0;
+                        }
+                        65% {
+                            transform: translate3d(64px, 14px, 10px) rotate(18deg) scale(0.97);
+                            opacity: 1;
+                        }
+                        82% {
+                            transform: translate3d(64px, -6px, 10px) rotate(15deg) scale(0.95);
+                        }
+                        100% {
+                            transform: translate3d(64px, 2px, 10px) rotate(16deg) scale(0.95);
+                            opacity: 1;
+                        }
+                    }
+
+                    @@keyframes dropCenterCard {
+                        0% {
+                            transform: translate3d(0, -800px, 25px) rotate(0deg) scale(0.90);
+                            opacity: 0;
+                        }
+                        65% {
+                            transform: translate3d(0, 16px, 25px) rotate(-4deg) scale(1.02);
+                            opacity: 1;
+                        }
+                        82% {
+                            transform: translate3d(0, -6px, 25px) rotate(-1deg) scale(1.0);
+                        }
+                        100% {
+                            transform: translate3d(0, 0px, 25px) rotate(-2deg) scale(1.0);
+                            opacity: 1;
+                        }
+                    }
+
+                    /* Active Falling State (Triggered on Scroll or Replay) */
+                    .fan-stack-wrapper.is-animating .fan-card.pos-left {
+                        animation: dropLeftCard 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+                        z-index: 10;
+                    }
+                    .fan-stack-wrapper.is-animating .fan-card.pos-right {
+                        animation: dropRightCard 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+                        z-index: 15;
+                    }
+                    .fan-stack-wrapper.is-animating .fan-card.pos-center {
+                        animation: dropCenterCard 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.40s both;
+                        z-index: 30;
+                    }
+
+                    /* Settled Positions (Exact Overlapping Fan Structure as in Reference Image) */
+                    .fan-stack-wrapper.is-settled .fan-card {
+                        opacity: 1;
+                    }
+                    .fan-stack-wrapper.is-settled .fan-card.pos-left {
+                        transform: translate3d(-64px, 2px, 0) rotate(-14deg) scale(0.95);
+                        z-index: 10;
+                        box-shadow: 0 16px 36px -8px rgba(44, 38, 33, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+                    }
+                    .fan-stack-wrapper.is-settled .fan-card.pos-center {
+                        transform: translate3d(0, 0px, 25px) rotate(-2deg) scale(1.0);
+                        z-index: 30;
+                        box-shadow: 0 26px 54px -12px rgba(44, 38, 33, 0.28), 0 8px 18px -4px rgba(44, 38, 33, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+                    }
+                    .fan-stack-wrapper.is-settled .fan-card.pos-right {
+                        transform: translate3d(64px, 2px, 10px) rotate(16deg) scale(0.95);
+                        z-index: 15;
+                        box-shadow: 0 18px 40px -8px rgba(44, 38, 33, 0.20), 0 0 0 1px rgba(0, 0, 0, 0.04);
+                    }
+
+                    /* Interactive Hover Fan-Out (Cards spread slightly to inspect titles) */
+                    .fan-stack-wrapper.is-settled:hover .fan-card.pos-left {
+                        transform: translate3d(-92px, -2px, 0) rotate(-19deg) scale(0.97);
+                    }
+                    .fan-stack-wrapper.is-settled:hover .fan-card.pos-center {
+                        transform: translate3d(0, -10px, 30px) rotate(0deg) scale(1.03);
+                        box-shadow: 0 32px 64px -12px rgba(44, 38, 33, 0.32), 0 0 0 1px rgba(0, 0, 0, 0.04);
+                    }
+                    .fan-stack-wrapper.is-settled:hover .fan-card.pos-right {
+                        transform: translate3d(92px, -2px, 10px) rotate(21deg) scale(0.97);
+                    }
+                </style>
+
+                @if (trendingBooks.Any())
+                {
+                    <div class="fan-stack-wrapper" id="trendingFanStack">
+                        @for (int i = 0; i < trendingBooks.Count; i++)
+                        {
+                            var book = trendingBooks[i];
+                            var edition = book.Editions?.FirstOrDefault();
+                            var coverImg = edition?.CoverImageUrl;
+                            var displayPrice = (edition?.Price > 0 ? edition.Price : book.StartingPrice).ToString("N0") + " MMK";
+
+                            <div class="fan-card bg-white rounded-[26px] p-3 sm:p-3.5 border border-stone-200/90 flex flex-col justify-between" 
+                                 data-index="@i" role="button" tabindex="0" aria-label="Book: @book.Title by @book.Author">
+                                
+                                <!-- Top Image Container (Rounded photo framing exactly like reference) -->
+                                <div class="relative w-full h-56 sm:h-64 rounded-[20px] overflow-hidden bg-stone-100 shadow-inner group/img">
+                                    
+                                    <!-- Frosted "Top rated" Pill Badge (Clean, authentic, NO aeroplane icon) -->
+                                    <span class="absolute top-2.5 left-2.5 px-3 py-1 rounded-full bg-black/55 backdrop-blur-md text-white text-[10px] font-semibold tracking-wide font-body z-20 shadow-xs">
+                                        Top rated
+                                    </span>
+
+                                    @if (!string.IsNullOrEmpty(coverImg))
+                                    {
+                                        <img src="@coverImg" alt="@book.Title" 
+                                             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" 
+                                             class="w-full h-full object-cover">
+                                        <div class="hidden w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-4 flex flex-col justify-between text-white text-center">
+                                            <span class="text-[9px] uppercase tracking-wider text-amber-200 font-semibold font-body">@(book.Genre ?? "Classic")</span>
+                                            <p class="font-heading font-bold text-sm leading-snug line-clamp-3">@book.Title</p>
+                                            <span class="text-[10px] text-gray-300 font-heading italic truncate">@book.Author</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-4 flex flex-col justify-between text-white text-center">
+                                            <span class="text-[9px] uppercase tracking-wider text-amber-200 font-semibold font-body">@(book.Genre ?? "Classic")</span>
+                                            <p class="font-heading font-bold text-sm leading-snug line-clamp-3">@book.Title</p>
+                                            <span class="text-[10px] text-gray-300 font-heading italic truncate">@book.Author</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Bottom Card Meta (Clean title & author on row 1, full-width pill button on row 2) -->
+                                <div class="pt-3 px-1">
+                                    <div class="flex items-baseline justify-between gap-2 mb-2.5">
+                                        <h3 class="font-heading font-bold text-[15px] sm:text-base text-brand-ink leading-tight truncate flex-1" title="@book.Title">
+                                            @book.Title
+                                        </h3>
+                                        <span class="text-[11px] font-medium text-brand-inkLight/80 font-body truncate shrink-0 max-w-[105px]">
+                                            @(book.Author ?? "Classic")
+                                        </span>
+                                    </div>
+
+                                    <!-- Full-Width Dark Pill Button (Matches 'Book Now' pill in photo) -->
+                                    <a href="/Books/Detail/@book.BookId" class="w-full py-2.5 rounded-full bg-[#221F1C] hover:bg-brand-accent text-white text-xs font-semibold text-center block transition-all duration-300 shadow-xs hover:shadow-md font-body tracking-wide">
+                                        View Details
+                                    </a>
+                                </div>
+
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="p-8 text-center bg-white rounded-2xl border border-brand-border text-brand-inkLight font-body">
+                        No trending books found at the moment.
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Interactive Fan Stack Script with Falling Entrance Animation -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const wrapper = document.getElementById('trendingFanStack');
+        const section = document.getElementById('trendingSection');
+        if (!wrapper) return;
+
+        const cards = Array.from(wrapper.querySelectorAll('.fan-card'));
+        const pills = document.querySelectorAll('.fan-pill');
+        const prevBtn = document.getElementById('fanPrevBtn');
+        const nextBtn = document.getElementById('fanNextBtn');
+        const replayBtn = document.getElementById('fanReplayBtn');
+        let activeIndex = 0; // Front/center card index
+
+        function updateStackPositions() {
+            cards.forEach((card, i) => {
+                card.classList.remove('pos-left', 'pos-center', 'pos-right');
+                
+                const total = cards.length;
+                const offset = (i - activeIndex + total) % total;
+
+                if (offset === 0) {
+                    card.classList.add('pos-center');
+                } else if (offset === 1) {
+                    card.classList.add('pos-right');
+                } else {
+                    card.classList.add('pos-left');
+                }
+            });
+
+            // Update indicator pills
+            pills.forEach((pill, i) => {
+                if (i === activeIndex) {
+                    pill.classList.add('bg-brand-ink', 'text-brand-bg', 'shadow-xs');
+                    pill.classList.remove('text-brand-inkLight');
+                } else {
+                    pill.classList.remove('bg-brand-ink', 'text-brand-bg', 'shadow-xs');
+                    pill.classList.add('text-brand-inkLight');
+                }
+            });
+        }
+
+        // Trigger Falling Drop Animation from Above
+        function triggerDropAnimation() {
+            wrapper.classList.remove('is-settled');
+            wrapper.classList.remove('is-animating');
+            
+            // Force browser reflow to reset keyframe animation
+            void wrapper.offsetWidth;
+            
+            updateStackPositions();
+            wrapper.classList.add('is-animating');
+
+            // After animation completes, mark as settled for hover and click physics
+            setTimeout(() => {
+                wrapper.classList.remove('is-animating');
+                wrapper.classList.add('is-settled');
+            }, 1400);
+        }
+
+        // Trigger on Scroll Viewport Entry
+        let hasAnimated = false;
+        if ('IntersectionObserver' in window && section) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !hasAnimated) {
+                        hasAnimated = true;
+                        triggerDropAnimation();
+                    }
+                });
+            }, { threshold: 0.2 });
+            observer.observe(section);
+        } else {
+            triggerDropAnimation();
+        }
+
+        // Card Click Interaction
+        cards.forEach((card, index) => {
+            card.addEventListener('click', function(e) {
+                // If user clicked the button or link inside the front card, let them navigate
+                if (card.classList.contains('pos-center') && (e.target.closest('a') || e.target.closest('button'))) {
+                    return;
+                }
+                e.preventDefault();
+                activeIndex = index;
+                updateStackPositions();
+            });
+        });
+
+        pills.forEach((pill, index) => {
+            pill.addEventListener('click', function() {
+                activeIndex = index;
+                updateStackPositions();
+            });
+        });
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                activeIndex = (activeIndex - 1 + cards.length) % cards.length;
+                updateStackPositions();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                activeIndex = (activeIndex + 1) % cards.length;
+                updateStackPositions();
+            });
+        }
+
+        if (replayBtn) {
+            replayBtn.addEventListener('click', function() {
+                triggerDropAnimation();
+            });
+        }
+    });
+</script>
+
+<!-- WAVE DIVIDER 3: New & Trending (Ivory #FDFBF7) into Recent Bestsellers (Parchment #F4F1EA) -->
+<div class="w-full overflow-hidden leading-none pointer-events-none bg-brand-bg -mb-px">
+    <svg viewBox="0 0 1440 84" fill="none" preserveAspectRatio="none" class="w-full h-10 sm:h-16 lg:h-20 block text-brand-surface">
+        <path d="M0,45 C240,15 480,85 760,40 C1040,5 1260,75 1440,35 L1440,84 L0,84 Z" fill="currentColor"></path>
+    </svg>
+</div>
+
+<!-- 4. Recent Bestsellers Section (Parchment Surface Island - Real Database Books) -->
+<section class="bg-brand-surface pt-8 sm:pt-10 pb-16 sm:pb-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-brand-accent inline-block"></span>
+                <h2 class="text-xs sm:text-sm font-bold uppercase tracking-widest text-brand-ink font-body">Recent Bestsellers</h2>
+            </div>
+            <a href="/Books?filter=bestsellers" class="text-brand-accent hover:text-brand-ink font-semibold text-xs uppercase tracking-widest flex items-center gap-1 transition-colors font-body">
+                View All
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </a>
+        </div>
+        
+        @if (bestsellerBooks.Any())
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
+                @foreach (var book in bestsellerBooks)
+                {
+                    var edition = book.Editions?.FirstOrDefault();
+                    var coverImg = edition?.CoverImageUrl;
+                    var price = (edition?.Price > 0 ? edition.Price : book.StartingPrice).ToString("N0") + " MMK";
+
+                    <div class="h-full flex items-stretch gap-3.5 sm:gap-4 bg-white/95 hover:bg-white border border-brand-border/70 hover:border-brand-accent/50 p-4 sm:p-4.5 rounded-2xl transition-all duration-300 hover:shadow-md group shadow-xs">
+                        
+                        <!-- Book Thumbnail Container (Fixed uniform dimensions with 3D spine & shadow) -->
+                        <a href="/Books/Detail/@book.BookId" class="w-22 sm:w-24 h-38 sm:h-42 shrink-0 rounded-r-md rounded-l-xs shadow-[0_8px_18px_rgba(45,33,24,0.18)] overflow-hidden relative group-hover:-translate-y-1 transition-transform block bg-brand-surface self-center" aria-label="Book: @book.Title">
+                            <!-- Spine Highlight -->
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/35 to-transparent pointer-events-none z-20"></div>
+                            <div class="absolute left-1 top-0 bottom-0 w-[0.5px] bg-black/25 pointer-events-none z-20"></div>
+                            
+                            @if (!string.IsNullOrEmpty(coverImg))
+                            {
+                                <img src="@coverImg" alt="@book.Title" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
+                                     class="w-full h-full object-cover rounded-r-md rounded-l-xs z-10 relative">
+                                <div class="hidden w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-2.5 flex flex-col justify-between text-white relative z-10">
+                                    <span class="text-[8px] uppercase tracking-wider text-amber-200 font-semibold font-body truncate">@(book.Genre ?? "Classic")</span>
+                                    <p class="font-heading font-bold text-xs leading-tight text-center px-0.5 line-clamp-2">@book.Title</p>
+                                    <span class="text-[8px] text-gray-300 font-heading italic text-center truncate">@book.Author</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-2.5 flex flex-col justify-between text-white relative z-10">
+                                    <span class="text-[8px] uppercase tracking-wider text-amber-200 font-semibold font-body truncate">@(book.Genre ?? "Classic")</span>
+                                    <p class="font-heading font-bold text-xs leading-tight text-center px-0.5 line-clamp-2">@book.Title</p>
+                                    <span class="text-[8px] text-gray-300 font-heading italic text-center truncate">@book.Author</span>
+                                </div>
+                            }
+                        </a>
+                        
+                        <!-- Book Details Area (Engineered so Stars, Title, Author, Price, and View Details align on the EXACT same horizontal line across all cards) -->
+                        <div class="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
+                            
+                            <!-- Upper Content: Stars, Fixed-Height Title, Fixed-Height Author -->
+                            <div>
+                                <!-- Rating Stars: Exactly same baseline (Height: 18px) -->
+                                <div class="flex items-center text-amber-500 text-xs tracking-wider h-[18px] mb-1.5 font-body">★★★★★</div>
+                                
+                                <!-- Title: Fixed 2-Line Height (44px) so 1-line and 2-line titles reserve the exact same height -->
+                                <div class="h-[44px] sm:h-[46px] flex items-start mb-1 overflow-hidden">
+                                    <a href="/Books/Detail/@book.BookId" class="block w-full">
+                                        <h4 class="font-heading font-bold text-brand-ink text-sm sm:text-base leading-snug line-clamp-2 hover:text-brand-accent transition-colors" title="@book.Title">
+                                            @book.Title
+                                        </h4>
+                                    </a>
+                                </div>
+                                
+                                <!-- Author: Fixed Height (18px) -->
+                                <div class="h-[18px] flex items-center overflow-hidden mb-2">
+                                    <p class="text-xs text-brand-inkLight font-heading italic truncate">
+                                        @(book.Author ?? "Acclaimed Author")
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Content: Anchored to Bottom so Price and Button are 100% IDENTICAL in baseline -->
+                            <div class="pt-2 border-t border-brand-border/40 mt-auto">
+                                <!-- Price: Exact same baseline across all cards (Height: 20px) -->
+                                <div class="h-[20px] flex items-center mb-2">
+                                    <span class="text-xs sm:text-sm font-bold text-brand-accent font-body whitespace-nowrap">
+                                        @price
+                                    </span>
+                                </div>
+                                
+                                <!-- View Details Button: Exact same baseline across all cards, whitespace-nowrap prevents line-breaks -->
+                                <a href="/Books/Detail/@book.BookId" class="w-full py-1.5 px-3 rounded-full border border-brand-accent/60 text-brand-accent hover:bg-brand-accent hover:text-white transition-all text-xs font-semibold font-body shadow-2xs text-center block whitespace-nowrap">
+                                    View Details
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="p-8 text-center bg-white rounded-2xl border border-brand-border text-brand-inkLight font-body">
+                No bestseller books found at the moment.
+            </div>
         }
     </div>
 </section>
 
-<!-- Sleek Section Divider -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="w-full h-px bg-brand-border/50 mb-14"></div>
+<!-- WAVE DIVIDER 4: Recent Bestsellers (Parchment #F4F1EA) into Footer (Ivory #FDFBF7) -->
+<div class="w-full overflow-hidden leading-none pointer-events-none bg-brand-bg -mt-px">
+    <svg viewBox="0 0 1440 84" fill="none" preserveAspectRatio="none" class="w-full h-10 sm:h-16 lg:h-20 block text-brand-surface">
+        <path d="M0,0 L1440,0 L1440,35 C1240,75 1020,10 740,50 C480,90 220,20 0,45 Z" fill="currentColor"></path>
+    </svg>
 </div>
 
-<!-- 4. New & Trending (Showcase with large font, book, author, audiobook, NO search bar) -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
-        
-        <!-- Left: Large Typography Info (Without Search Bar) -->
-        <div class="lg:col-span-5 flex flex-col justify-center">
-            <div class="flex items-center gap-2 mb-3">
-                <span class="w-2 h-2 rounded-full bg-brand-accent inline-block"></span>
-                <span class="text-xs font-semibold uppercase tracking-widest text-brand-accent font-body">Curated Collection</span>
-            </div>
-            
-            <h2 class="text-5xl sm:text-6xl font-heading font-bold text-brand-ink leading-[1.08] tracking-tight mb-4">
-                New &amp;<br />Trending
-            </h2>
-            
-            <p class="text-brand-inkLight text-base sm:text-lg leading-relaxed max-w-sm font-body">
-                Explore rare editions, modern classics, and timeless literature.
-            </p>
-        </div>
-
-        <!-- Right: 3D Book, Author of the Week, Audiobook Cards on Gallery Ledge -->
-        <div class="lg:col-span-7 flex flex-col items-center lg:items-end">
-            <div class="flex items-end justify-center gap-2 sm:gap-4 pb-2 w-full max-w-2xl">
-                
-                <!-- 1. The Featured Book (3D Book Cover) -->
-                <a href="/Books?search=The+Last+Thing+He+Told+Me" class="w-44 sm:w-52 h-64 sm:h-76 shrink-0 rounded-r-lg rounded-l-xs shadow-[0_18px_32px_-8px_rgba(30,24,18,0.35)] overflow-hidden bg-gradient-to-br from-[#1C2C25] via-[#283E34] to-[#14221C] p-3.5 sm:p-4 flex flex-col justify-between text-white relative hover:-translate-y-2 transition-all duration-300 group cursor-pointer">
-                    <!-- Spine Highlight -->
-                    <div class="absolute left-0 top-0 bottom-0 w-2 bg-gradient-to-r from-white/25 via-transparent to-black/35 pointer-events-none rounded-l-xs"></div>
-                    <div class="absolute left-2 top-0 bottom-0 w-[0.5px] bg-black/30 pointer-events-none"></div>
-
-                    <!-- Top Meta -->
-                    <div class="flex justify-between items-center text-[9px] uppercase tracking-wider font-semibold text-amber-200/90 font-body relative z-10 pl-1">
-                        <span>#1 Bestseller</span>
-                        <span>Babylon</span>
-                    </div>
-
-                    <!-- Center Title & Author -->
-                    <div class="my-auto text-center px-1 relative z-10">
-                        <h3 class="font-heading font-bold text-white text-lg sm:text-xl leading-tight drop-shadow-xs">
-                            The Last<br />Thing He<br />Told Me
-                        </h3>
-                        <p class="font-heading italic text-amber-300/90 text-xs sm:text-sm mt-2">Laura Dave</p>
-                    </div>
-
-                    <!-- Bottom Details -->
-                    <div class="flex justify-between items-end border-t border-white/15 pt-2 text-[10px] font-body relative z-10 pl-1">
-                        <span class="text-gray-300 text-[9px] leading-tight">Hardcover<br />Edition</span>
-                        <span class="text-amber-300 font-bold text-xs sm:text-sm leading-tight text-right">24,000<br /><span class="text-[9px] font-semibold tracking-wider text-amber-400">MMK</span></span>
-                    </div>
-                </a>
-
-                <!-- Vertical Divider Label: Author of the Week -->
-                <div class="hidden sm:flex items-center justify-center h-56 text-[9px] font-bold tracking-widest text-brand-inkLight/60 uppercase select-none [writing-mode:vertical-rl] rotate-180 font-body shrink-0">
-                    Author of the Week
-                </div>
-
-                <!-- 2. Featured Author Card (Stephen King) -->
-                <div class="w-36 sm:w-44 h-60 sm:h-72 shrink-0 rounded-3xl bg-gradient-to-b from-[#C48F47] to-[#A97534] text-white shadow-[0_14px_28px_-6px_rgba(169,117,52,0.32)] p-4 flex flex-col justify-between items-center text-center hover:-translate-y-2 transition-all duration-300 group">
-                    <div class="w-full">
-                        <span class="text-[9px] uppercase tracking-widest font-semibold text-amber-100/90 font-body">Featured Author</span>
-                        <h4 class="font-heading font-bold text-base sm:text-lg text-white mt-1 leading-snug">Stephen King</h4>
-                        <p class="text-[11px] text-amber-100/80 font-body">78 Classic Works</p>
-                    </div>
-
-                    <!-- Author Icon Avatar -->
-                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-white my-auto shadow-inner group-hover:scale-105 transition-transform">
-                        <svg class="w-6 h-6 sm:w-7 sm:h-7 opacity-90" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                    </div>
-
-                    <!-- Explore Button -->
-                    <a href="/Authors" class="w-full py-2 bg-white/20 hover:bg-white/30 text-white rounded-full text-xs font-semibold font-body transition-colors shadow-2xs">
-                        Explore Author
-                    </a>
-                </div>
-
-                <!-- Vertical Divider Label: Audiobook -->
-                <div class="hidden sm:flex items-center justify-center h-56 text-[9px] font-bold tracking-widest text-brand-inkLight/60 uppercase select-none [writing-mode:vertical-rl] rotate-180 font-body shrink-0">
-                    Audiobook
-                </div>
-
-                <!-- 3. Audiobook Card (False Witness) -->
-                <div class="w-36 sm:w-44 h-60 sm:h-72 shrink-0 rounded-3xl bg-white border border-brand-border/60 shadow-[0_14px_28px_-6px_rgba(44,38,33,0.12)] p-4 flex flex-col justify-between items-center text-center hover:-translate-y-2 transition-all duration-300 group">
-                    <div class="w-full">
-                        <h4 class="font-heading font-bold text-base sm:text-lg text-brand-ink leading-tight">False Witness</h4>
-                        <p class="font-heading italic text-[11px] text-brand-inkLight mt-0.5">Karin Slaughter</p>
-                    </div>
-
-                    <!-- Vinyl Record Graphic with Grooves and Center Label -->
-                    <div class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#181615] flex items-center justify-center shadow-md my-auto ring-2 ring-black/5 group-hover:rotate-45 transition-transform duration-700">
-                        <div class="absolute inset-1 rounded-full border border-white/10 pointer-events-none"></div>
-                        <div class="absolute inset-2.5 rounded-full border border-white/5 pointer-events-none"></div>
-                        <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#D4A359] border-2 border-[#181615] flex items-center justify-center shadow-xs">
-                            <div class="w-1.5 h-1.5 rounded-full bg-[#181615]"></div>
-                        </div>
-                    </div>
-
-                    <!-- Play Audio Button -->
-                    <button type="button" onclick="alert('Audiobook preview: False Witness by Karin Slaughter')" class="w-9 h-9 rounded-full bg-[#1A1817] hover:bg-brand-accent text-white flex items-center justify-center transition-colors shadow-md hover:scale-105" aria-label="Play audiobook preview">
-                        <svg class="w-4 h-4 translate-x-0.5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Sleek Section Divider -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="w-full h-px bg-brand-border/50 mb-14"></div>
-</div>
-
-<!-- 5. Recent Bestsellers Section (Horizontal Cards) -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-    <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-brand-accent inline-block"></span>
-            <h2 class="text-xs sm:text-sm font-bold uppercase tracking-widest text-brand-ink font-body">Recent Bestsellers</h2>
-        </div>
-        <a href="/Books?filter=bestsellers" class="text-brand-accent hover:text-brand-ink font-semibold text-xs uppercase tracking-widest flex items-center gap-1 transition-colors font-body">
-            View All
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </a>
-    </div>
-    
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Bestseller 1: Left to Fear -->
-        <div class="flex items-center gap-4 bg-brand-surface border border-brand-border/70 hover:border-brand-accent/50 p-4 rounded-2xl transition-all duration-300 hover:shadow-md group">
-            <div class="w-20 sm:w-24 h-28 sm:h-34 shrink-0 rounded-r-md rounded-l-xs shadow-[0_8px_18px_rgba(45,33,24,0.18)] overflow-hidden bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-2.5 flex flex-col justify-between text-white relative group-hover:-translate-y-1 transition-transform">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/30 to-transparent pointer-events-none"></div>
-                <div class="absolute left-1 top-0 bottom-0 w-[0.5px] bg-black/25 pointer-events-none"></div>
-                <span class="text-[8px] uppercase tracking-wider text-amber-200 font-semibold font-body">Bestseller</span>
-                <p class="font-heading font-bold text-xs sm:text-sm leading-tight text-center px-1">Left to Fear</p>
-                <span class="text-[8px] text-gray-300 font-heading italic text-center">Blake Pierce</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="text-amber-500 text-xs tracking-wider mb-1 font-body">★★★★★</div>
-                <h4 class="font-heading font-bold text-brand-ink text-sm sm:text-base truncate" title="Left to Fear">Left to Fear</h4>
-                <p class="text-xs text-brand-inkLight font-heading italic truncate mt-0.5">Blake Pierce</p>
-                <p class="text-xs sm:text-sm font-semibold text-brand-accent font-body mt-1.5">15,000 MMK</p>
-                <button type="button" onclick="window.handleAddToCart(null, event)" class="inline-block mt-2 px-3.5 py-1 rounded-full border border-brand-accent/60 text-brand-accent hover:bg-brand-accent hover:text-white transition-colors text-xs font-semibold font-body shadow-2xs">
-                    Buy Now
-                </button>
-            </div>
-        </div>
-
-        <!-- Bestseller 2: Malibu Rising -->
-        <div class="flex items-center gap-4 bg-brand-surface border border-brand-border/70 hover:border-brand-accent/50 p-4 rounded-2xl transition-all duration-300 hover:shadow-md group">
-            <div class="w-20 sm:w-24 h-28 sm:h-34 shrink-0 rounded-r-md rounded-l-xs shadow-[0_8px_18px_rgba(45,33,24,0.18)] overflow-hidden bg-gradient-to-br from-[#20404C] via-[#336170] to-[#162D36] p-2.5 flex flex-col justify-between text-white relative group-hover:-translate-y-1 transition-transform">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/30 to-transparent pointer-events-none"></div>
-                <div class="absolute left-1 top-0 bottom-0 w-[0.5px] bg-black/25 pointer-events-none"></div>
-                <span class="text-[8px] uppercase tracking-wider text-teal-200 font-semibold font-body">Trending</span>
-                <p class="font-heading font-bold text-xs sm:text-sm leading-tight text-center px-1">Malibu Rising</p>
-                <span class="text-[8px] text-gray-300 font-heading italic text-center">Taylor Jenkins Reid</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="text-amber-500 text-xs tracking-wider mb-1 font-body">★★★★★</div>
-                <h4 class="font-heading font-bold text-brand-ink text-sm sm:text-base truncate" title="Malibu Rising">Malibu Rising</h4>
-                <p class="text-xs text-brand-inkLight font-heading italic truncate mt-0.5">Taylor Jenkins Reid</p>
-                <p class="text-xs sm:text-sm font-semibold text-brand-accent font-body mt-1.5">18,500 MMK</p>
-                <button type="button" onclick="window.handleAddToCart(null, event)" class="inline-block mt-2 px-3.5 py-1 rounded-full border border-brand-accent/60 text-brand-accent hover:bg-brand-accent hover:text-white transition-colors text-xs font-semibold font-body shadow-2xs">
-                    Buy Now
-                </button>
-            </div>
-        </div>
-
-        <!-- Bestseller 3: Black Ice -->
-        <div class="flex items-center gap-4 bg-brand-surface border border-brand-border/70 hover:border-brand-accent/50 p-4 rounded-2xl transition-all duration-300 hover:shadow-md group">
-            <div class="w-20 sm:w-24 h-28 sm:h-34 shrink-0 rounded-r-md rounded-l-xs shadow-[0_8px_18px_rgba(45,33,24,0.18)] overflow-hidden bg-gradient-to-br from-[#1C1824] via-[#2F293E] to-[#120F18] p-2.5 flex flex-col justify-between text-white relative group-hover:-translate-y-1 transition-transform">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/30 to-transparent pointer-events-none"></div>
-                <div class="absolute left-1 top-0 bottom-0 w-[0.5px] bg-black/25 pointer-events-none"></div>
-                <span class="text-[8px] uppercase tracking-wider text-purple-200 font-semibold font-body">Thriller</span>
-                <p class="font-heading font-bold text-xs sm:text-sm leading-tight text-center px-1">Black Ice</p>
-                <span class="text-[8px] text-gray-300 font-heading italic text-center">Brad Thor</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="text-amber-500 text-xs tracking-wider mb-1 font-body">★★★★★</div>
-                <h4 class="font-heading font-bold text-brand-ink text-sm sm:text-base truncate" title="Black Ice">Black Ice</h4>
-                <p class="text-xs text-brand-inkLight font-heading italic truncate mt-0.5">Brad Thor</p>
-                <p class="text-xs sm:text-sm font-semibold text-brand-accent font-body mt-1.5">20,000 MMK</p>
-                <button type="button" onclick="window.handleAddToCart(null, event)" class="inline-block mt-2 px-3.5 py-1 rounded-full border border-brand-accent/60 text-brand-accent hover:bg-brand-accent hover:text-white transition-colors text-xs font-semibold font-body shadow-2xs">
-                    Buy Now
-                </button>
-            </div>
-        </div>
-
-        <!-- Bestseller 4: Blind Tiger -->
-        <div class="flex items-center gap-4 bg-brand-surface border border-brand-border/70 hover:border-brand-accent/50 p-4 rounded-2xl transition-all duration-300 hover:shadow-md group">
-            <div class="w-20 sm:w-24 h-28 sm:h-34 shrink-0 rounded-r-md rounded-l-xs shadow-[0_8px_18px_rgba(45,33,24,0.18)] overflow-hidden bg-gradient-to-br from-[#3D2817] via-[#523720] to-[#25180D] p-2.5 flex flex-col justify-between text-white relative group-hover:-translate-y-1 transition-transform">
-                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/30 to-transparent pointer-events-none"></div>
-                <div class="absolute left-1 top-0 bottom-0 w-[0.5px] bg-black/25 pointer-events-none"></div>
-                <span class="text-[8px] uppercase tracking-wider text-amber-300 font-semibold font-body">Classic</span>
-                <p class="font-heading font-bold text-xs sm:text-sm leading-tight text-center px-1">Blind Tiger</p>
-                <span class="text-[8px] text-gray-300 font-heading italic text-center">Sandra Brown</span>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="text-amber-500 text-xs tracking-wider mb-1 font-body">★★★★★</div>
-                <h4 class="font-heading font-bold text-brand-ink text-sm sm:text-base truncate" title="Blind Tiger">Blind Tiger</h4>
-                <p class="text-xs text-brand-inkLight font-heading italic truncate mt-0.5">Sandra Brown</p>
-                <p class="text-xs sm:text-sm font-semibold text-brand-accent font-body mt-1.5">22,500 MMK</p>
-                <button type="button" onclick="window.handleAddToCart(null, event)" class="inline-block mt-2 px-3.5 py-1 rounded-full border border-brand-accent/60 text-brand-accent hover:bg-brand-accent hover:text-white transition-colors text-xs font-semibold font-body shadow-2xs">
-                    Buy Now
-                </button>
-            </div>
-        </div>
-    </div>
-</section>
