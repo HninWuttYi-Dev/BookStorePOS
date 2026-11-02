@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.Order;
@@ -35,7 +36,18 @@ public class OrderService : IOrderService
                     TotalPrice = item.TotalPrice,
                     TotalQuantity = item.TotalQuantity,
                     OrderStatus = (OrderStatus)item.OrderStatus,
-                    OrderSource = item.OrderSource
+                    OrderSource = item.OrderSource,
+                    CustomerId = item.CustomerId,
+                    CustomerName = item.CustomerName,
+                    CustomerPhone = item.CustomerPhone,
+                    ShippingAddress = item.ShippingAddress,
+                    Notes = item.Notes,
+                    PaymentMethod = item.PaymentMethod,
+                    PaymentStatus = (PaymentStatus)item.PaymentStatus,
+                    PaymentScreenshotUrl = item.PaymentScreenshotUrl,
+                    RejectReason = item.RejectReason,
+                    CreatedAt = item.CreatedAt,
+                    UpdatedAt = item.UpdatedAt
                 })
                 .ToListAsync();
 
@@ -62,49 +74,26 @@ public class OrderService : IOrderService
 
     public async Task<Result<OrderModel>> GetOrderById(OrderGetByIdRequestModel requestModel)
     {
-        _logger.LogInformation("Get Order Async => Fetching order by Id");
+        _logger.LogInformation("Get Order Async => Fetching order by Id: {OrderId}", requestModel.OrderId);
         try
         {
             var item = await _db.TblOrders
                 .AsNoTracking()
                 .Include(o => o.TblOrderItems)
-                .ThenInclude(oi => oi.BookEdition!)
-                .ThenInclude(be => be.Book)
+                    .ThenInclude(oi => oi.BookEdition!)
+                    .ThenInclude(be => be.Book)
                 .Include(o => o.TblOrderItems)
-                .ThenInclude(oi => oi.BookEdition!)
-                .ThenInclude(be => be.Edition)
+                    .ThenInclude(oi => oi.BookEdition!)
+                    .ThenInclude(be => be.Edition)
                 .FirstOrDefaultAsync(x => x.OrderId == requestModel.OrderId);
 
             if (item is null)
             {
-                _logger.LogWarning("Get Order Async => Order is not found");
+                _logger.LogWarning("Get Order Async => Order {OrderId} is not found", requestModel.OrderId);
                 return Result<OrderModel>.NotFound("Order is not found");
             }
 
-            var orderModel = new OrderModel
-            {
-                OrderId = item.OrderId,
-                OrderDate = item.OrderDate,
-                TotalPrice = item.TotalPrice,
-                TotalQuantity = item.TotalQuantity > 0 ? item.TotalQuantity : item.TblOrderItems.Sum(oi => oi.Quantity),
-                OrderStatus = (OrderStatus)item.OrderStatus,
-                OrderSource = item.OrderSource
-            };
-
-            foreach (var oi in item.TblOrderItems)
-            {
-                orderModel.Items.Add(new OrderItemModel
-                {
-                    OrderItemId = oi.OrderItemId,
-                    OrderId = oi.OrderId,
-                    BookEditionId = oi.BookEditionId ?? 0,
-                    BookTitle = oi.BookEdition?.Book?.Title,
-                    EditionName = oi.BookEdition?.Edition?.EditionName,
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    Subtotal = oi.Subtotal ?? 0
-                });
-            }
+            var orderModel = MapToOrderModel(item);
 
             _logger.LogInformation("Get Order Async => Order fetched successfully");
             return Result<OrderModel>.Success(orderModel, "Order fetched successfully");
@@ -116,9 +105,12 @@ public class OrderService : IOrderService
         }
     }
 
+    /// <summary>
+    /// Existing POS Create Order: OrderSource POS, OrderStatus Completed, deducts stock immediately.
+    /// </summary>
     public async Task<Result<OrderModel>> CreateOrder(OrderCreateRequestModel requestModel)
     {
-        _logger.LogInformation("Create Order Async => Creating order");
+        _logger.LogInformation("Create Order Async => Creating POS order");
 
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
@@ -135,7 +127,7 @@ public class OrderService : IOrderService
                 .Distinct()
                 .ToList();
 
-            // 2. Single query to load everything needed
+            // 2. Single batch query to avoid N+1
             var editions = await _db.TblBookEditions
                 .Include(e => e.Book)
                 .Include(e => e.Edition)
@@ -144,7 +136,7 @@ public class OrderService : IOrderService
 
             var editionLookup = editions.ToDictionary(e => e.BookEditionId);
 
-            // 3. Validation (now pure in-memory)
+            // 3. In-memory validation
             foreach (var item in requestModel.Items)
             {
                 if (item.Quantity <= 0)
@@ -173,6 +165,8 @@ public class OrderService : IOrderService
                 TotalQuantity = 0,
                 OrderStatus = (byte)OrderStatus.Completed,
                 OrderSource = requestModel.OrderSource ?? "POS",
+                PaymentStatus = (byte)PaymentStatus.Verified,
+                PaymentMethod = "Cash",
                 CustomerId = requestModel.CustomerId,
                 CustomerName = requestModel.CustomerName,
                 CustomerPhone = requestModel.CustomerPhone,
@@ -180,10 +174,9 @@ public class OrderService : IOrderService
                 CreatedAt = DateTime.Now
             };
 
-            // 5. Process items + deduct stock (still in-memory lookup)
+            // 5. Process items + deduct stock
             decimal orderTotal = 0;
             int orderQuantity = 0;
-            var orderModelItems = new List<OrderItemModel>();
 
             foreach (var item in requestModel.Items)
             {
@@ -191,6 +184,7 @@ public class OrderService : IOrderService
 
                 // Deduct stock on tracked EF Core entity
                 edition.StockQuantity -= item.Quantity;
+                edition.UpdatedAt = DateTime.Now;
 
                 decimal price = edition.Price;
                 decimal subtotal = price * item.Quantity;
@@ -205,16 +199,6 @@ public class OrderService : IOrderService
                     Subtotal = subtotal
                 };
                 order.TblOrderItems.Add(orderItem);
-
-                orderModelItems.Add(new OrderItemModel
-                {
-                    BookEditionId = item.BookEditionId,
-                    BookTitle = edition.Book?.Title,
-                    EditionName = edition.Edition?.EditionName,
-                    Quantity = item.Quantity,
-                    UnitPrice = price,
-                    Subtotal = subtotal
-                });
             }
 
             order.TotalPrice = orderTotal;
@@ -222,27 +206,391 @@ public class OrderService : IOrderService
 
             _db.TblOrders.Add(order);
 
-            // Single atomic save for order, order items, and stock updates
+            // Single atomic save for order, items, and stock updates
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            _logger.LogInformation("Create Order Async => Order is created successfully");
-            return Result<OrderModel>.Success(new OrderModel
+            var orderModelItems = order.TblOrderItems.Select(oi =>
             {
-                OrderId = order.OrderId,
-                OrderDate = order.OrderDate,
-                TotalPrice = order.TotalPrice,
-                TotalQuantity = order.TotalQuantity,
-                OrderStatus = (OrderStatus)order.OrderStatus,
-                OrderSource = order.OrderSource,
-                Items = orderModelItems
-            }, "Created new order successfully");
+                var ed = oi.BookEditionId.HasValue && editionLookup.TryGetValue(oi.BookEditionId.Value, out var val) ? val : null;
+                return new OrderItemModel
+                {
+                    OrderItemId = oi.OrderItemId,
+                    OrderId = oi.OrderId,
+                    BookEditionId = oi.BookEditionId ?? 0,
+                    BookTitle = ed?.Book?.Title,
+                    EditionName = ed?.Edition?.EditionName,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    Subtotal = oi.Subtotal ?? 0
+                };
+            }).ToList();
+
+            _logger.LogInformation("Create Order Async => POS Order #{OrderId} created successfully", order.OrderId);
+            return Result<OrderModel>.Success(MapToOrderModel(order, orderModelItems), "Created new order successfully");
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
             _logger.LogWarning(ex, "Create Order Async => Failed to create order");
             return Result<OrderModel>.SystemError("Failed to create order: " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 1) CreateOnlineOrderAsync
+    /// Validates stock available without deducting yet.
+    /// OrderSource = "Online", OrderStatus = Pending, PaymentStatus = Unpaid, PaymentMethod = "BankTransfer".
+    /// </summary>
+    public async Task<Result<OrderModel>> CreateOnlineOrderAsync(OnlineOrderCreateRequestModel requestModel)
+    {
+        _logger.LogInformation("Create Online Order Async => Creating online order for customer {CustomerName}", requestModel.CustomerName);
+
+        if (requestModel.Items == null || !requestModel.Items.Any())
+        {
+            _logger.LogWarning("Create Online Order Async => Order items are required");
+            return Result<OrderModel>.ValidationError("Order must contain at least one item.");
+        }
+
+        if (string.IsNullOrWhiteSpace(requestModel.CustomerName))
+        {
+            return Result<OrderModel>.ValidationError("Customer name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(requestModel.CustomerPhone))
+        {
+            return Result<OrderModel>.ValidationError("Customer phone is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(requestModel.ShippingAddress))
+        {
+            return Result<OrderModel>.ValidationError("Shipping address is required.");
+        }
+
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            // 1. Single query to collect all distinct editions needed (avoids N+1)
+            var bookEditionIds = requestModel.Items
+                .Select(i => i.BookEditionId)
+                .Distinct()
+                .ToList();
+
+            var editions = await _db.TblBookEditions
+                .Include(e => e.Book)
+                .Include(e => e.Edition)
+                .Where(e => bookEditionIds.Contains(e.BookEditionId) && !e.IsDeleted)
+                .ToListAsync();
+
+            var editionLookup = editions.ToDictionary(e => e.BookEditionId);
+
+            // 2. Pure in-memory validation (verify stock available, do NOT deduct yet)
+            foreach (var item in requestModel.Items)
+            {
+                if (item.Quantity <= 0)
+                {
+                    return Result<OrderModel>.ValidationError("Quantity must be greater than 0.");
+                }
+
+                if (!editionLookup.TryGetValue(item.BookEditionId, out var edition))
+                {
+                    return Result<OrderModel>.NotFound(
+                        $"Book Edition with ID {item.BookEditionId} not found or is deleted.");
+                }
+
+                if (edition.StockQuantity < item.Quantity)
+                {
+                    return Result<OrderModel>.ValidationError(
+                        $"Insufficient stock for '{edition.Book?.Title ?? "Book"} ({edition.Edition?.EditionName ?? "Edition"})'. Available: {edition.StockQuantity}, Requested: {item.Quantity}");
+                }
+            }
+
+            // 3. Create order header
+            var order = new TblOrder
+            {
+                OrderDate = DateTime.Now,
+                TotalPrice = 0,
+                TotalQuantity = 0,
+                OrderStatus = (byte)OrderStatus.Pending,
+                OrderSource = "Online",
+                PaymentStatus = (byte)PaymentStatus.Unpaid,
+                PaymentMethod = "BankTransfer",
+                CustomerId = requestModel.CustomerId,
+                CustomerName = requestModel.CustomerName.Trim(),
+                CustomerPhone = requestModel.CustomerPhone.Trim(),
+                ShippingAddress = requestModel.ShippingAddress.Trim(),
+                Notes = requestModel.Notes,
+                CreatedAt = DateTime.Now
+            };
+
+            // 4. Compute UnitPrice from edition.Price and assemble items
+            decimal orderTotal = 0;
+            int orderQuantity = 0;
+
+            foreach (var item in requestModel.Items)
+            {
+                var edition = editionLookup[item.BookEditionId];
+
+                // NOTE: We do NOT deduct stock yet for online orders until admin confirms
+                decimal price = edition.Price;
+                decimal subtotal = price * item.Quantity;
+                orderTotal += subtotal;
+                orderQuantity += item.Quantity;
+
+                var orderItem = new TblOrderItem
+                {
+                    BookEditionId = item.BookEditionId,
+                    Quantity = item.Quantity,
+                    UnitPrice = price,
+                    Subtotal = subtotal
+                };
+                order.TblOrderItems.Add(orderItem);
+            }
+
+            order.TotalPrice = orderTotal;
+            order.TotalQuantity = orderQuantity;
+
+            _db.TblOrders.Add(order);
+
+            // Single atomic save in transaction
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            var orderModelItems = order.TblOrderItems.Select(oi =>
+            {
+                var ed = oi.BookEditionId.HasValue && editionLookup.TryGetValue(oi.BookEditionId.Value, out var val) ? val : null;
+                return new OrderItemModel
+                {
+                    OrderItemId = oi.OrderItemId,
+                    OrderId = oi.OrderId,
+                    BookEditionId = oi.BookEditionId ?? 0,
+                    BookTitle = ed?.Book?.Title,
+                    EditionName = ed?.Edition?.EditionName,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    Subtotal = oi.Subtotal ?? 0
+                };
+            }).ToList();
+
+            _logger.LogInformation("Create Online Order Async => Online order #{OrderId} created successfully", order.OrderId);
+            return Result<OrderModel>.Success(MapToOrderModel(order, orderModelItems), "Online order placed successfully");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Create Online Order Async => Failed to create online order");
+            return Result<OrderModel>.SystemError("Failed to create online order: " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 2) UploadPaymentScreenshotAsync
+    /// Order must exist, OrderSource Online, OrderStatus Pending.
+    /// Sets PaymentScreenshotUrl, PaymentStatus = Submitted, PaymentMethod = BankTransfer, UpdatedAt.
+    /// </summary>
+    public async Task<Result<OrderModel>> UploadPaymentScreenshotAsync(OrderPaymentScreenshotRequestModel requestModel)
+    {
+        _logger.LogInformation("Upload Payment Screenshot Async => Processing order {OrderId}", requestModel.OrderId);
+        try
+        {
+            if (string.IsNullOrWhiteSpace(requestModel.PaymentScreenshotUrl))
+            {
+                return Result<OrderModel>.ValidationError("Payment screenshot URL is required.");
+            }
+
+            var order = await _db.TblOrders
+                .Include(o => o.TblOrderItems)
+                    .ThenInclude(oi => oi.BookEdition!)
+                    .ThenInclude(be => be.Book)
+                .Include(o => o.TblOrderItems)
+                    .ThenInclude(oi => oi.BookEdition!)
+                    .ThenInclude(be => be.Edition)
+                .FirstOrDefaultAsync(o => o.OrderId == requestModel.OrderId);
+
+            if (order == null)
+            {
+                _logger.LogWarning("Upload Payment Screenshot Async => Order {OrderId} not found", requestModel.OrderId);
+                return Result<OrderModel>.NotFound($"Order with ID {requestModel.OrderId} was not found.");
+            }
+
+            if (!string.Equals(order.OrderSource, "Online", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Upload Payment Screenshot Async => Order {OrderId} is not an Online order (Source: {OrderSource})", order.OrderId, order.OrderSource);
+                return Result<OrderModel>.ValidationError("Payment screenshot can only be uploaded for Online orders.");
+            }
+
+            if (order.OrderStatus != (byte)OrderStatus.Pending)
+            {
+                _logger.LogWarning("Upload Payment Screenshot Async => Order {OrderId} status is {OrderStatus}, expected Pending", order.OrderId, (OrderStatus)order.OrderStatus);
+                return Result<OrderModel>.ValidationError($"Payment screenshot can only be uploaded for Pending orders. Current status: {(OrderStatus)order.OrderStatus}");
+            }
+
+            order.PaymentScreenshotUrl = requestModel.PaymentScreenshotUrl.Trim();
+            order.PaymentStatus = (byte)PaymentStatus.Submitted;
+            order.PaymentMethod = "BankTransfer";
+            order.UpdatedAt = DateTime.Now;
+
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Upload Payment Screenshot Async => Order {OrderId} payment screenshot uploaded successfully", order.OrderId);
+            return Result<OrderModel>.Success(MapToOrderModel(order), "Payment screenshot uploaded successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Upload Payment Screenshot Async => Failed to upload payment screenshot for order {OrderId}", requestModel.OrderId);
+            return Result<OrderModel>.SystemError("Failed to upload payment screenshot: " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 3) ConfirmOrderAsync (admin)
+    /// Order must be Pending. Checks stock again, deducts BookEdition.StockQuantity.
+    /// OrderStatus = Completed, PaymentStatus = Verified, UpdatedAt.
+    /// Runs in transaction; fails if insufficient stock.
+    /// </summary>
+    public async Task<Result<OrderModel>> ConfirmOrderAsync(OrderConfirmRequestModel requestModel)
+    {
+        _logger.LogInformation("Confirm Order Async => Admin confirming order {OrderId}", requestModel.OrderId);
+
+        var order = await _db.TblOrders
+            .Include(o => o.TblOrderItems)
+                .ThenInclude(oi => oi.BookEdition!)
+                .ThenInclude(be => be.Book)
+            .Include(o => o.TblOrderItems)
+                .ThenInclude(oi => oi.BookEdition!)
+                .ThenInclude(be => be.Edition)
+            .FirstOrDefaultAsync(o => o.OrderId == requestModel.OrderId);
+
+        if (order == null)
+        {
+            _logger.LogWarning("Confirm Order Async => Order {OrderId} not found", requestModel.OrderId);
+            return Result<OrderModel>.NotFound($"Order with ID {requestModel.OrderId} was not found.");
+        }
+
+        if (order.OrderStatus != (byte)OrderStatus.Pending)
+        {
+            _logger.LogWarning("Confirm Order Async => Order {OrderId} is not Pending (Status: {OrderStatus})", order.OrderId, (OrderStatus)order.OrderStatus);
+            return Result<OrderModel>.ValidationError($"Order cannot be confirmed because it is in '{(OrderStatus)order.OrderStatus}' status. Only Pending orders can be confirmed.");
+        }
+
+        if (order.TblOrderItems == null || !order.TblOrderItems.Any())
+        {
+            return Result<OrderModel>.ValidationError("Order has no items to confirm.");
+        }
+
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            // Single batch query for all distinct edition IDs (avoids N+1)
+            var bookEditionIds = order.TblOrderItems
+                .Where(oi => oi.BookEditionId.HasValue)
+                .Select(oi => oi.BookEditionId!.Value)
+                .Distinct()
+                .ToList();
+
+            var editions = await _db.TblBookEditions
+                .Include(e => e.Book)
+                .Include(e => e.Edition)
+                .Where(e => bookEditionIds.Contains(e.BookEditionId) && !e.IsDeleted)
+                .ToListAsync();
+
+            var editionLookup = editions.ToDictionary(e => e.BookEditionId);
+
+            // Re-validate stock for all items
+            foreach (var item in order.TblOrderItems)
+            {
+                if (!item.BookEditionId.HasValue || !editionLookup.TryGetValue(item.BookEditionId.Value, out var edition))
+                {
+                    await transaction.RollbackAsync();
+                    return Result<OrderModel>.NotFound($"Book Edition with ID {item.BookEditionId} not found or is deleted.");
+                }
+
+                if (edition.StockQuantity < item.Quantity)
+                {
+                    await transaction.RollbackAsync();
+                    return Result<OrderModel>.ValidationError(
+                        $"Insufficient stock for '{edition.Book?.Title ?? "Book"} ({edition.Edition?.EditionName ?? "Edition"})'. Available: {edition.StockQuantity}, Required: {item.Quantity}");
+                }
+            }
+
+            // Deduct stock for each item on tracked EF Core entities
+            foreach (var item in order.TblOrderItems)
+            {
+                var edition = editionLookup[item.BookEditionId!.Value];
+                edition.StockQuantity -= item.Quantity;
+                edition.UpdatedAt = DateTime.Now;
+            }
+
+            order.OrderStatus = (byte)OrderStatus.Completed;
+            order.PaymentStatus = (byte)PaymentStatus.Verified;
+            order.UpdatedAt = DateTime.Now;
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Confirm Order Async => Order {OrderId} confirmed and stock deducted successfully", order.OrderId);
+            return Result<OrderModel>.Success(MapToOrderModel(order), "Order confirmed and completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Confirm Order Async => Failed to confirm order {OrderId}", requestModel.OrderId);
+            return Result<OrderModel>.SystemError("Failed to confirm order: " + ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// 4) RejectOrderAsync (admin)
+    /// Order must be Pending.
+    /// OrderStatus = Rejected, PaymentStatus = Rejected, RejectReason set, UpdatedAt.
+    /// No stock change (because stock was not deducted on order creation).
+    /// </summary>
+    public async Task<Result<OrderModel>> RejectOrderAsync(OrderRejectRequestModel requestModel)
+    {
+        _logger.LogInformation("Reject Order Async => Admin rejecting order {OrderId}", requestModel.OrderId);
+        try
+        {
+            if (string.IsNullOrWhiteSpace(requestModel.RejectReason))
+            {
+                return Result<OrderModel>.ValidationError("Reject reason is required.");
+            }
+
+            var order = await _db.TblOrders
+                .Include(o => o.TblOrderItems)
+                    .ThenInclude(oi => oi.BookEdition!)
+                    .ThenInclude(be => be.Book)
+                .Include(o => o.TblOrderItems)
+                    .ThenInclude(oi => oi.BookEdition!)
+                    .ThenInclude(be => be.Edition)
+                .FirstOrDefaultAsync(o => o.OrderId == requestModel.OrderId);
+
+            if (order == null)
+            {
+                _logger.LogWarning("Reject Order Async => Order {OrderId} not found", requestModel.OrderId);
+                return Result<OrderModel>.NotFound($"Order with ID {requestModel.OrderId} was not found.");
+            }
+
+            if (order.OrderStatus != (byte)OrderStatus.Pending)
+            {
+                _logger.LogWarning("Reject Order Async => Order {OrderId} is not Pending (Status: {OrderStatus})", order.OrderId, (OrderStatus)order.OrderStatus);
+                return Result<OrderModel>.ValidationError($"Order cannot be rejected because it is in '{(OrderStatus)order.OrderStatus}' status. Only Pending orders can be rejected.");
+            }
+
+            order.OrderStatus = (byte)OrderStatus.Rejected;
+            order.PaymentStatus = (byte)PaymentStatus.Rejected;
+            order.RejectReason = requestModel.RejectReason.Trim();
+            order.UpdatedAt = DateTime.Now;
+
+            // Note: No stock change because stock was not deducted on order creation
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation("Reject Order Async => Order {OrderId} rejected successfully", order.OrderId);
+            return Result<OrderModel>.Success(MapToOrderModel(order), "Order rejected successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Reject Order Async => Failed to reject order {OrderId}", requestModel.OrderId);
+            return Result<OrderModel>.SystemError("Failed to reject order: " + ex.Message);
         }
     }
 
@@ -334,7 +682,18 @@ public class OrderService : IOrderService
                     TotalPrice = o.TotalPrice,
                     TotalQuantity = o.TblOrderItems.Sum(oi => oi.Quantity),
                     OrderStatus = (OrderStatus)o.OrderStatus,
-                    OrderSource = o.OrderSource
+                    OrderSource = o.OrderSource,
+                    CustomerId = o.CustomerId,
+                    CustomerName = o.CustomerName,
+                    CustomerPhone = o.CustomerPhone,
+                    ShippingAddress = o.ShippingAddress,
+                    Notes = o.Notes,
+                    PaymentMethod = o.PaymentMethod,
+                    PaymentStatus = (PaymentStatus)o.PaymentStatus,
+                    PaymentScreenshotUrl = o.PaymentScreenshotUrl,
+                    RejectReason = o.RejectReason,
+                    CreatedAt = o.CreatedAt,
+                    UpdatedAt = o.UpdatedAt
                 })
                 .ToListAsync();
 
@@ -368,4 +727,51 @@ public class OrderService : IOrderService
         }
     }
 
+    private static OrderModel MapToOrderModel(TblOrder item, List<OrderItemModel>? items = null)
+    {
+        var model = new OrderModel
+        {
+            OrderId = item.OrderId,
+            OrderDate = item.OrderDate,
+            TotalPrice = item.TotalPrice,
+            TotalQuantity = item.TotalQuantity > 0 ? item.TotalQuantity : (item.TblOrderItems?.Sum(oi => oi.Quantity) ?? 0),
+            OrderStatus = (OrderStatus)item.OrderStatus,
+            OrderSource = item.OrderSource,
+            CustomerId = item.CustomerId,
+            CustomerName = item.CustomerName,
+            CustomerPhone = item.CustomerPhone,
+            ShippingAddress = item.ShippingAddress,
+            Notes = item.Notes,
+            PaymentMethod = item.PaymentMethod,
+            PaymentStatus = (PaymentStatus)item.PaymentStatus,
+            PaymentScreenshotUrl = item.PaymentScreenshotUrl,
+            RejectReason = item.RejectReason,
+            CreatedAt = item.CreatedAt,
+            UpdatedAt = item.UpdatedAt
+        };
+
+        if (items != null)
+        {
+            model.Items = items;
+        }
+        else if (item.TblOrderItems != null && item.TblOrderItems.Any())
+        {
+            foreach (var oi in item.TblOrderItems)
+            {
+                model.Items.Add(new OrderItemModel
+                {
+                    OrderItemId = oi.OrderItemId,
+                    OrderId = oi.OrderId,
+                    BookEditionId = oi.BookEditionId ?? 0,
+                    BookTitle = oi.BookEdition?.Book?.Title,
+                    EditionName = oi.BookEdition?.Edition?.EditionName,
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice,
+                    Subtotal = oi.Subtotal ?? 0
+                });
+            }
+        }
+
+        return model;
+    }
 }

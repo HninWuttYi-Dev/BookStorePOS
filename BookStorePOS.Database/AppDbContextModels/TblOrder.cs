@@ -29,6 +29,16 @@ public partial class TblOrder
 
     public DateTime? UpdatedAt { get; set; }
 
+    public string? ShippingAddress { get; set; }
+
+    public string? PaymentMethod { get; set; }
+
+    public byte PaymentStatus { get; set; }
+
+    public string? PaymentScreenshotUrl { get; set; }
+
+    public string? RejectReason { get; set; }
+
     public virtual TblUser? Customer { get; set; }
 
     public virtual ICollection<TblOrderItem> TblOrderItems { get; set; } = new List<TblOrderItem>();

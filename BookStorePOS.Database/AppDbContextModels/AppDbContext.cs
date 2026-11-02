@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -157,6 +157,10 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValue("POS", "DF_TblOrder_OrderSource");
             entity.Property(e => e.OrderStatus).HasDefaultValue((byte)2, "DF_TblOrder_OrderStatus");
+            entity.Property(e => e.PaymentMethod).HasMaxLength(30);
+            entity.Property(e => e.PaymentScreenshotUrl).HasMaxLength(500);
+            entity.Property(e => e.RejectReason).HasMaxLength(500);
+            entity.Property(e => e.ShippingAddress).HasMaxLength(500);
             entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
 
             entity.HasOne(d => d.Customer).WithMany(p => p.TblOrders)
