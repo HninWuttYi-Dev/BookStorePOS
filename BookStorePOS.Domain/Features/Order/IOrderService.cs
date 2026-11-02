@@ -8,7 +8,6 @@ public interface IOrderService
 {
     Task<Result<OrderModel>> CreateOrder(OrderCreateRequestModel requestModel);
     Task<Result<OrderModel>> CreateOnlineOrderAsync(OnlineOrderCreateRequestModel requestModel);
-    Task<Result<OrderModel>> UploadPaymentScreenshotAsync(OrderPaymentScreenshotRequestModel requestModel);
     Task<Result<OrderModel>> ConfirmOrderAsync(OrderConfirmRequestModel requestModel);
     Task<Result<OrderModel>> RejectOrderAsync(OrderRejectRequestModel requestModel);
     Task<Result<OrderModel>> GetOrderById(OrderGetByIdRequestModel requestModel);

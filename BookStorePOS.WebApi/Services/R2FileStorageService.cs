@@ -50,8 +50,9 @@ public class R2FileStorageService : IFileStorageService
                     ServiceURL = $"https://{accountId}.r2.cloudflarestorage.com",
                     ForcePathStyle = true,
                     AuthenticationRegion = "auto",
-                    Timeout = TimeSpan.FromSeconds(10),
-                    MaxErrorRetry = 1
+                    DisableHostPrefixInjection = true,
+                    Timeout = TimeSpan.FromSeconds(4),
+                    MaxErrorRetry = 0
                 };
 
                 using var client = new AmazonS3Client(accessKey, secretKey, s3Config);
@@ -68,7 +69,8 @@ public class R2FileStorageService : IFileStorageService
                         : file.ContentType
                 };
 
-                await client.PutObjectAsync(request);
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(4));
+                await client.PutObjectAsync(request, cts.Token);
 
                 var url = $"{publicUrl}/{key}";
                 _logger.LogInformation("R2 upload success => {Url}", url);
@@ -98,7 +100,8 @@ public class R2FileStorageService : IFileStorageService
             await using var fileStream = new FileStream(filePath, FileMode.Create);
             await file.CopyToAsync(fileStream);
 
-            var localUrl = $"/uploads/{folder}/{fileName}";
+            var apiBase = _config["ApiBaseUrl"] ?? "http://localhost:5201";
+            var localUrl = $"{apiBase.TrimEnd('/')}/uploads/{folder}/{fileName}";
             _logger.LogInformation("Local file upload success => {Url}", localUrl);
             return localUrl;
         }

@@ -313,8 +313,13 @@ public class OrderService : IOrderService
                 TotalQuantity = 0,
                 OrderStatus = (byte)OrderStatus.Pending,
                 OrderSource = "Online",
-                PaymentStatus = (byte)PaymentStatus.Unpaid,
-                PaymentMethod = "BankTransfer",
+                PaymentStatus = !string.IsNullOrWhiteSpace(requestModel.PaymentScreenshotUrl)
+                    ? (byte)PaymentStatus.Submitted
+                    : (byte)PaymentStatus.Unpaid,
+                PaymentMethod = !string.IsNullOrWhiteSpace(requestModel.PaymentMethod)
+                    ? requestModel.PaymentMethod.Trim()
+                    : "BankTransfer",
+                PaymentScreenshotUrl = requestModel.PaymentScreenshotUrl?.Trim(),
                 CustomerId = requestModel.CustomerId,
                 CustomerName = requestModel.CustomerName.Trim(),
                 CustomerPhone = requestModel.CustomerPhone.Trim(),
@@ -384,66 +389,7 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// 2) UploadPaymentScreenshotAsync
-    /// Order must exist, OrderSource Online, OrderStatus Pending.
-    /// Sets PaymentScreenshotUrl, PaymentStatus = Submitted, PaymentMethod = BankTransfer, UpdatedAt.
-    /// </summary>
-    public async Task<Result<OrderModel>> UploadPaymentScreenshotAsync(OrderPaymentScreenshotRequestModel requestModel)
-    {
-        _logger.LogInformation("Upload Payment Screenshot Async => Processing order {OrderId}", requestModel.OrderId);
-        try
-        {
-            if (string.IsNullOrWhiteSpace(requestModel.PaymentScreenshotUrl))
-            {
-                return Result<OrderModel>.ValidationError("Payment screenshot URL is required.");
-            }
-
-            var order = await _db.TblOrders
-                .Include(o => o.TblOrderItems)
-                    .ThenInclude(oi => oi.BookEdition!)
-                    .ThenInclude(be => be.Book)
-                .Include(o => o.TblOrderItems)
-                    .ThenInclude(oi => oi.BookEdition!)
-                    .ThenInclude(be => be.Edition)
-                .FirstOrDefaultAsync(o => o.OrderId == requestModel.OrderId);
-
-            if (order == null)
-            {
-                _logger.LogWarning("Upload Payment Screenshot Async => Order {OrderId} not found", requestModel.OrderId);
-                return Result<OrderModel>.NotFound($"Order with ID {requestModel.OrderId} was not found.");
-            }
-
-            if (!string.Equals(order.OrderSource, "Online", StringComparison.OrdinalIgnoreCase))
-            {
-                _logger.LogWarning("Upload Payment Screenshot Async => Order {OrderId} is not an Online order (Source: {OrderSource})", order.OrderId, order.OrderSource);
-                return Result<OrderModel>.ValidationError("Payment screenshot can only be uploaded for Online orders.");
-            }
-
-            if (order.OrderStatus != (byte)OrderStatus.Pending)
-            {
-                _logger.LogWarning("Upload Payment Screenshot Async => Order {OrderId} status is {OrderStatus}, expected Pending", order.OrderId, (OrderStatus)order.OrderStatus);
-                return Result<OrderModel>.ValidationError($"Payment screenshot can only be uploaded for Pending orders. Current status: {(OrderStatus)order.OrderStatus}");
-            }
-
-            order.PaymentScreenshotUrl = requestModel.PaymentScreenshotUrl.Trim();
-            order.PaymentStatus = (byte)PaymentStatus.Submitted;
-            order.PaymentMethod = "BankTransfer";
-            order.UpdatedAt = DateTime.Now;
-
-            await _db.SaveChangesAsync();
-
-            _logger.LogInformation("Upload Payment Screenshot Async => Order {OrderId} payment screenshot uploaded successfully", order.OrderId);
-            return Result<OrderModel>.Success(MapToOrderModel(order), "Payment screenshot uploaded successfully.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Upload Payment Screenshot Async => Failed to upload payment screenshot for order {OrderId}", requestModel.OrderId);
-            return Result<OrderModel>.SystemError("Failed to upload payment screenshot: " + ex.Message);
-        }
-    }
-
-    /// <summary>
-    /// 3) ConfirmOrderAsync (admin)
+    /// ConfirmOrderAsync (admin)
     /// Order must be Pending. Checks stock again, deducts BookEdition.StockQuantity.
     /// OrderStatus = Completed, PaymentStatus = Verified, UpdatedAt.
     /// Runs in transaction; fails if insufficient stock.

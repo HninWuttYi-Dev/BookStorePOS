@@ -95,9 +95,11 @@
             <!-- Search, Cart, Login (Desktop) -->
             <div class="hidden md:flex items-center gap-6 ml-auto">
 
-                <a href="/Cart" class="flex items-center gap-2 text-brand-ink hover:text-brand-accent transition-colors">
+
+                <a href="/Cart" class="flex items-center gap-2 text-brand-ink hover:text-brand-accent transition-colors relative">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <span class="font-medium text-sm">Cart</span>
+                    <span id="navCartBadge" class="hidden px-2 py-0.5 text-[11px] font-bold rounded-full bg-brand-accent text-white">0</span>
                 </a>
 
                 <!-- Guest State -->
@@ -124,8 +126,9 @@
 
             <!-- Mobile Cart & Toggle -->
             <div class="flex md:hidden items-center gap-4">
-                <a href="/Cart" class="text-brand-ink hover:text-brand-accent transition-colors">
+                <a href="/Cart" class="text-brand-ink hover:text-brand-accent transition-colors relative">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    <span id="mobileCartBadge" class="hidden absolute -top-1 -right-2 px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-brand-accent text-white">0</span>
                 </a>
                 <button id="mobileMenuBtn" class="text-brand-ink hover:text-brand-accent focus:outline-none" aria-label="Toggle menu">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -362,7 +365,7 @@
                 return false;
             }
             if (bookId) {
-                window.location.href = '/Cart/Add/' + bookId;
+                window.location.href = '/Books/Detail/' + bookId;
             } else {
                 window.location.href = '/Cart';
             }
@@ -521,8 +524,135 @@
                     }
                 });
             });
+
+            // Update Cart Badge on load
+            if (typeof window.updateCartBadge === 'function') {
+                window.updateCartBadge();
+            }
         });
+
+        // Global Cart Badge Update
+        window.updateCartBadge = function() {
+            try {
+                const raw = localStorage.getItem('customer_cart');
+                const cart = raw ? JSON.parse(raw) : [];
+                const total = cart.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0);
+                
+                const navBadge = document.getElementById('navCartBadge');
+                const mobBadge = document.getElementById('mobileCartBadge');
+                
+                if (navBadge) {
+                    if (total > 0) {
+                        navBadge.textContent = total;
+                        navBadge.classList.remove('hidden');
+                    } else {
+                        navBadge.classList.add('hidden');
+                    }
+                }
+                if (mobBadge) {
+                    if (total > 0) {
+                        mobBadge.textContent = total;
+                        mobBadge.classList.remove('hidden');
+                    } else {
+                        mobBadge.classList.add('hidden');
+                    }
+                }
+            } catch(e) {}
+        };
+
+        // Global Toast Notification System
+        let toastTimeout = null;
+        window.showToast = function(message, isSuccess = true) {
+            const container = document.getElementById('globalToastContainer');
+            const cardEl = document.getElementById('globalToastCard');
+            const titleEl = document.getElementById('globalToastTitle');
+            const messageEl = document.getElementById('globalToastMessage');
+            const iconContainer = document.getElementById('globalToastIconContainer');
+            if (!container || !messageEl || !iconContainer) return;
+
+            messageEl.textContent = message;
+
+            const isSuccessBool = (isSuccess === true || isSuccess === 'success' || isSuccess === 1 || isSuccess === '1');
+
+            if (isSuccessBool) {
+                if (titleEl) {
+                    titleEl.textContent = "SUCCESS";
+                    titleEl.className = "text-[10px] font-bold tracking-widest uppercase text-emerald-600 mb-0.5 font-body";
+                }
+                if (cardEl) {
+                    cardEl.className = "bg-white/95 backdrop-blur-md border border-emerald-200 shadow-2xl rounded-2xl px-5 py-4 flex items-center gap-3.5 max-w-md ring-1 ring-emerald-500/15";
+                }
+                iconContainer.className = "w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0 shadow-2xs";
+                iconContainer.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>';
+            } else {
+                if (titleEl) {
+                    titleEl.textContent = "ATTENTION";
+                    titleEl.className = "text-[10px] font-bold tracking-widest uppercase text-rose-600 mb-0.5 font-body";
+                }
+                if (cardEl) {
+                    cardEl.className = "bg-white/95 backdrop-blur-md border border-rose-200 shadow-2xl rounded-2xl px-5 py-4 flex items-center gap-3.5 max-w-md ring-1 ring-rose-500/15";
+                }
+                iconContainer.className = "w-9 h-9 rounded-xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 shadow-2xs";
+                iconContainer.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+            }
+
+            container.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-3');
+            container.classList.add('opacity-100', 'translate-y-0');
+
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                window.hideToast();
+            }, 4500);
+        };
+
+        window.hideToast = function() {
+            const container = document.getElementById('globalToastContainer');
+            if (container) {
+                container.classList.add('opacity-0', 'pointer-events-none', 'translate-y-3');
+                container.classList.remove('opacity-100', 'translate-y-0');
+            }
+        };
     </script>
+
+    <!-- Global Toast Container Element -->
+    <div id="globalToastContainer" class="fixed bottom-6 right-6 z-50 transition-all duration-300 transform translate-y-3 opacity-0 pointer-events-none font-body">
+        <div id="globalToastCard" class="bg-white/95 backdrop-blur-md border border-slate-200/80 shadow-2xl rounded-2xl px-5 py-4 flex items-center gap-3.5 max-w-md ring-1 ring-slate-900/5">
+            <div id="globalToastIconContainer" class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"></div>
+            <div class="pr-2">
+                <div id="globalToastTitle" class="text-[10px] font-bold tracking-widest uppercase mb-0.5"></div>
+                <div id="globalToastMessage" class="text-xs text-slate-800 font-semibold leading-relaxed"></div>
+            </div>
+            <button type="button" onclick="window.hideToast()" class="ml-auto text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0" aria-label="Close notification">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    @{
+        bool hasGlobalToast = false;
+        bool globalToastSuccess = true;
+        string globalToastMsg = "";
+
+        if (TempData["Message"] != null)
+        {
+            hasGlobalToast = true;
+            globalToastMsg = TempData["Message"]?.ToString() ?? "";
+            var rawSuccess = TempData["isSuccess"] ?? TempData["IsSuccess"];
+            globalToastSuccess = rawSuccess == null || Convert.ToBoolean(rawSuccess);
+        }
+    }
+    @if (hasGlobalToast && !string.IsNullOrWhiteSpace(globalToastMsg))
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(globalToastMsg)), @(globalToastSuccess ? "true" : "false"));
+                }
+            });
+        </script>
+    }
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="~/js/auth-api.js" asp-append-version="true"></script>

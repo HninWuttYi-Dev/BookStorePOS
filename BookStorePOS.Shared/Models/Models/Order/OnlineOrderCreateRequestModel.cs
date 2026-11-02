@@ -9,6 +9,8 @@ public class OnlineOrderCreateRequestModel
     public string? CustomerPhone { get; set; }
     public string? ShippingAddress { get; set; }
     public string? Notes { get; set; }
+    public string? PaymentMethod { get; set; }
+    public string? PaymentScreenshotUrl { get; set; }
     public List<OnlineOrderItemRequestModel> Items { get; set; } = new List<OnlineOrderItemRequestModel>();
 }
 

@@ -1,0 +1,1034 @@
+@{
+    ViewData["Title"] = "Checkout";
+    string preFillName = ViewData["PreFillName"]?.ToString() ?? "";
+}
+
+<div class="py-6 sm:py-10">
+    <!-- Breadcrumb & Header -->
+    <div class="text-center mb-10 sm:mb-14">
+        <h1 class="font-heading text-3xl sm:text-5xl font-bold text-brand-ink mb-3 tracking-tight">Checkout</h1>
+        <nav class="flex items-center justify-center gap-2 text-xs sm:text-sm text-brand-inkLight font-body">
+            <a href="/" class="hover:text-brand-accent transition-colors">Home</a>
+            <span class="text-brand-border">/</span>
+            <a href="/Cart" class="hover:text-brand-accent transition-colors">Shopping Cart</a>
+            <span class="text-brand-border">/</span>
+            <span class="text-brand-accent font-semibold">Checkout</span>
+        </nav>
+    </div>
+
+    <!-- Main Checkout Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        
+        <!-- Left: Customer Information & Payment (7 Cols) -->
+        <div class="lg:col-span-7 space-y-8">
+            
+            <!-- 1. Customer & Shipping Info Card -->
+            <div class="bg-brand-surface rounded-3xl border border-brand-border/80 p-6 sm:p-9 shadow-xs">
+                <div class="flex items-center gap-3 pb-4 mb-6 border-b border-brand-border/70">
+                    <span class="w-8 h-8 rounded-full bg-brand-ink text-brand-bg font-bold text-sm flex items-center justify-center shrink-0">1</span>
+                    <div>
+                        <h2 class="font-heading text-xl sm:text-2xl font-bold text-brand-ink">Shipping & Customer Information</h2>
+                        <p class="text-xs text-brand-inkLight font-body">Where should we deliver your books?</p>
+                    </div>
+                </div>
+
+                <div class="space-y-5 font-body">
+                    <!-- Customer Name -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="customerName" class="block text-xs font-bold text-brand-ink uppercase tracking-wider">
+                                Full Name <span class="text-brand-danger">*</span>
+                            </label>
+                            <span id="customerNameError" class="hidden text-xs font-bold text-rose-600 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <span>Full name is required</span>
+                            </span>
+                        </div>
+                        <div id="customerNameBanner" class="hidden mb-2 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 shadow-2xs">
+                            <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span>Please enter your full name</span>
+                        </div>
+                        <input type="text" id="customerName" name="customerName" required value="@preFillName" placeholder="e.g. Daw Khin Khin"
+                               class="w-full px-4 py-3 bg-white border border-brand-border rounded-xl text-brand-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent transition-all shadow-2xs">
+                    </div>
+
+                    <!-- Customer Phone -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="customerPhone" class="block text-xs font-bold text-brand-ink uppercase tracking-wider">
+                                Phone Number <span class="text-brand-danger">*</span>
+                            </label>
+                            <span id="customerPhoneError" class="hidden text-xs font-bold text-rose-600 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <span>Phone number is required</span>
+                            </span>
+                        </div>
+                        <div id="customerPhoneBanner" class="hidden mb-2 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 shadow-2xs">
+                            <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span>Please enter your phone number to receive order updates</span>
+                        </div>
+                        <input type="tel" id="customerPhone" name="customerPhone" required placeholder="e.g. 09 123 456 789"
+                               class="w-full px-4 py-3 bg-white border border-brand-border rounded-xl text-brand-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent transition-all shadow-2xs">
+                        <p class="text-[11px] text-brand-inkLight/80 mt-1.5">We will reach you via this phone number for order updates and parcel delivery.</p>
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="shippingAddress" class="block text-xs font-bold text-brand-ink uppercase tracking-wider">
+                                Delivery Address <span class="text-brand-danger">*</span>
+                            </label>
+                            <span id="shippingAddressError" class="hidden text-xs font-bold text-rose-600 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <span>Delivery address is required</span>
+                            </span>
+                        </div>
+                        <div id="shippingAddressBanner" class="hidden mb-2 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 shadow-2xs">
+                            <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                            </svg>
+                            <span>Please enter your street address, township and city for delivery</span>
+                        </div>
+                        <textarea id="shippingAddress" name="shippingAddress" rows="3" required placeholder="House No., Street Name, Ward, Township, City"
+                                  class="w-full px-4 py-3 bg-white border border-brand-border rounded-xl text-brand-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent transition-all shadow-2xs resize-none"></textarea>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label for="orderNotes" class="block text-xs font-bold text-brand-ink uppercase tracking-wider mb-2">
+                            Order Notes <span class="text-xs text-brand-inkLight font-normal lowercase">(optional)</span>
+                        </label>
+                        <textarea id="orderNotes" name="orderNotes" rows="2" placeholder="Special delivery instructions or remarks..."
+                                  class="w-full px-4 py-3 bg-white border border-brand-border rounded-xl text-brand-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent transition-all shadow-2xs resize-none"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Payment Method & Proof Card -->
+            <div class="bg-brand-surface rounded-3xl border border-brand-border/80 p-6 sm:p-9 shadow-xs">
+                <div class="flex items-center gap-3 pb-4 mb-6 border-b border-brand-border/70">
+                    <span class="w-8 h-8 rounded-full bg-brand-ink text-brand-bg font-bold text-sm flex items-center justify-center shrink-0">2</span>
+                    <div>
+                        <h2 class="font-heading text-xl sm:text-2xl font-bold text-brand-ink">Payment Method & Slip</h2>
+                        <p class="text-xs text-brand-inkLight font-body">Choose how you'd like to pay and attach transfer proof</p>
+                    </div>
+                </div>
+
+                <!-- Payment Options Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6 font-body">
+                    
+                    <!-- Option: KBZPay -->
+                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-accent shadow-xs" onclick="window.selectPaymentMethod('KBZPay')">
+                        <input type="radio" name="paymentMethodRadio" value="KBZPay" checked class="mt-1 text-brand-accent focus:ring-brand-accent">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="w-6 h-6 rounded-md bg-[#00377B] text-white flex items-center justify-center text-[10px] font-black tracking-tight shrink-0">KP</span>
+                                <span class="font-bold text-sm text-brand-ink">KBZPay</span>
+                            </div>
+                            <p class="text-xs text-brand-inkLight">Direct KPay transfer</p>
+                        </div>
+                    </label>
+
+                    <!-- Option: WavePay -->
+                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-border/70 hover:border-brand-accent/60 shadow-xs" onclick="window.selectPaymentMethod('WavePay')">
+                        <input type="radio" name="paymentMethodRadio" value="WavePay" class="mt-1 text-brand-accent focus:ring-brand-accent">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="w-6 h-6 rounded-md bg-[#F8A01B] text-white flex items-center justify-center text-[10px] font-black tracking-tight shrink-0">WP</span>
+                                <span class="font-bold text-sm text-brand-ink">WavePay</span>
+                            </div>
+                            <p class="text-xs text-brand-inkLight">Wave Money transfer</p>
+                        </div>
+                    </label>
+
+                    <!-- Option: CB Bank -->
+                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-border/70 hover:border-brand-accent/60 shadow-xs" onclick="window.selectPaymentMethod('CBBank')">
+                        <input type="radio" name="paymentMethodRadio" value="CBBank" class="mt-1 text-brand-accent focus:ring-brand-accent">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="w-6 h-6 rounded-md bg-[#006838] text-white flex items-center justify-center text-[10px] font-black tracking-tight shrink-0">CB</span>
+                                <span class="font-bold text-sm text-brand-ink">CB Bank</span>
+                            </div>
+                            <p class="text-xs text-brand-inkLight">Mobile Banking / iBanking</p>
+                        </div>
+                    </label>
+
+                    <!-- Option: Cash on Delivery -->
+                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-border/70 hover:border-brand-accent/60 shadow-xs" onclick="window.selectPaymentMethod('CashOnDelivery')">
+                        <input type="radio" name="paymentMethodRadio" value="CashOnDelivery" class="mt-1 text-brand-accent focus:ring-brand-accent">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                </span>
+                                <span class="font-bold text-sm text-brand-ink">Cash on Delivery</span>
+                            </div>
+                            <p class="text-xs text-brand-inkLight">Pay in cash when received</p>
+                        </div>
+                    </label>
+
+                </div>
+
+                <!-- Digital Wallet / Bank Transfer Instructions Box -->
+                <div id="bankInstructionsBox" class="bg-white rounded-2xl border border-brand-border/80 p-5 mb-6 shadow-2xs font-body">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span id="bankBadge" class="w-7 h-7 rounded-lg bg-[#00377B] text-white flex items-center justify-center text-xs font-black shrink-0">KP</span>
+                            <div>
+                                <h4 id="bankNameTitle" class="text-sm font-bold text-brand-ink">KBZPay Account Details</h4>
+                                <p class="text-[11px] text-brand-inkLight">Please transfer total amount to this account</p>
+                            </div>
+                        </div>
+                        <span id="bankHolderName" class="text-xs font-semibold text-brand-accent bg-brand-surface px-2.5 py-1 rounded-full border border-brand-border/70">
+                            Babylon Books
+                        </span>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-brand-surface border border-brand-border/60 rounded-xl px-4 py-2.5">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider font-semibold text-brand-inkLight block">Account / Phone Number</span>
+                            <span id="bankAccountNumber" class="font-mono font-bold text-base text-brand-ink tracking-wider">09 123 456 789</span>
+                        </div>
+                        <button type="button" onclick="window.copyCurrentAccountNumber()" class="text-xs font-semibold text-brand-accent hover:text-brand-ink bg-white border border-brand-border/80 hover:border-brand-accent px-3 py-1.5 rounded-lg transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cash on Delivery Notice Box (Hidden by default) -->
+                <div id="codNoticeBox" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-6 font-body">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-emerald-900">Cash on Delivery Selected</h4>
+                            <p class="text-xs text-emerald-800 mt-1 leading-relaxed">
+                                You do not need to make an advance transfer or upload a payment screenshot. Please keep the exact cash amount ready for the delivery driver upon arrival.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Screenshot Uploader Section -->
+                <div id="slipUploadSection" class="font-body">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold text-brand-ink uppercase tracking-wider">
+                            Attach Payment Screenshot <span class="text-brand-danger">*</span>
+                        </label>
+                        <span id="slipFileError" class="hidden text-xs font-bold text-rose-600 flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <span>Screenshot is required</span>
+                        </span>
+                        <span class="text-[11px] text-brand-inkLight">PNG, JPG, WEBP (Max 10MB)</span>
+                    </div>
+
+                    <div id="slipFileBanner" class="hidden mb-2 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2 shadow-2xs">
+                        <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <span id="slipFileBannerText">Please attach your transfer screenshot before proceeding</span>
+                    </div>
+
+                    <!-- Hidden File Input -->
+                    <input type="file" id="slipFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" class="hidden" onchange="window.handleSlipFileSelect(event)">
+
+                    <!-- Drag & Drop Dropzone Box -->
+                    <div id="slipDropzone" onclick="document.getElementById('slipFileInput').click()"
+                         class="border-2 border-dashed border-brand-border hover:border-brand-accent bg-white hover:bg-brand-surface/40 rounded-2xl p-6 sm:p-8 text-center cursor-pointer transition-all group shadow-2xs">
+                        <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-brand-surface border border-brand-border/70 text-brand-inkLight group-hover:text-brand-accent group-hover:scale-105 transition-all flex items-center justify-center">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-bold text-brand-ink mb-1">Click to choose or drag & drop payment screenshot</p>
+                        <p class="text-xs text-brand-inkLight">Attach your transfer slip so our administrators can verify and approve your order.</p>
+                    </div>
+
+                    <!-- Selected Slip File Preview (Hidden by default) -->
+                    <div id="slipPreviewCard" class="hidden bg-white border border-brand-border/80 rounded-2xl p-4 shadow-2xs">
+                        <div class="flex items-center gap-4">
+                            <img id="slipPreviewImg" src="" alt="Payment Screenshot Preview" class="w-16 h-20 rounded-xl object-cover border border-brand-border shrink-0 shadow-2xs">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">Attached</span>
+                                    <span id="slipFileName" class="text-xs font-bold text-brand-ink truncate">slip.jpg</span>
+                                </div>
+                                <p id="slipFileSize" class="text-[11px] text-brand-inkLight mb-2">240 KB</p>
+                                <button type="button" onclick="document.getElementById('slipFileInput').click()" class="text-xs text-brand-accent hover:underline font-semibold cursor-pointer">
+                                    Change image
+                                </button>
+                            </div>
+                            <button type="button" onclick="window.removeSelectedSlip(event)" class="text-brand-inkLight/70 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-xl transition-colors cursor-pointer shrink-0" title="Remove image">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right: Order Review & Confirmation (5 Cols) -->
+        <div class="lg:col-span-5 sticky top-28 space-y-6">
+            
+            <div class="bg-white rounded-3xl border border-brand-border/80 p-6 sm:p-8 shadow-xs">
+                <h3 class="font-heading text-xl font-bold text-brand-ink pb-4 border-b border-brand-border/70 mb-5">
+                    Order Review
+                </h3>
+
+                <!-- Cart Items Compact List -->
+                <div id="checkoutItemsList" class="space-y-4 max-h-80 overflow-y-auto pr-1 divide-y divide-brand-border/40 font-body">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+
+                <!-- Totals Breakdown -->
+                <div class="pt-5 border-t border-brand-border/70 space-y-3 font-body text-sm mt-5">
+                    <div class="flex justify-between items-center text-brand-inkLight">
+                        <span>Total Items</span>
+                        <span id="checkoutTotalQty" class="font-semibold text-brand-ink">0</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-brand-inkLight">
+                        <span>Payment Method</span>
+                        <span id="checkoutReviewPaymentMethod" class="font-semibold text-brand-ink">KBZPay</span>
+                    </div>
+
+                    <div class="pt-3 border-t border-brand-border/70 flex justify-between items-baseline">
+                        <span class="text-base font-bold text-brand-ink font-heading">Total Amount</span>
+                        <div class="text-right">
+                            <span id="checkoutGrandTotal" class="text-2xl font-bold text-brand-ink font-heading">0</span>
+                            <span class="text-xs font-semibold text-brand-accent ml-1 font-body">MMK</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Place Order Button -->
+                <div class="mt-8">
+                    <button type="button" id="btnPlaceOrder" onclick="window.openOrderConfirmModal()"
+                            class="w-full bg-brand-ink hover:bg-brand-accent text-brand-bg py-4 px-6 rounded-full font-bold text-sm sm:text-base tracking-wide transition-all shadow-[0_10px_25px_-5px_rgba(44,38,33,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(140,111,69,0.4)] hover:-translate-y-0.5 flex items-center justify-center gap-2 cursor-pointer font-body">
+                        <span>Confirm & Place Order</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </button>
+                    <p class="text-[11px] text-center text-brand-inkLight/80 mt-3 font-body">
+                        You can review your order before final confirmation.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Return to Cart -->
+            <div class="text-center">
+                <a href="/Cart" class="inline-flex items-center gap-2 text-xs font-semibold text-brand-inkLight hover:text-brand-accent transition-colors font-body uppercase tracking-wider">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span>Modify Cart Items</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Order Confirmation Card Modal -->
+<dialog id="orderConfirmModal" class="m-auto rounded-3xl p-0 border border-brand-border bg-brand-surface shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm max-w-lg w-[94%] sm:w-full transition-all overflow-hidden" aria-labelledby="orderConfirmModalTitle" aria-describedby="orderConfirmModalDesc">
+    <div class="p-6 sm:p-8 relative">
+        <!-- Close Button -->
+        <button type="button" onclick="window.closeOrderConfirmModal()" class="absolute top-4 right-4 text-brand-inkLight/60 hover:text-brand-ink p-1.5 rounded-xl hover:bg-brand-bg transition-colors cursor-pointer" aria-label="Close modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+
+        <!-- Header -->
+        <div class="flex items-center gap-3.5 mb-5 pb-4 border-b border-brand-border/70">
+            <div class="w-12 h-12 rounded-2xl bg-brand-accent/15 border border-brand-accent/30 text-brand-accent flex items-center justify-center shrink-0 shadow-2xs">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 id="orderConfirmModalTitle" class="font-heading text-xl sm:text-2xl font-bold text-brand-ink">Confirm Your Order</h3>
+                <p id="orderConfirmModalDesc" class="text-xs text-brand-inkLight font-body">Please review all details before placing your order</p>
+            </div>
+        </div>
+
+        <!-- Details Summary Card -->
+        <div class="space-y-4 font-body text-xs sm:text-sm mb-6">
+            
+            <!-- Recipient & Phone -->
+            <div class="bg-white border border-brand-border/70 rounded-2xl p-4 space-y-2">
+                <div class="flex justify-between items-start">
+                    <span class="text-brand-inkLight font-semibold">Recipient:</span>
+                    <span id="confirmModalCustomerName" class="font-bold text-brand-ink text-right"></span>
+                </div>
+                <div class="flex justify-between items-start">
+                    <span class="text-brand-inkLight font-semibold">Phone:</span>
+                    <span id="confirmModalCustomerPhone" class="font-bold text-brand-ink font-mono text-right"></span>
+                </div>
+                <div class="flex justify-between items-start pt-2 border-t border-brand-border/40">
+                    <span class="text-brand-inkLight font-semibold shrink-0 mr-2">Address:</span>
+                    <span id="confirmModalDeliveryAddress" class="font-medium text-brand-ink text-right line-clamp-2"></span>
+                </div>
+            </div>
+
+            <!-- Payment & Proof -->
+            <div class="bg-white border border-brand-border/70 rounded-2xl p-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-brand-inkLight font-semibold">Payment Method:</span>
+                    <span id="confirmModalPaymentMethod" class="font-bold text-brand-ink"></span>
+                </div>
+                
+                <div id="confirmModalSlipRow" class="flex items-center gap-3 pt-2 border-t border-brand-border/40">
+                    <img id="confirmModalSlipThumbnail" src="" alt="Payment Slip" class="w-12 h-16 rounded-lg object-cover border border-brand-border shrink-0 shadow-2xs">
+                    <div>
+                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase tracking-wider">Proof Attached</span>
+                        <p class="text-[11px] text-brand-inkLight mt-0.5">Transfer slip will be verified by store admins.</p>
+                    </div>
+                </div>
+
+                <div id="confirmModalCodRow" class="hidden pt-2 border-t border-brand-border/40 text-xs text-emerald-800 font-medium">
+                    ✓ Cash will be collected by courier upon delivery.
+                </div>
+            </div>
+
+            <!-- Total Amount Card -->
+            <div class="bg-brand-accent/10 border border-brand-accent/30 rounded-2xl p-4 flex justify-between items-center">
+                <div>
+                    <span class="text-xs uppercase tracking-wider font-bold text-brand-ink block">Grand Total</span>
+                    <span id="confirmModalTotalQty" class="text-xs text-brand-inkLight">0 items</span>
+                </div>
+                <div class="text-right">
+                    <span id="confirmModalGrandTotal" class="text-2xl font-bold text-brand-ink font-heading">0</span>
+                    <span class="text-xs font-semibold text-brand-accent ml-1 font-body">MMK</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 font-body">
+            <button type="button" onclick="window.closeOrderConfirmModal()" class="w-full order-2 sm:order-1 inline-flex items-center justify-center py-3 px-5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/30 text-brand-ink font-semibold text-sm transition-all shadow-xs cursor-pointer">
+                Edit Details
+            </button>
+            <button type="button" id="modalConfirmOrderBtn" onclick="window.executePlaceOrder()" class="w-full order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg font-bold py-3 px-5 rounded-xl transition-all shadow-md text-sm cursor-pointer">
+                <svg id="modalConfirmOrderSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span id="modalConfirmOrderBtnText">Confirm & Place Order</span>
+            </button>
+        </div>
+    </div>
+</dialog>
+
+@section Scripts {
+<script>
+    const CART_KEY = 'customer_cart';
+    let isSubmittingOrder = false;
+    let selectedPaymentMethod = 'KBZPay';
+    let selectedSlipFile = null;
+
+    const PAYMENT_ACCOUNTS = {
+        'KBZPay': {
+            name: 'KBZPay Account Details',
+            holder: 'Babylon Books',
+            number: '09 123 456 789',
+            badge: 'KP',
+            badgeBg: 'bg-[#00377B]'
+        },
+        'WavePay': {
+            name: 'WavePay Account Details',
+            holder: 'Babylon Books',
+            number: '09 987 654 321',
+            badge: 'WP',
+            badgeBg: 'bg-[#F8A01B]'
+        },
+        'CBBank': {
+            name: 'CB Bank Account Details',
+            holder: 'Babylon Co., Ltd',
+            number: '0012 3456 7890 1234',
+            badge: 'CB',
+            badgeBg: 'bg-[#006838]'
+        }
+    };
+
+    function getLocalCart() {
+        try {
+            const raw = localStorage.getItem(CART_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function renderCheckoutReview() {
+        const cart = getLocalCart();
+        if (!cart || cart.length === 0) {
+            window.location.href = '/Cart';
+            return;
+        }
+
+        const $list = document.getElementById('checkoutItemsList');
+        const $totalQty = document.getElementById('checkoutTotalQty');
+        const $grandTotal = document.getElementById('checkoutGrandTotal');
+
+        let totalQty = 0;
+        let totalPrice = 0;
+        let html = '';
+
+        cart.forEach((item) => {
+            const qty = parseInt(item.quantity, 10) || 1;
+            const price = parseFloat(item.price) || 0;
+            const subtotal = qty * price;
+            totalQty += qty;
+            totalPrice += subtotal;
+
+            html += `
+                <div class="flex items-center gap-3 pt-3 first:pt-0">
+                    <div class="w-12 h-16 rounded-md bg-brand-surface border border-brand-border/60 overflow-hidden shrink-0 shadow-2xs flex items-center justify-center">
+                        ${item.coverImageUrl ? `<img src="${item.coverImageUrl}" alt="${escapeHtml(item.title)}" class="w-full h-full object-cover">` : `<svg class="w-5 h-5 text-brand-border" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>`}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-heading font-bold text-xs sm:text-sm text-brand-ink truncate" title="${escapeHtml(item.title)}">
+                            ${escapeHtml(item.title)}
+                        </h4>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-[10px] text-brand-inkLight bg-brand-surface px-1.5 py-0.5 rounded border border-brand-border/60">
+                                ${escapeHtml(item.editionName || 'Standard')}
+                            </span>
+                            <span class="text-[11px] text-brand-inkLight">
+                                Qty: <strong class="text-brand-ink">${qty}</strong>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 font-body text-xs sm:text-sm font-bold text-brand-ink">
+                        ${subtotal.toLocaleString()} MMK
+                    </div>
+                </div>
+            `;
+        });
+
+        if ($list) $list.innerHTML = html;
+        if ($totalQty) $totalQty.textContent = totalQty;
+        if ($grandTotal) $grandTotal.textContent = totalPrice.toLocaleString();
+    }
+
+    // Payment Method Selection
+    window.selectPaymentMethod = function(method) {
+        selectedPaymentMethod = method;
+
+        // Update card styles
+        document.querySelectorAll('.payment-method-card').forEach(card => {
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio && radio.value === method) {
+                card.classList.remove('border-brand-border/70');
+                card.classList.add('border-brand-accent');
+                radio.checked = true;
+            } else {
+                card.classList.remove('border-brand-accent');
+                card.classList.add('border-brand-border/70');
+                if (radio) radio.checked = false;
+            }
+        });
+
+        // Update Review summary label
+        const revPayment = document.getElementById('checkoutReviewPaymentMethod');
+        if (revPayment) {
+            revPayment.textContent = method === 'CashOnDelivery' ? 'Cash on Delivery' : method;
+        }
+
+        const bankBox = document.getElementById('bankInstructionsBox');
+        const codBox = document.getElementById('codNoticeBox');
+        const slipSection = document.getElementById('slipUploadSection');
+
+        if (method === 'CashOnDelivery') {
+            clearSlipWarning();
+            if (bankBox) bankBox.classList.add('hidden');
+            if (codBox) codBox.classList.remove('hidden');
+            if (slipSection) slipSection.classList.add('hidden');
+        } else {
+            if (codBox) codBox.classList.add('hidden');
+            if (bankBox) bankBox.classList.remove('hidden');
+            if (slipSection) slipSection.classList.remove('hidden');
+
+            const info = PAYMENT_ACCOUNTS[method] || PAYMENT_ACCOUNTS['KBZPay'];
+            const $name = document.getElementById('bankNameTitle');
+            const $holder = document.getElementById('bankHolderName');
+            const $number = document.getElementById('bankAccountNumber');
+            const $badge = document.getElementById('bankBadge');
+
+            if ($name) $name.textContent = info.name;
+            if ($holder) $holder.textContent = info.holder;
+            if ($number) $number.textContent = info.number;
+            if ($badge) {
+                $badge.textContent = info.badge;
+                $badge.className = `w-7 h-7 rounded-lg ${info.badgeBg} text-white flex items-center justify-center text-xs font-black shrink-0`;
+            }
+        }
+    };
+
+    window.copyCurrentAccountNumber = function() {
+        const info = PAYMENT_ACCOUNTS[selectedPaymentMethod] || PAYMENT_ACCOUNTS['KBZPay'];
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(info.number.replace(/\s+/g, '')).then(() => {
+                if (typeof window.showToast === 'function') {
+                    window.showToast(`${selectedPaymentMethod} account number copied!`, true);
+                }
+            });
+        }
+    };
+
+    // File Selection & Drag-and-drop
+    window.handleSlipFileSelect = function(e) {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            if (typeof window.showToast === 'function') {
+                window.showToast("Please choose an image file (PNG, JPG, WEBP).", false);
+            }
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            if (typeof window.showToast === 'function') {
+                window.showToast("Image file size must be less than 10MB.", false);
+            }
+            return;
+        }
+
+        selectedSlipFile = file;
+        clearSlipWarning();
+
+        // Render preview
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const previewImg = document.getElementById('slipPreviewImg');
+            const fileNameEl = document.getElementById('slipFileName');
+            const fileSizeEl = document.getElementById('slipFileSize');
+            const dropzone = document.getElementById('slipDropzone');
+            const previewCard = document.getElementById('slipPreviewCard');
+
+            if (previewImg) previewImg.src = evt.target.result;
+            if (fileNameEl) fileNameEl.textContent = file.name;
+            if (fileSizeEl) fileSizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+
+            if (dropzone) dropzone.classList.add('hidden');
+            if (previewCard) previewCard.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.removeSelectedSlip = function(e) {
+        if (e) e.stopPropagation();
+        selectedSlipFile = null;
+        const fileInput = document.getElementById('slipFileInput');
+        if (fileInput) fileInput.value = '';
+
+        const dropzone = document.getElementById('slipDropzone');
+        const previewCard = document.getElementById('slipPreviewCard');
+
+        if (dropzone) dropzone.classList.remove('hidden');
+        if (previewCard) previewCard.classList.add('hidden');
+    };
+
+    // Warning Helper Functions for Blank Inputs
+    function showInputWarning(fieldId, message) {
+        const input = document.getElementById(fieldId);
+        const errSpan = document.getElementById(`${fieldId}Error`);
+        const banner = document.getElementById(`${fieldId}Banner`);
+
+        if (input) {
+            input.classList.remove('border-brand-border');
+            input.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20', 'bg-rose-50/15');
+        }
+        if (errSpan) {
+            errSpan.classList.remove('hidden');
+        }
+        if (banner) {
+            banner.classList.remove('hidden');
+            const span = banner.querySelector('span');
+            if (span && message) span.textContent = message;
+        }
+    }
+
+    function clearInputWarning(fieldId) {
+        const input = document.getElementById(fieldId);
+        const errSpan = document.getElementById(`${fieldId}Error`);
+        const banner = document.getElementById(`${fieldId}Banner`);
+
+        if (input) {
+            input.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20', 'bg-rose-50/15');
+            input.classList.add('border-brand-border');
+        }
+        if (errSpan) {
+            errSpan.classList.add('hidden');
+        }
+        if (banner) {
+            banner.classList.add('hidden');
+        }
+    }
+
+    function showSlipWarning(message) {
+        const dropzone = document.getElementById('slipDropzone');
+        const errSpan = document.getElementById('slipFileError');
+        const banner = document.getElementById('slipFileBanner');
+        const bannerText = document.getElementById('slipFileBannerText');
+
+        if (dropzone) {
+            dropzone.classList.remove('border-brand-border', 'hover:border-brand-accent');
+            dropzone.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20', 'bg-rose-50/15');
+        }
+        if (errSpan) errSpan.classList.remove('hidden');
+        if (banner) banner.classList.remove('hidden');
+        if (bannerText && message) bannerText.textContent = message;
+    }
+
+    function clearSlipWarning() {
+        const dropzone = document.getElementById('slipDropzone');
+        const errSpan = document.getElementById('slipFileError');
+        const banner = document.getElementById('slipFileBanner');
+
+        if (dropzone) {
+            dropzone.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20', 'bg-rose-50/15');
+            dropzone.classList.add('border-brand-border', 'hover:border-brand-accent');
+        }
+        if (errSpan) errSpan.classList.add('hidden');
+        if (banner) banner.classList.add('hidden');
+    }
+
+    function validateCheckoutForm() {
+        let isValid = true;
+        let firstInvalidElement = null;
+
+        const nameInput = document.getElementById('customerName');
+        const phoneInput = document.getElementById('customerPhone');
+        const addressInput = document.getElementById('shippingAddress');
+        const dropzone = document.getElementById('slipDropzone');
+
+        const name = (nameInput?.value || '').trim();
+        const phone = (phoneInput?.value || '').trim();
+        const address = (addressInput?.value || '').trim();
+
+        // 1. Full Name
+        if (!name) {
+            isValid = false;
+            showInputWarning('customerName', 'Please enter your full name');
+            if (!firstInvalidElement) firstInvalidElement = nameInput;
+        } else {
+            clearInputWarning('customerName');
+        }
+
+        // 2. Phone Number
+        if (!phone) {
+            isValid = false;
+            showInputWarning('customerPhone', 'Please enter your phone number to receive order updates');
+            if (!firstInvalidElement) firstInvalidElement = phoneInput;
+        } else {
+            clearInputWarning('customerPhone');
+        }
+
+        // 3. Delivery Address
+        if (!address) {
+            isValid = false;
+            showInputWarning('shippingAddress', 'Please enter your street address, township and city for delivery');
+            if (!firstInvalidElement) firstInvalidElement = addressInput;
+        } else {
+            clearInputWarning('shippingAddress');
+        }
+
+        // 4. Payment Slip (if Bank Transfer / Digital Wallet)
+        if (selectedPaymentMethod !== 'CashOnDelivery') {
+            if (!selectedSlipFile) {
+                isValid = false;
+                showSlipWarning(`Please attach your ${selectedPaymentMethod} transfer screenshot before proceeding`);
+                if (!firstInvalidElement) firstInvalidElement = dropzone;
+            } else {
+                clearSlipWarning();
+            }
+        } else {
+            clearSlipWarning();
+        }
+
+        if (!isValid && firstInvalidElement) {
+            firstInvalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (typeof firstInvalidElement.focus === 'function') {
+                firstInvalidElement.focus();
+            }
+        }
+
+        return isValid;
+    }
+
+    // Order Confirmation Modal Handlers
+    window.openOrderConfirmModal = function() {
+        if (!validateCheckoutForm()) {
+            return;
+        }
+
+        const name = (document.getElementById('customerName')?.value || '').trim();
+        const phone = (document.getElementById('customerPhone')?.value || '').trim();
+        const address = (document.getElementById('shippingAddress')?.value || '').trim();
+
+        // Fill modal fields
+        const modalName = document.getElementById('confirmModalCustomerName');
+        const modalPhone = document.getElementById('confirmModalCustomerPhone');
+        const modalAddress = document.getElementById('confirmModalDeliveryAddress');
+        const modalPayment = document.getElementById('confirmModalPaymentMethod');
+        const modalSlipRow = document.getElementById('confirmModalSlipRow');
+        const modalCodRow = document.getElementById('confirmModalCodRow');
+        const modalSlipThumb = document.getElementById('confirmModalSlipThumbnail');
+        const modalTotalQty = document.getElementById('confirmModalTotalQty');
+        const modalGrandTotal = document.getElementById('confirmModalGrandTotal');
+
+        if (modalName) modalName.textContent = name;
+        if (modalPhone) modalPhone.textContent = phone;
+        if (modalAddress) modalAddress.textContent = address;
+        if (modalPayment) modalPayment.textContent = selectedPaymentMethod === 'CashOnDelivery' ? 'Cash on Delivery' : selectedPaymentMethod;
+
+        if (selectedPaymentMethod === 'CashOnDelivery') {
+            if (modalSlipRow) modalSlipRow.classList.add('hidden');
+            if (modalCodRow) modalCodRow.classList.remove('hidden');
+        } else {
+            if (modalCodRow) modalCodRow.classList.add('hidden');
+            if (modalSlipRow) modalSlipRow.classList.remove('hidden');
+            if (modalSlipThumb && selectedSlipFile) {
+                const reader = new FileReader();
+                reader.onload = (e) => { modalSlipThumb.src = e.target.result; };
+                reader.readAsDataURL(selectedSlipFile);
+            }
+        }
+
+        const totalQty = document.getElementById('checkoutTotalQty')?.textContent || '0';
+        const grandTotal = document.getElementById('checkoutGrandTotal')?.textContent || '0';
+
+        if (modalTotalQty) modalTotalQty.textContent = `${totalQty} items`;
+        if (modalGrandTotal) modalGrandTotal.textContent = grandTotal;
+
+        const modal = document.getElementById('orderConfirmModal');
+        if (modal) {
+            if (typeof modal.showModal === 'function') {
+                modal.showModal();
+            } else {
+                modal.setAttribute('open', '');
+            }
+        }
+    };
+
+    window.closeOrderConfirmModal = function() {
+        const modal = document.getElementById('orderConfirmModal');
+        if (!modal) return;
+        if (typeof modal.close === 'function') {
+            modal.close();
+        } else {
+            modal.removeAttribute('open');
+        }
+    };
+
+    // Final Order Execution
+    window.executePlaceOrder = function() {
+        if (isSubmittingOrder) return;
+
+        const cart = getLocalCart();
+        if (!cart || cart.length === 0) {
+            if (typeof window.showToast === 'function') {
+                window.showToast("Your cart is empty. Please add books before checkout.", false);
+            }
+            window.closeOrderConfirmModal();
+            return;
+        }
+
+        const name = (document.getElementById('customerName')?.value || '').trim();
+        const phone = (document.getElementById('customerPhone')?.value || '').trim();
+        const address = (document.getElementById('shippingAddress')?.value || '').trim();
+        const notes = (document.getElementById('orderNotes')?.value || '').trim();
+
+        const orderItems = cart.map(item => ({
+            BookEditionId: parseInt(item.bookEditionId || item.BookEditionId || item.editionId || item.EditionId, 10),
+            Quantity: parseInt(item.quantity || item.Quantity, 10) || 1
+        }));
+
+        if (orderItems.length === 0 || orderItems.some(i => !i.BookEditionId || isNaN(i.BookEditionId) || i.BookEditionId <= 0)) {
+            if (typeof window.showToast === 'function') {
+                window.showToast("One or more cart items are invalid. Please review your cart.", false);
+            }
+            window.closeOrderConfirmModal();
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('customerName', name);
+        formData.append('customerPhone', phone);
+        formData.append('shippingAddress', address);
+        if (notes) formData.append('notes', notes);
+        formData.append('paymentMethod', selectedPaymentMethod);
+        formData.append('itemsJson', JSON.stringify(orderItems));
+        formData.append('items', JSON.stringify(orderItems));
+
+        if (selectedSlipFile) {
+            formData.append('paymentScreenshot', selectedSlipFile);
+            formData.append('file', selectedSlipFile);
+        }
+
+        const $btn = document.getElementById('modalConfirmOrderBtn');
+        const $text = document.getElementById('modalConfirmOrderBtnText');
+        const $spinner = document.getElementById('modalConfirmOrderSpinner');
+
+        isSubmittingOrder = true;
+        if ($btn) {
+            $btn.disabled = true;
+            $btn.classList.add('opacity-70', 'cursor-not-allowed');
+        }
+        if ($text) $text.textContent = "Placing Order...";
+        if ($spinner) $spinner.classList.remove('hidden');
+
+        $.ajax({
+            url: '/Cart/CreateOnlineOrder',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            timeout: 30000,
+            success: function(response) {
+                const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true);
+                if (isSuccess) {
+                    // Clear cart from localStorage upon successful online order
+                    localStorage.removeItem(CART_KEY);
+                    if (typeof window.updateCartBadge === 'function') {
+                        window.updateCartBadge();
+                    }
+
+                    window.closeOrderConfirmModal();
+
+                    const orderId = response?.data?.orderId || response?.data?.OrderId || response?.Data?.orderId || response?.Data?.OrderId;
+                    if (orderId) {
+                        window.location.href = '/Cart/Success/' + orderId;
+                    } else {
+                        window.location.href = '/Books';
+                    }
+                } else {
+                    const msg = response?.message || response?.Message || "Failed to place order. Please try again.";
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(msg, false);
+                    }
+                    resetModalSubmitButton();
+                }
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                console.error("Order submission failed:", textStatus, errorThrown, xhr.status, xhr.responseText);
+                let msg = "Failed to communicate with order service.";
+                if (textStatus === "timeout") {
+                    msg = "Order request timed out. Please check your network connection or check your order history before submitting again.";
+                } else if (xhr.status === 0) {
+                    msg = "Network connection lost. Please check your connection and try again.";
+                } else {
+                    try {
+                        const parsed = JSON.parse(xhr.responseText);
+                        if (parsed && (parsed.message || parsed.Message)) {
+                            msg = parsed.message || parsed.Message;
+                        }
+                    } catch (e) {}
+                }
+
+                if (typeof window.showToast === 'function') {
+                    window.showToast(msg, false);
+                }
+                resetModalSubmitButton();
+            }
+        });
+    };
+
+    function resetModalSubmitButton() {
+        isSubmittingOrder = false;
+        const $btn = document.getElementById('modalConfirmOrderBtn');
+        const $text = document.getElementById('modalConfirmOrderBtnText');
+        const $spinner = document.getElementById('modalConfirmOrderSpinner');
+
+        if ($btn) {
+            $btn.disabled = false;
+            $btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        }
+        if ($text) $text.textContent = "Confirm & Place Order";
+        if ($spinner) $spinner.classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderCheckoutReview();
+
+        // Dynamically clear warning banners when user types into blank fields
+        ['customerName', 'customerPhone', 'shippingAddress'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => {
+                    if (el.value.trim().length > 0) {
+                        clearInputWarning(id);
+                    }
+                });
+            }
+        });
+
+        // Setup dropzone drag and drop
+        const dropzone = document.getElementById('slipDropzone');
+        if (dropzone) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('border-brand-accent', 'bg-brand-surface/60');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropzone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('border-brand-accent', 'bg-brand-surface/60');
+                });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    window.handleSlipFileSelect({ target: { files: files } });
+                }
+            });
+        }
+
+        // Close modal on backdrop click
+        const confirmModal = document.getElementById('orderConfirmModal');
+        if (confirmModal) {
+            confirmModal.addEventListener('click', function(e) {
+                if (e.target === confirmModal) {
+                    window.closeOrderConfirmModal();
+                }
+            });
+        }
+    });
+</script>
+}

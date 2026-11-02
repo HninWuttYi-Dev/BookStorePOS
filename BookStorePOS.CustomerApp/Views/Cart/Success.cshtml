@@ -1,0 +1,210 @@
+@{
+    ViewData["Title"] = "Order Confirmed";
+    var order = ViewData["Order"] as OrderModel;
+    int orderId = order?.OrderId ?? (int)(ViewData["OrderId"] ?? 0);
+}
+
+<div class="py-6 sm:py-12 max-w-5xl mx-auto">
+    <!-- Breadcrumb -->
+    <div class="text-center mb-8">
+        <nav class="flex items-center justify-center gap-2 text-xs sm:text-sm text-brand-inkLight font-body mb-3">
+            <a href="/" class="hover:text-brand-accent transition-colors">Home</a>
+            <span class="text-brand-border">/</span>
+            <a href="/Cart" class="hover:text-brand-accent transition-colors">Cart</a>
+            <span class="text-brand-border">/</span>
+            <span class="text-brand-accent font-semibold">Order Confirmed</span>
+        </nav>
+    </div>
+
+    <!-- Hero Success Banner -->
+    <div class="bg-brand-surface rounded-3xl border border-brand-border/80 p-8 sm:p-12 text-center shadow-xs mb-8">
+        <!-- Success Icon -->
+        <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-emerald-50 border-2 border-emerald-200 text-emerald-600 flex items-center justify-center shadow-sm">
+            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+
+        <h1 class="font-heading text-3xl sm:text-4xl font-bold text-brand-ink mb-2">Thank You for Your Order!</h1>
+        <p class="text-sm sm:text-base text-brand-inkLight font-body max-w-lg mx-auto mb-6">
+            Your order <strong class="text-brand-ink font-semibold">#@orderId</strong> has been placed successfully. We are preparing your books for dispatch.
+        </p>
+
+        <!-- Status Badges -->
+        <div class="inline-flex flex-wrap items-center justify-center gap-3 font-body text-xs sm:text-sm">
+            <span class="bg-brand-ink text-brand-bg font-bold px-4 py-1.5 rounded-full shadow-2xs">
+                Order #@orderId
+            </span>
+
+            @if (order != null)
+            {
+                if (order.PaymentStatus == PaymentStatus.Submitted)
+                {
+                    <span class="bg-brand-accent/15 text-brand-accent border border-brand-accent/30 font-semibold px-4 py-1.5 rounded-full flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Payment Slip Submitted • Awaiting Verification</span>
+                    </span>
+                }
+                else if (order.PaymentStatus == PaymentStatus.Verified)
+                {
+                    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold px-4 py-1.5 rounded-full flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>Payment Verified</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="bg-blue-50 text-blue-700 border border-blue-200 font-semibold px-4 py-1.5 rounded-full flex items-center gap-1.5">
+                        <span>Cash on Delivery • Pending Dispatch</span>
+                    </span>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Order Details Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left: Ordered Items Summary (7 Cols) -->
+        <div class="lg:col-span-7 bg-white rounded-3xl border border-brand-border/80 p-6 sm:p-8 shadow-xs">
+            <h3 class="font-heading text-xl font-bold text-brand-ink pb-4 border-b border-brand-border/70 mb-5">
+                Ordered Items
+            </h3>
+
+            @if (order?.Items != null && order.Items.Any())
+            {
+                <div class="divide-y divide-brand-border/50 font-body">
+                    @foreach (var item in order.Items)
+                    {
+                        <div class="py-4 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-heading font-bold text-sm sm:text-base text-brand-ink truncate">
+                                    @(item.BookTitle ?? "Book Title")
+                                </h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-xs text-brand-inkLight bg-brand-surface px-2 py-0.5 rounded border border-brand-border/60">
+                                        @(item.EditionName ?? "Standard Edition")
+                                    </span>
+                                    <span class="text-xs text-brand-inkLight">
+                                        Qty: <strong class="text-brand-ink">@item.Quantity</strong> × @item.UnitPrice.ToString("N0") MMK
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0 font-body text-sm font-bold text-brand-ink">
+                                @((item.Subtotal ?? (item.Quantity * item.UnitPrice)).ToString("N0")) MMK
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="mt-6 pt-5 border-t border-brand-border/70 space-y-2 font-body text-sm">
+                    <div class="flex justify-between items-center text-brand-inkLight">
+                        <span>Total Quantity</span>
+                        <span class="font-semibold text-brand-ink">@order.TotalQuantity items</span>
+                    </div>
+                    <div class="flex justify-between items-baseline pt-2 border-t border-brand-border/40">
+                        <span class="font-heading font-bold text-base text-brand-ink">Grand Total</span>
+                        <div class="text-right">
+                            <span class="font-heading font-bold text-2xl text-brand-ink">@order.TotalPrice.ToString("N0")</span>
+                            <span class="text-xs font-semibold text-brand-accent ml-1 font-body">MMK</span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p class="text-sm text-brand-inkLight font-body py-4">Order details recorded in system.</p>
+            }
+        </div>
+
+        <!-- Right: Shipping & Payment Summary (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Shipping Info Card -->
+            <div class="bg-white rounded-3xl border border-brand-border/80 p-6 sm:p-7 shadow-xs font-body">
+                <h3 class="font-heading text-lg font-bold text-brand-ink pb-3 border-b border-brand-border/70 mb-4">
+                    Delivery Details
+                </h3>
+
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <span class="text-xs uppercase tracking-wider text-brand-inkLight font-semibold block">Recipient</span>
+                        <span class="font-bold text-brand-ink text-sm">@(order?.CustomerName ?? "Customer")</span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs uppercase tracking-wider text-brand-inkLight font-semibold block">Phone Number</span>
+                        <span class="font-bold text-brand-ink font-mono text-sm">@(order?.CustomerPhone ?? "-")</span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs uppercase tracking-wider text-brand-inkLight font-semibold block">Shipping Address</span>
+                        <p class="text-brand-ink leading-relaxed text-sm">@(order?.ShippingAddress ?? "-")</p>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(order?.Notes))
+                    {
+                        <div class="pt-2 border-t border-brand-border/40">
+                            <span class="text-xs uppercase tracking-wider text-brand-inkLight font-semibold block">Notes</span>
+                            <p class="text-xs text-brand-inkLight italic">@order.Notes</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Payment Summary Card -->
+            <div class="bg-white rounded-3xl border border-brand-border/80 p-6 sm:p-7 shadow-xs font-body">
+                <h3 class="font-heading text-lg font-bold text-brand-ink pb-3 border-b border-brand-border/70 mb-4">
+                    Payment Method
+                </h3>
+
+                <div class="flex items-center justify-between mb-3 text-sm">
+                    <span class="text-brand-inkLight font-semibold">Method:</span>
+                    <span class="font-bold text-brand-ink">@(order?.PaymentMethod ?? "Direct Transfer")</span>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(order?.PaymentScreenshotUrl))
+                {
+                    <div class="pt-3 border-t border-brand-border/40">
+                        <span class="text-xs uppercase tracking-wider text-brand-inkLight font-semibold block mb-2">Attached Payment Slip</span>
+                        <a href="@order.PaymentScreenshotUrl" target="_blank" rel="noopener noreferrer" class="group relative block rounded-2xl overflow-hidden border border-brand-border shadow-2xs hover:border-brand-accent transition-all">
+                            <img src="@order.PaymentScreenshotUrl" alt="Payment Screenshot" class="w-full max-h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                                <span>View Full Screenshot</span>
+                            </div>
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="pt-2 border-t border-brand-border/40 text-xs text-brand-inkLight">
+                        Cash on delivery payment will be collected when parcel arrives.
+                    </div>
+                }
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-3 font-body">
+                <a href="/Books" class="w-full inline-flex items-center justify-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg font-bold py-4 px-6 rounded-full transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-sm sm:text-base cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    <span>Continue Browsing Books</span>
+                </a>
+
+                <a href="/" class="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-brand-surface text-brand-ink font-semibold py-3 px-6 rounded-full border border-brand-border transition-all text-sm shadow-2xs">
+                    <span>Return to Home</span>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</div>

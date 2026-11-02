@@ -209,7 +209,10 @@ else
             const editionInstruction = document.getElementById('edition-instruction');
             const genreText = '@book.Genre';
 
+            let currentSelectedBtn = null;
+
             function selectEdition(btn) {
+                currentSelectedBtn = btn;
                 // Update active state among edition buttons
                 editionSelectors.forEach(b => {
                     b.classList.remove('border-brand-accent', 'bg-brand-accent/10', 'ring-2', 'ring-brand-accent/30');
@@ -311,14 +314,13 @@ else
                 });
             });
 
-            // Note: DO NOT pre-select any edition by default per design requirement
-
             // Form validation and login guard
             const addToCartForm = document.getElementById('add-to-cart-form');
             if (addToCartForm) {
                 addToCartForm.addEventListener('submit', function(e) {
-                    if (!editionInput || !editionInput.value) {
-                        e.preventDefault();
+                    e.preventDefault();
+
+                    if (!editionInput || !editionInput.value || !currentSelectedBtn) {
                         const container = document.getElementById('edition-selector-container');
                         if (container) {
                             container.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -333,7 +335,6 @@ else
                     }
 
                     if (typeof window.isCustomerLoggedIn === 'function' && !window.isCustomerLoggedIn()) {
-                        e.preventDefault();
                         if (typeof window.openLoginRequiredModal === 'function') {
                             window.openLoginRequiredModal(window.location.pathname);
                         } else {
@@ -341,6 +342,60 @@ else
                         }
                         return false;
                     }
+
+                    try {
+                        const editionId = parseInt(currentSelectedBtn.dataset.editionId, 10);
+                        const rawPrice = currentSelectedBtn.dataset.price ? currentSelectedBtn.dataset.price.replace(/,/g, '') : '0';
+                        const price = parseFloat(rawPrice) || 0;
+                        const stock = parseInt(currentSelectedBtn.dataset.stock, 10) || 0;
+                        const editionName = currentSelectedBtn.querySelector('span')?.textContent?.trim() || 'Standard Edition';
+                        const coverImg = currentSelectedBtn.dataset.image || '@(book.Editions?.FirstOrDefault(e => !string.IsNullOrEmpty(e.CoverImageUrl))?.CoverImageUrl ?? "")';
+
+                        const rawCart = localStorage.getItem('customer_cart');
+                        let cart = rawCart ? JSON.parse(rawCart) : [];
+
+                        const existing = cart.find(i => i.bookEditionId === editionId);
+                        if (existing) {
+                            if (existing.quantity < stock) {
+                                existing.quantity += 1;
+                            } else {
+                                if (typeof window.showToast === 'function') {
+                                    window.showToast(`Only ${stock} copies available in stock.`, false);
+                                }
+                                return false;
+                            }
+                        } else {
+                            cart.push({
+                                bookEditionId: editionId,
+                                bookId: @book.BookId,
+                                title: @Html.Raw(JsonConvert.SerializeObject(book.Title)),
+                                editionName: editionName,
+                                price: price,
+                                coverImageUrl: coverImg,
+                                quantity: 1,
+                                stockQuantity: stock
+                            });
+                        }
+
+                        localStorage.setItem('customer_cart', JSON.stringify(cart));
+                        if (typeof window.updateCartBadge === 'function') {
+                            window.updateCartBadge();
+                        }
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast(`"${@Html.Raw(JsonConvert.SerializeObject(book.Title))}" (${editionName}) added to cart!`, true);
+                        }
+
+                        if (addToCartText) {
+                            addToCartText.textContent = "Added to Cart! (View Cart)";
+                            addToCartBtn.onclick = function() {
+                                window.location.href = '/Cart';
+                            };
+                        }
+                    } catch (err) {
+                        console.error("Cart error:", err);
+                    }
+                    return false;
                 });
             }
         });
