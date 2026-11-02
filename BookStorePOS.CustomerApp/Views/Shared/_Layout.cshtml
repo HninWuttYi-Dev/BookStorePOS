@@ -119,7 +119,7 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
-                        <span>Logout</span>
+                        <span>Sign Out</span>
                     </button>
                 </div>
             </div>
@@ -237,7 +237,7 @@
             
             <h3 class="font-heading text-2xl font-bold text-brand-ink mb-2">Sign in to Add to Cart</h3>
             <p class="text-sm text-brand-inkLight leading-relaxed mb-6 font-body">
-                Please log in to your Babylon BookStore account or create a new account to add books to your shopping cart and place orders.
+                Please sign in to your Babylon BookStore account or create a new account to add books to your shopping cart and place orders.
             </p>
 
             <div class="space-y-3">
@@ -278,14 +278,14 @@
             
             <h3 id="logoutModalTitle" class="font-heading text-2xl font-bold text-brand-ink mb-2">Confirm Sign Out</h3>
             <p id="logoutModalDesc" class="text-sm text-brand-inkLight leading-relaxed mb-6 font-body">
-                Are you sure you want to sign out of Babylon BookStore? You will need to log in again with your phone number to access your account and cart.
+                Are you sure you want to sign out of Babylon BookStore? You will need to sign in again with your phone number to access your account and cart.
             </p>
 
             <div class="flex flex-col sm:flex-row gap-3">
                 <button type="button" onclick="window.closeLogoutConfirmModal()" class="w-full order-2 sm:order-1 inline-flex items-center justify-center py-2.5 px-5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/30 text-brand-ink font-semibold text-sm transition-all shadow-xs cursor-pointer">
                     Cancel
                 </button>
-                <button type="button" onclick="window.performCustomerLogout()" class="w-full order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all shadow-sm text-sm cursor-pointer">
+                <button type="button" onclick="window.performCustomerSignOut()" class="w-full order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all shadow-sm text-sm cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                     </svg>
@@ -351,9 +351,10 @@
             }
         };
 
-        window.performCustomerLogout = function() {
-            window.location.href = '/Auth/Logout';
+        window.performCustomerSignOut = function() {
+            window.location.href = '/Auth/SignOut';
         };
+        window.performCustomerLogout = window.performCustomerSignOut;
 
         window.handleAddToCart = function(bookId, e) {
             if (e) {

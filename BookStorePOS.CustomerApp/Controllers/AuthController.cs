@@ -330,6 +330,10 @@ namespace BookStorePOS.CustomerApp.Controllers
         }
 
         [HttpGet]
+        [ActionName("SignOut")]
+        public Task<IActionResult> CustomerSignOut() => Logout();
+
+        [HttpGet]
         [ActionName("ForgotPassword")]
         public IActionResult ForgotPassword()
         {
