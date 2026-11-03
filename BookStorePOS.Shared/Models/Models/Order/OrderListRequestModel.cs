@@ -10,10 +10,17 @@ public class OrderListRequestModel
     public OrderStatus? OrderStatus { get; set; }
     public PaymentStatus? PaymentStatus { get; set; }
     public string? Search { get; set; }
+    public int? CustomerId { get; set; }
+    public int? Page { get; set; }
+    public int? Limit { get; set; }
 }
 
 public class OrderListResponseModel : Result<List<OrderModel>>
 {
+    public int Page { get; set; }
+    public int Limit { get; set; }
+    public int TotalPages { get; set; }
+    public int TotalCount { get; set; }
     public int PendingCount { get; set; }
     public int CompletedCount { get; set; }
     public int RejectedCount { get; set; }

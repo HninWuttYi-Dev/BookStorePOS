@@ -32,6 +32,10 @@ public class OrderService : IOrderService
             {
                 sourceQuery = sourceQuery.Where(o => o.OrderSource == requestModel.OrderSource);
             }
+            if (requestModel.CustomerId.HasValue && requestModel.CustomerId.Value > 0)
+            {
+                sourceQuery = sourceQuery.Where(o => o.CustomerId == requestModel.CustomerId.Value);
+            }
 
             // Summary metrics calculated directly from database
             var pendingCount = await sourceQuery.CountAsync(o => o.OrderStatus == (byte)OrderStatus.Pending);
@@ -61,8 +65,17 @@ public class OrderService : IOrderService
                     (o.PaymentMethod != null && o.PaymentMethod.Contains(q)));
             }
 
-            var orders = await query
-                .OrderByDescending(o => o.OrderId)
+            int totalFilteredCount = await query.CountAsync();
+            int page = requestModel.Page.HasValue && requestModel.Page.Value > 0 ? requestModel.Page.Value : 1;
+            int limit = requestModel.Limit.HasValue && requestModel.Limit.Value > 0 ? requestModel.Limit.Value : 0;
+            int totalPages = limit > 0 ? (int)Math.Ceiling((double)totalFilteredCount / limit) : 1;
+
+            var orderedQuery = query.OrderByDescending(o => o.OrderId);
+            var queryToExecute = (limit > 0)
+                ? orderedQuery.Skip((page - 1) * limit).Take(limit)
+                : orderedQuery;
+
+            var orders = await queryToExecute
                 .Select(item => new OrderModel
                 {
                     OrderId = item.OrderId,
@@ -92,6 +105,10 @@ public class OrderService : IOrderService
                 Type = EnumResType.Success,
                 Message = "Orders fetched successfully",
                 Data = orders,
+                Page = page,
+                Limit = limit > 0 ? limit : totalFilteredCount,
+                TotalPages = totalPages,
+                TotalCount = totalFilteredCount,
                 PendingCount = pendingCount,
                 CompletedCount = completedCount,
                 RejectedCount = rejectedCount,

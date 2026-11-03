@@ -1,0 +1,241 @@
+@using BookStorePOS.Shared.Models.Order
+@{
+    ViewData["Title"] = "My Orders";
+    var orders = ViewData["Orders"] as List<OrderModel> ?? new List<OrderModel>();
+    string activeStatus = ViewData["ActiveStatus"]?.ToString() ?? "All";
+    int currentPage = ViewData["CurrentPage"] != null ? Convert.ToInt32(ViewData["CurrentPage"]) : 1;
+    int totalPages = ViewData["TotalPages"] != null ? Convert.ToInt32(ViewData["TotalPages"]) : 1;
+    int totalCount = ViewData["TotalCount"] != null ? Convert.ToInt32(ViewData["TotalCount"]) : 0;
+    int pendingCount = ViewData["PendingCount"] != null ? Convert.ToInt32(ViewData["PendingCount"]) : 0;
+    int completedCount = ViewData["CompletedCount"] != null ? Convert.ToInt32(ViewData["CompletedCount"]) : 0;
+    int rejectedCount = ViewData["RejectedCount"] != null ? Convert.ToInt32(ViewData["RejectedCount"]) : 0;
+
+    string FormatOrderNo(int id, DateTime? date)
+    {
+        var d = date ?? DateTime.Now;
+        return $"C{d.ToString("yyMMdd")}{id.ToString("0000")}";
+    }
+
+    string FormatOrderDate(DateTime? date)
+    {
+        if (!date.HasValue) return "-";
+        return date.Value.ToString("dd MMM yyyy, hh:mm tt");
+    }
+}
+
+<div class="space-y-8 max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-border/70 pb-6">
+        <div>
+            <div class="flex items-center gap-2 mb-1.5">
+                <span class="w-8 h-8 rounded-xl bg-brand-surface border border-brand-border flex items-center justify-center text-brand-accent shadow-2xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                </span>
+                <span class="text-xs uppercase tracking-widest font-bold text-brand-accent">Account Management</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-heading font-bold text-brand-ink">My Order History</h1>
+            <p class="text-brand-inkLight text-sm mt-1">Track the status of your online book orders and payment receipts.</p>
+        </div>
+        <a href="/Books" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-ink text-brand-bg hover:bg-brand-accent transition-all text-xs sm:text-sm font-semibold shadow-xs hover:shadow self-start sm:self-auto">
+            <span>Browse More Books</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2">
+        <a href="/Orders" class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 @(activeStatus == "All" ? "bg-brand-ink text-brand-bg shadow-sm" : "bg-brand-surface border border-brand-border text-brand-ink hover:border-brand-accent/50")">
+            <span>All Orders</span>
+        </a>
+        <a href="/Orders?status=Pending" class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 @(activeStatus == "Pending" ? "bg-amber-600 text-white shadow-sm" : "bg-brand-surface border border-brand-border text-brand-ink hover:border-brand-accent/50")">
+            <span>Pending Review</span>
+            @if (pendingCount > 0)
+            {
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold @(activeStatus == "Pending" ? "bg-white text-amber-700" : "bg-amber-100 text-amber-800")">@pendingCount</span>
+            }
+        </a>
+        <a href="/Orders?status=Completed" class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 @(activeStatus == "Completed" ? "bg-emerald-700 text-white shadow-sm" : "bg-brand-surface border border-brand-border text-brand-ink hover:border-brand-accent/50")">
+            <span>Completed</span>
+            @if (completedCount > 0)
+            {
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold @(activeStatus == "Completed" ? "bg-white text-emerald-800" : "bg-emerald-100 text-emerald-800")">@completedCount</span>
+            }
+        </a>
+        <a href="/Orders?status=Rejected" class="px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 @(activeStatus == "Rejected" ? "bg-rose-700 text-white shadow-sm" : "bg-brand-surface border border-brand-border text-brand-ink hover:border-brand-accent/50")">
+            <span>Rejected</span>
+            @if (rejectedCount > 0)
+            {
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold @(activeStatus == "Rejected" ? "bg-white text-rose-800" : "bg-rose-100 text-rose-800")">@rejectedCount</span>
+            }
+        </a>
+    </div>
+
+    <!-- Orders List Container -->
+    @if (orders == null || orders.Count == 0)
+    {
+        <div class="bg-brand-surface/60 rounded-3xl border border-brand-border p-12 text-center max-w-lg mx-auto shadow-xs">
+            <div class="w-16 h-16 rounded-3xl bg-brand-bg border border-brand-border/80 flex items-center justify-center text-brand-accent mx-auto mb-4 shadow-2xs">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-heading font-bold text-brand-ink mb-1.5">No orders found</h3>
+            <p class="text-brand-inkLight text-xs sm:text-sm leading-relaxed mb-6">
+                @if (activeStatus != "All")
+                {
+                    <span>You have no orders currently in <strong>@activeStatus</strong> status.</span>
+                }
+                else
+                {
+                    <span>You haven't placed any book orders yet. Explore our curated library of titles and find your next favorite read.</span>
+                }
+            </p>
+            <a href="/Books" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-brand-accent hover:bg-brand-accentHover text-white text-xs sm:text-sm font-semibold transition-all shadow-xs">
+                <span>Start Browsing</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-4">
+            @foreach (var order in orders)
+            {
+                var orderNo = FormatOrderNo(order.OrderId, order.OrderDate);
+
+                <div class="bg-brand-surface/40 hover:bg-brand-surface/70 border border-brand-border rounded-2xl p-5 sm:p-6 transition-all duration-200 shadow-2xs hover:shadow-xs group">
+                    <!-- Top Bar: Order ID, Date, Status -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-brand-border/60 pb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm sm:text-base font-bold text-brand-ink font-heading">
+                                Order #@orderNo
+                            </span>
+                            <span class="text-xs text-brand-inkLight font-medium">
+                                &bull; @FormatOrderDate(order.OrderDate)
+                            </span>
+                        </div>
+                        <div>
+                            @if (order.OrderStatus == OrderStatus.Pending)
+                            {
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    Pending Payment Verification
+                                </span>
+                            }
+                            else if (order.OrderStatus == OrderStatus.Completed)
+                            {
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    Verified & Confirmed
+                                </span>
+                            }
+                            else if (order.OrderStatus == OrderStatus.Rejected)
+                            {
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                    Order Rejected
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                    @order.OrderStatus
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Middle: Rejection Reason if any -->
+                    @if (order.OrderStatus == OrderStatus.Rejected && !string.IsNullOrWhiteSpace(order.RejectReason))
+                    {
+                        <div class="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200/80 text-xs text-rose-800 flex items-start gap-2.5">
+                            <svg class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            <div>
+                                <span class="font-bold">Reason for Rejection:</span>
+                                <span class="ml-1 text-rose-700">@order.RejectReason</span>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Middle: Summary info -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-4 text-xs">
+                        <div>
+                            <span class="text-brand-inkLight font-medium block mb-0.5">Payment Method</span>
+                            <span class="font-bold text-brand-ink">@(string.IsNullOrWhiteSpace(order.PaymentMethod) ? "Online Transfer" : order.PaymentMethod)</span>
+                            <div class="mt-0.5">
+                                @if (order.PaymentStatus == PaymentStatus.Verified)
+                                {
+                                    <span class="text-[11px] font-bold text-emerald-700">Payment Verified</span>
+                                }
+                                else if (order.PaymentStatus == PaymentStatus.Submitted)
+                                {
+                                    <span class="text-[11px] font-bold text-blue-700">Slip Uploaded</span>
+                                }
+                                else if (order.PaymentStatus == PaymentStatus.Rejected)
+                                {
+                                    <span class="text-[11px] font-bold text-rose-700">Slip Declined</span>
+                                }
+                                else
+                                {
+                                    <span class="text-[11px] font-bold text-amber-700">Unpaid</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-brand-inkLight font-medium block mb-0.5">Delivery Address</span>
+                            <span class="font-medium text-brand-ink line-clamp-2">@(string.IsNullOrWhiteSpace(order.ShippingAddress) ? "Standard Shipping" : order.ShippingAddress)</span>
+                        </div>
+
+                        <div>
+                            <span class="text-brand-inkLight font-medium block mb-0.5">Total Amount</span>
+                            <span class="text-base font-extrabold text-brand-ink font-heading">@order.TotalPrice.ToString("#,##0")</span>
+                            <span class="text-xs font-bold text-brand-accent ml-1">MMK</span>
+                            <span class="text-[11px] text-brand-inkLight block">(@order.TotalQuantity @(order.TotalQuantity == 1 ? "book" : "books"))</span>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Bar: View Details Link -->
+                    <div class="pt-3 border-t border-brand-border/40 flex items-center justify-between">
+                        <span class="text-[11px] text-brand-inkLight">Click below to view itemized book editions and status details</span>
+                        <a href="/Orders/Detail/@order.OrderId" class="inline-flex items-center gap-1.5 text-xs font-bold text-brand-accent hover:text-brand-accentHover transition-colors">
+                            <span>View Order Details</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination (Exact style as Browse Books) -->
+        @if (totalPages > 1)
+        {
+            <div class="flex justify-center items-center gap-2 pt-6 mb-12 font-body">
+                @if (currentPage > 1)
+                {
+                    <a href="/Orders?status=@activeStatus&page=@(currentPage - 1)" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-accent hover:text-white transition-colors shadow-sm text-sm">Previous</a>
+                }
+                
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    if (i == currentPage)
+                    {
+                        <span class="px-4 py-2 bg-brand-accent text-white rounded-lg shadow-sm font-semibold text-sm">@i</span>
+                    }
+                    else
+                    {
+                        <a href="/Orders?status=@activeStatus&page=@i" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-surface transition-colors text-sm">@i</a>
+                    }
+                }
+                
+                @if (currentPage < totalPages)
+                {
+                    <a href="/Orders?status=@activeStatus&page=@(currentPage + 1)" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-accent hover:text-white transition-colors shadow-sm text-sm">Next</a>
+                }
+            </div>
+        }
+    }
+</div>
+

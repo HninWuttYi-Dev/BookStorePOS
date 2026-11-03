@@ -58,6 +58,17 @@ public class OrderController : BaseController
     public async Task<IActionResult> GetOrdersAsync([FromQuery] OrderListRequestModel requestModel)
     {
         _logger.LogInformation("Get Orders Async => Fetching all orders");
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (string.Equals(role, "Customer", StringComparison.OrdinalIgnoreCase))
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(userIdStr, out int uid) && uid > 0)
+            {
+                requestModel.CustomerId = uid;
+            }
+        }
+
         var response = await _orderService.GetOrdersAsync(requestModel);
         return ExecuteResult(response);
     }
@@ -72,6 +83,17 @@ public class OrderController : BaseController
     {
         _logger.LogInformation("Get Order Async => Fetching order by Id: {OrderId}", id);
         var response = await _orderService.GetOrderById(new OrderGetByIdRequestModel { OrderId = id });
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (string.Equals(role, "Customer", StringComparison.OrdinalIgnoreCase) && response.IsSuccess && response.Data != null)
+        {
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(userIdStr, out int uid) && response.Data.CustomerId != uid)
+            {
+                return ExecuteResult(Result<OrderModel>.Unauthorized("You are not authorized to view this order."));
+            }
+        }
+
         return ExecuteResult(response);
     }
 
