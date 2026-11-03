@@ -26,8 +26,42 @@ public class OrderService : IOrderService
         _logger.LogInformation("Get Orders Async => Fetching all orders");
         try
         {
-            var orders = await _db.TblOrders
-                .AsNoTracking()
+            var sourceQuery = _db.TblOrders.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(requestModel.OrderSource))
+            {
+                sourceQuery = sourceQuery.Where(o => o.OrderSource == requestModel.OrderSource);
+            }
+
+            // Summary metrics calculated directly from database
+            var pendingCount = await sourceQuery.CountAsync(o => o.OrderStatus == (byte)OrderStatus.Pending);
+            var completedCount = await sourceQuery.CountAsync(o => o.OrderStatus == (byte)OrderStatus.Completed);
+            var rejectedCount = await sourceQuery.CountAsync(o => o.OrderStatus == (byte)OrderStatus.Rejected);
+            var totalRevenue = await sourceQuery
+                .Where(o => o.OrderStatus == (byte)OrderStatus.Completed)
+                .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+
+            var query = sourceQuery;
+
+            if (requestModel.OrderStatus.HasValue && requestModel.OrderStatus.Value != OrderStatus.None)
+            {
+                query = query.Where(o => o.OrderStatus == (byte)requestModel.OrderStatus.Value);
+            }
+            if (requestModel.PaymentStatus.HasValue)
+            {
+                query = query.Where(o => o.PaymentStatus == (byte)requestModel.PaymentStatus.Value);
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.Search))
+            {
+                var q = requestModel.Search.Trim();
+                query = query.Where(o =>
+                    o.OrderId.ToString().Contains(q) ||
+                    (o.CustomerName != null && o.CustomerName.Contains(q)) ||
+                    (o.CustomerPhone != null && o.CustomerPhone.Contains(q)) ||
+                    (o.PaymentMethod != null && o.PaymentMethod.Contains(q)));
+            }
+
+            var orders = await query
                 .OrderByDescending(o => o.OrderId)
                 .Select(item => new OrderModel
                 {
@@ -57,7 +91,11 @@ public class OrderService : IOrderService
                 IsSuccess = true,
                 Type = EnumResType.Success,
                 Message = "Orders fetched successfully",
-                Data = orders
+                Data = orders,
+                PendingCount = pendingCount,
+                CompletedCount = completedCount,
+                RejectedCount = rejectedCount,
+                TotalRevenue = totalRevenue
             };
         }
         catch (Exception ex)

@@ -6,10 +6,18 @@ namespace BookStorePOS.Shared.Models.Order;
 
 public class OrderListRequestModel
 {
+    public string? OrderSource { get; set; }
+    public OrderStatus? OrderStatus { get; set; }
+    public PaymentStatus? PaymentStatus { get; set; }
+    public string? Search { get; set; }
 }
 
 public class OrderListResponseModel : Result<List<OrderModel>>
 {
+    public int PendingCount { get; set; }
+    public int CompletedCount { get; set; }
+    public int RejectedCount { get; set; }
+    public decimal TotalRevenue { get; set; }
 }
 
 public class OrderModel
