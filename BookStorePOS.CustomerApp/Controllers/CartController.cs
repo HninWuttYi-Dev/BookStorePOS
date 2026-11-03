@@ -98,6 +98,10 @@ namespace BookStorePOS.CustomerApp.Controllers
         public IActionResult Cart()
         {
             _logger.LogInformation("Cart => Rendering shopping cart page");
+            if (!IsCustomerLoggedIn())
+            {
+                return Redirect("/Auth/Login?returnUrl=/Cart");
+            }
             return View("Cart");
         }
 
@@ -146,6 +150,11 @@ namespace BookStorePOS.CustomerApp.Controllers
         [ActionName("Success")]
         public async Task<IActionResult> SuccessAsync(int id)
         {
+            if (!IsCustomerLoggedIn())
+            {
+                return Redirect("/");
+            }
+
             if (id <= 0)
             {
                 return Redirect("/Cart");

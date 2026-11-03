@@ -158,24 +158,28 @@
     const CART_KEY = 'customer_cart';
 
     function getLocalCart() {
+        if (typeof window.getCustomerCart === 'function') {
+            return window.getCustomerCart();
+        }
         try {
-            const raw = localStorage.getItem(CART_KEY);
+            const raw = localStorage.getItem('customer_cart');
             return raw ? JSON.parse(raw) : [];
         } catch (e) {
-            console.error("Failed to parse cart from localStorage:", e);
             return [];
         }
     }
 
     function saveLocalCart(cart) {
+        if (typeof window.saveCustomerCart === 'function') {
+            window.saveCustomerCart(cart);
+            return;
+        }
         try {
-            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            localStorage.setItem('customer_cart', JSON.stringify(cart));
             if (typeof window.updateCartBadge === 'function') {
                 window.updateCartBadge();
             }
-        } catch (e) {
-            console.error("Failed to save cart to localStorage:", e);
-        }
+        } catch (e) {}
     }
 
     function renderCartTable() {
@@ -348,9 +352,13 @@
 
     window.confirmClearCart = function() {
         window.closeClearCartModal();
-        localStorage.removeItem(CART_KEY);
-        if (typeof window.updateCartBadge === 'function') {
-            window.updateCartBadge();
+        if (typeof window.clearCustomerCart === 'function') {
+            window.clearCustomerCart();
+        } else {
+            localStorage.removeItem('customer_cart');
+            if (typeof window.updateCartBadge === 'function') {
+                window.updateCartBadge();
+            }
         }
         renderCartTable();
         if (typeof window.showToast === 'function') {
@@ -403,6 +411,10 @@
                 }
             });
         }
+    });
+
+    window.addEventListener('pageshow', function() {
+        renderCartTable();
     });
 </script>
 }

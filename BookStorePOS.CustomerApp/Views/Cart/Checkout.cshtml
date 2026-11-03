@@ -438,6 +438,11 @@
 
 @section Scripts {
 <script>
+    // Immediate check to prevent showing cached checkout info if signed out
+    if (typeof window.isCustomerLoggedIn === 'function' && !window.isCustomerLoggedIn()) {
+        window.location.replace('/Auth/Login?returnUrl=/Cart/Checkout');
+    }
+
     const CART_KEY = 'customer_cart';
     let isSubmittingOrder = false;
     let selectedPaymentMethod = 'KBZPay';
@@ -468,8 +473,11 @@
     };
 
     function getLocalCart() {
+        if (typeof window.getCustomerCart === 'function') {
+            return window.getCustomerCart();
+        }
         try {
-            const raw = localStorage.getItem(CART_KEY);
+            const raw = localStorage.getItem('customer_cart');
             return raw ? JSON.parse(raw) : [];
         } catch (e) {
             return [];
@@ -907,10 +915,14 @@
             success: function(response) {
                 const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true);
                 if (isSuccess) {
-                    // Clear cart from localStorage upon successful online order
-                    localStorage.removeItem(CART_KEY);
-                    if (typeof window.updateCartBadge === 'function') {
-                        window.updateCartBadge();
+                    // Clear cart from storage upon successful online order
+                    if (typeof window.clearCustomerCart === 'function') {
+                        window.clearCustomerCart();
+                    } else {
+                        localStorage.removeItem('customer_cart');
+                        if (typeof window.updateCartBadge === 'function') {
+                            window.updateCartBadge();
+                        }
                     }
 
                     window.closeOrderConfirmModal();
@@ -1028,6 +1040,20 @@
                     window.closeOrderConfirmModal();
                 }
             });
+        }
+    });
+
+    window.addEventListener('pageshow', function() {
+        if (typeof window.isCustomerLoggedIn === 'function' && !window.isCustomerLoggedIn()) {
+            window.location.replace('/Auth/Login?returnUrl=/Cart/Checkout');
+            return;
+        }
+        renderCheckoutReview();
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && typeof window.isCustomerLoggedIn === 'function' && !window.isCustomerLoggedIn()) {
+            window.location.replace('/Auth/Login?returnUrl=/Cart/Checkout');
         }
     });
 </script>

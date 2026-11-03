@@ -60,6 +60,23 @@
         bool isBrowse = rawPath == "/books" || rawPath.StartsWith("/books/") || (currentController == "books" && rawPath != "/authors" && rawPath != "/genres");
         bool isAuthors = rawPath == "/authors" || rawPath.StartsWith("/authors/") || currentController == "authors" || currentController == "author";
         bool isGenres = rawPath == "/genres" || rawPath.StartsWith("/genres/") || currentController == "genres" || currentController == "genre";
+
+        bool isCustomerAuth = !string.IsNullOrEmpty(Context.Request.Cookies["customer_token"]) ||
+                              !string.IsNullOrEmpty(Context.Request.Cookies["customer_user"]);
+        string serverCustomerUser = Context.Request.Cookies["customer_user"] ?? "";
+        if (!string.IsNullOrEmpty(serverCustomerUser))
+        {
+            try { serverCustomerUser = Uri.UnescapeDataString(serverCustomerUser); } catch { }
+            serverCustomerUser = serverCustomerUser.Replace("%20", " ").Replace("+", " ").Trim();
+        }
+        else
+        {
+            serverCustomerUser = "Customer";
+        }
+        var userWords = serverCustomerUser.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        string serverInitials = userWords.Length >= 2 
+            ? $"{userWords[0][0]}{userWords[^1][0]}".ToUpper() 
+            : (serverCustomerUser.Length >= 2 ? serverCustomerUser.Substring(0, 2).ToUpper() : serverCustomerUser.ToUpper());
     }
 
     <header class="bg-brand-surface border-b border-brand-border shadow-sm sticky top-0 z-50">
@@ -103,15 +120,15 @@
                 </a>
 
                 <!-- Guest State -->
-                <a href="/Auth/Login" id="navLoginBtn" class="text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-2.5 rounded-full transition-all font-medium text-sm shadow-sm hover:shadow">
+                <a href="/Auth/Login" id="navLoginBtn" class="@(isCustomerAuth ? "hidden " : "")text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-2.5 rounded-full transition-all font-medium text-sm shadow-sm hover:shadow">
                     Sign In
                 </a>
 
                 <!-- Logged In State (Upgraded Modern UI) -->
-                <div id="navUserMenu" class="hidden items-center gap-2.5">
+                <div id="navUserMenu" class="@(isCustomerAuth ? "flex " : "hidden ")items-center gap-2.5">
                     <div class="flex items-center gap-2 bg-brand-surface/90 border border-brand-border/80 px-3.5 py-1.5 rounded-full shadow-xs">
-                        <span class="w-7 h-7 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs shadow-xs tracking-wider" id="navUserInitials">CU</span>
-                        <span id="navUsername" class="font-medium text-xs text-brand-ink max-w-[120px] truncate">Customer</span>
+                        <span class="w-7 h-7 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs shadow-xs tracking-wider" id="navUserInitials">@serverInitials</span>
+                        <span id="navUsername" class="font-medium text-xs text-brand-ink max-w-[120px] truncate">@serverCustomerUser</span>
                     </div>
                     <button type="button" id="navLogoutBtn" onclick="window.openLogoutConfirmModal()" 
                        class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-rose-700 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200 hover:border-rose-600 rounded-full transition-all duration-200 shadow-xs hover:shadow-sm cursor-pointer" 
@@ -160,17 +177,17 @@
                 <a href="/Cart" class="text-brand-ink font-medium text-base tracking-wide uppercase py-2.5 border-b border-brand-border/50 hover:text-brand-accent">Cart</a>
                 
                 <!-- Guest Mobile -->
-                <a href="/Auth/Login" id="mobileLoginBtn" class="text-center mt-2 text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-3 rounded-xl transition-colors font-medium text-base w-full shadow-sm">
+                <a href="/Auth/Login" id="mobileLoginBtn" class="@(isCustomerAuth ? "hidden " : "")text-center mt-2 text-brand-bg bg-brand-ink hover:bg-brand-accent px-5 py-3 rounded-xl transition-colors font-medium text-base w-full shadow-sm">
                     Sign In
                 </a>
 
                 <!-- Logged In Mobile (Upgraded Modern UI) -->
-                <div id="mobileUserMenu" class="hidden flex-col gap-3 pt-3 border-t border-brand-border/60">
+                <div id="mobileUserMenu" class="@(isCustomerAuth ? "flex " : "hidden ")flex-col gap-3 pt-3 border-t border-brand-border/60">
                     <div class="flex items-center gap-3 bg-brand-bg border border-brand-border p-3 rounded-xl">
-                        <span class="w-10 h-10 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs tracking-wider shrink-0 shadow-xs" id="mobileUserInitials">CU</span>
+                        <span class="w-10 h-10 rounded-full bg-brand-accent text-white flex items-center justify-center font-bold text-xs tracking-wider shrink-0 shadow-xs" id="mobileUserInitials">@serverInitials</span>
                         <div class="flex flex-col min-w-0">
                             <span class="text-[11px] text-brand-inkLight uppercase tracking-wider font-semibold">Signed in as</span>
-                            <span id="mobileUsername" class="text-sm font-bold text-brand-ink truncate"></span>
+                            <span id="mobileUsername" class="text-sm font-bold text-brand-ink truncate">@serverCustomerUser</span>
                         </div>
                     </div>
                     <button type="button" onclick="window.openLogoutConfirmModal()" class="flex items-center justify-center gap-2 text-rose-700 bg-rose-50 hover:bg-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-xs w-full cursor-pointer">
@@ -306,6 +323,55 @@
             }
         };
 
+        // User-scoped Cart Storage: preserves items per user across logins without database changes
+        window.getCustomerCartKey = function() {
+            try {
+                const match = document.cookie.match(/customer_user=([^;]+)/);
+                if (match && match[1]) {
+                    let u = decodeURIComponent(match[1]).trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                    if (u) return 'customer_cart_' + u;
+                }
+            } catch(e) {}
+            return 'customer_cart_guest';
+        };
+
+        window.getCustomerCart = function() {
+            if (!window.isCustomerLoggedIn()) return [];
+            try {
+                const key = window.getCustomerCartKey();
+                let raw = localStorage.getItem(key);
+                // Auto-migrate legacy generic cart into user's cart if present
+                if (!raw) {
+                    raw = localStorage.getItem('customer_cart');
+                    if (raw) {
+                        localStorage.setItem(key, raw);
+                        localStorage.removeItem('customer_cart');
+                    }
+                }
+                return raw ? JSON.parse(raw) : [];
+            } catch(e) {
+                return [];
+            }
+        };
+
+        window.saveCustomerCart = function(cart) {
+            if (!window.isCustomerLoggedIn()) return;
+            try {
+                const key = window.getCustomerCartKey();
+                localStorage.setItem(key, JSON.stringify(cart));
+                window.updateCartBadge();
+            } catch(e) {}
+        };
+
+        window.clearCustomerCart = function() {
+            try {
+                const key = window.getCustomerCartKey();
+                localStorage.removeItem(key);
+                localStorage.removeItem('customer_cart');
+                window.updateCartBadge();
+            } catch(e) {}
+        };
+
         window.openLoginRequiredModal = function(returnUrl) {
             const modal = document.getElementById('loginRequiredModal');
             if (!modal) return;
@@ -352,7 +418,28 @@
         };
 
         window.performCustomerSignOut = function() {
-            window.location.href = '/Auth/SignOut';
+            try {
+                sessionStorage.setItem('customer_logged_out', 'true');
+            } catch(e) {}
+
+            // Immediately clear auth cookies on client side
+            document.cookie = "customer_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0";
+            document.cookie = "customer_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0";
+            document.cookie = "customer_refresh=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0";
+
+            window.closeLogoutConfirmModal();
+            window.closeLoginRequiredModal();
+
+            const navLoginBtn = document.getElementById('navLoginBtn');
+            const navUserMenu = document.getElementById('navUserMenu');
+            if (navLoginBtn) navLoginBtn.classList.remove('hidden');
+            if (navUserMenu) {
+                navUserMenu.classList.add('hidden');
+                navUserMenu.classList.remove('flex');
+            }
+            window.updateCartBadge();
+
+            window.location.replace('/Auth/SignOut');
         };
         window.performCustomerLogout = window.performCustomerSignOut;
 
@@ -431,53 +518,8 @@
                 }
             });
 
-            // Customer Auth state check from cookie
-            try {
-                const userMatch = document.cookie.match(/customer_user=([^;]+)/);
-                if (userMatch && userMatch[1]) {
-                    // Safe multi-pass URL decoder to clean any %20, %2520, or +
-                    let cleanUser = userMatch[1];
-                    try {
-                        cleanUser = decodeURIComponent(cleanUser);
-                        if (cleanUser.includes('%')) {
-                            cleanUser = decodeURIComponent(cleanUser);
-                        }
-                    } catch(e) {}
-                    cleanUser = cleanUser.replace(/%20/g, ' ').replace(/\+/g, ' ').trim();
-
-                    // Generate initials (e.g. "Harry Potter" -> "HP", "Harry" -> "HA")
-                    const words = cleanUser.split(/\s+/).filter(Boolean);
-                    const initials = words.length >= 2 
-                        ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
-                        : cleanUser.substring(0, 2).toUpperCase();
-
-                    const navLoginBtn = document.getElementById('navLoginBtn');
-                    const navUserMenu = document.getElementById('navUserMenu');
-                    const navUsername = document.getElementById('navUsername');
-                    const navUserInitials = document.getElementById('navUserInitials');
-
-                    const mobileLoginBtn = document.getElementById('mobileLoginBtn');
-                    const mobileUserMenu = document.getElementById('mobileUserMenu');
-                    const mobileUsername = document.getElementById('mobileUsername');
-                    const mobileUserInitials = document.getElementById('mobileUserInitials');
-
-                    if (navLoginBtn) navLoginBtn.classList.add('hidden');
-                    if (navUserMenu) {
-                        navUserMenu.classList.remove('hidden');
-                        navUserMenu.classList.add('flex');
-                    }
-                    if (navUsername) navUsername.textContent = cleanUser;
-                    if (navUserInitials) navUserInitials.textContent = initials;
-
-                    if (mobileLoginBtn) mobileLoginBtn.classList.add('hidden');
-                    if (mobileUserMenu) {
-                        mobileUserMenu.classList.remove('hidden');
-                        mobileUserMenu.classList.add('flex');
-                    }
-                    if (mobileUsername) mobileUsername.textContent = cleanUser;
-                    if (mobileUserInitials) mobileUserInitials.textContent = initials;
-                }
-            } catch(e) {}
+            // Customer Auth state check & UI synchronization
+            window.syncCustomerAuthState();
 
             // Active Navigation Tab Indicator based on URL
             try {
@@ -525,22 +567,150 @@
                     }
                 });
             });
+        });
 
-            // Update Cart Badge on load
-            if (typeof window.updateCartBadge === 'function') {
-                window.updateCartBadge();
+        // Synchronize customer authentication UI & cart badge across pages and back-forward navigation
+        window.syncCustomerAuthState = function() {
+            // Guarantee confirmation modals are closed on back-navigation
+            window.closeLogoutConfirmModal();
+            window.closeLoginRequiredModal();
+
+            const navLoginBtn = document.getElementById('navLoginBtn');
+            const navUserMenu = document.getElementById('navUserMenu');
+            const navUsername = document.getElementById('navUsername');
+            const navUserInitials = document.getElementById('navUserInitials');
+
+            const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+            const mobileUserMenu = document.getElementById('mobileUserMenu');
+            const mobileUsername = document.getElementById('mobileUsername');
+            const mobileUserInitials = document.getElementById('mobileUserInitials');
+
+            const isLoggedIn = window.isCustomerLoggedIn();
+
+            if (isLoggedIn) {
+                try {
+                    sessionStorage.removeItem('customer_logged_out');
+                } catch(e) {}
+
+                try {
+                    const userMatch = document.cookie.match(/customer_user=([^;]+)/);
+                    let cleanUser = userMatch && userMatch[1] ? userMatch[1] : 'Customer';
+                    try {
+                        cleanUser = decodeURIComponent(cleanUser);
+                        if (cleanUser.includes('%')) {
+                            cleanUser = decodeURIComponent(cleanUser);
+                        }
+                    } catch(e) {}
+                    cleanUser = cleanUser.replace(/%20/g, ' ').replace(/\+/g, ' ').trim();
+
+                    const words = cleanUser.split(/\s+/).filter(Boolean);
+                    const initials = words.length >= 2 
+                        ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+                        : cleanUser.substring(0, 2).toUpperCase();
+
+                    if (navLoginBtn) navLoginBtn.classList.add('hidden');
+                    if (navUserMenu) {
+                        navUserMenu.classList.remove('hidden');
+                        navUserMenu.classList.add('flex');
+                    }
+                    if (navUsername) navUsername.textContent = cleanUser;
+                    if (navUserInitials) navUserInitials.textContent = initials;
+
+                    if (mobileLoginBtn) mobileLoginBtn.classList.add('hidden');
+                    if (mobileUserMenu) {
+                        mobileUserMenu.classList.remove('hidden');
+                        mobileUserMenu.classList.add('flex');
+                    }
+                    if (mobileUsername) mobileUsername.textContent = cleanUser;
+                    if (mobileUserInitials) mobileUserInitials.textContent = initials;
+                } catch(e) {}
+            } else {
+                if (navLoginBtn) navLoginBtn.classList.remove('hidden');
+                if (navUserMenu) {
+                    navUserMenu.classList.add('hidden');
+                    navUserMenu.classList.remove('flex');
+                }
+                if (mobileLoginBtn) mobileLoginBtn.classList.remove('hidden');
+                if (mobileUserMenu) {
+                    mobileUserMenu.classList.add('hidden');
+                    mobileUserMenu.classList.remove('flex');
+                }
+
+                // If user is logged out and on any Cart/Order route (via Back button or cached state), redirect to Home
+                const currentPath = window.location.pathname.toLowerCase();
+                if (currentPath.startsWith('/cart')) {
+                    window.location.replace('/');
+                    return;
+                }
+
+                // If user logged out and Back button navigates into past session pages, force return to Home
+                if (sessionStorage.getItem('customer_logged_out') === 'true') {
+                    if (currentPath !== '/' && currentPath !== '/home' && !currentPath.startsWith('/auth/login')) {
+                        window.location.replace('/');
+                        return;
+                    } else if (window.history && window.history.pushState) {
+                        window.history.pushState(null, '', window.location.href);
+                    }
+                }
             }
+
+            window.updateCartBadge();
+        };
+
+        // Handle Back/Forward cache navigation (bfcache) & Tab switching
+        window.addEventListener('pageshow', function() {
+            window.syncCustomerAuthState();
+        });
+
+        window.addEventListener('popstate', function() {
+            if (!window.isCustomerLoggedIn() && sessionStorage.getItem('customer_logged_out') === 'true') {
+                const currentPath = window.location.pathname.toLowerCase();
+                if (currentPath !== '/' && currentPath !== '/home') {
+                    window.location.replace('/');
+                    return;
+                }
+                if (window.history && window.history.pushState) {
+                    window.history.pushState(null, '', window.location.href);
+                }
+            }
+            window.syncCustomerAuthState();
+        });
+
+        // When guest intentionally clicks any link or button, unlock regular guest navigation
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (link && link.href) {
+                try {
+                    sessionStorage.removeItem('customer_logged_out');
+                } catch(e) {}
+            }
+        });
+
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                window.syncCustomerAuthState();
+            }
+        });
+
+        window.addEventListener('focus', function() {
+            window.syncCustomerAuthState();
         });
 
         // Global Cart Badge Update
         window.updateCartBadge = function() {
             try {
-                const raw = localStorage.getItem('customer_cart');
-                const cart = raw ? JSON.parse(raw) : [];
-                const total = cart.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0);
-                
                 const navBadge = document.getElementById('navCartBadge');
                 const mobBadge = document.getElementById('mobileCartBadge');
+
+                // If not logged in, guests cannot have a cart
+                if (!window.isCustomerLoggedIn()) {
+                    if (navBadge) navBadge.classList.add('hidden');
+                    if (mobBadge) mobBadge.classList.add('hidden');
+                    return;
+                }
+
+                const cart = typeof window.getCustomerCart === 'function' ? window.getCustomerCart() : [];
+                const total = cart.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 1), 0);
                 
                 if (navBadge) {
                     if (total > 0) {

@@ -323,10 +323,11 @@ namespace BookStorePOS.CustomerApp.Controllers
                 _logger.LogWarning(ex, "Customer Logout => Error revoking refresh token on WebAPI");
             }
 
-            Response.Cookies.Delete("customer_token");
-            Response.Cookies.Delete("customer_refresh");
-            Response.Cookies.Delete("customer_user");
-            return RedirectToAction("Index", "Books");
+            SetNoCacheHeaders();
+            Response.Cookies.Delete("customer_token", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("customer_refresh", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("customer_user", new CookieOptions { Path = "/" });
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]

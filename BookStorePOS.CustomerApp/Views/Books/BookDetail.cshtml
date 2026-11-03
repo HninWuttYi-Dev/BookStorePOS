@@ -351,8 +351,9 @@ else
                         const editionName = currentSelectedBtn.querySelector('span')?.textContent?.trim() || 'Standard Edition';
                         const coverImg = currentSelectedBtn.dataset.image || '@(book.Editions?.FirstOrDefault(e => !string.IsNullOrEmpty(e.CoverImageUrl))?.CoverImageUrl ?? "")';
 
-                        const rawCart = localStorage.getItem('customer_cart');
-                        let cart = rawCart ? JSON.parse(rawCart) : [];
+                        const cart = typeof window.getCustomerCart === 'function' 
+                            ? window.getCustomerCart() 
+                            : (localStorage.getItem('customer_cart') ? JSON.parse(localStorage.getItem('customer_cart')) : []);
 
                         const existing = cart.find(i => i.bookEditionId === editionId);
                         if (existing) {
@@ -377,9 +378,13 @@ else
                             });
                         }
 
-                        localStorage.setItem('customer_cart', JSON.stringify(cart));
-                        if (typeof window.updateCartBadge === 'function') {
-                            window.updateCartBadge();
+                        if (typeof window.saveCustomerCart === 'function') {
+                            window.saveCustomerCart(cart);
+                        } else {
+                            localStorage.setItem('customer_cart', JSON.stringify(cart));
+                            if (typeof window.updateCartBadge === 'function') {
+                                window.updateCartBadge();
+                            }
                         }
 
                         if (typeof window.showToast === 'function') {
