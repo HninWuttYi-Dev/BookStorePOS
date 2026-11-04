@@ -239,6 +239,7 @@
                                 <span class="text-[11px] font-semibold font-body bg-brand-surface border border-brand-border/80 text-brand-inkLight px-2 py-0.5 rounded-md">
                                     ${escapeHtml(item.editionName || 'Standard')}
                                 </span>
+                                ${item.publisher ? `<span class="text-[11px] text-brand-inkLight font-body truncate max-w-[160px]" title="${escapeHtml(item.publisher)}">· ${escapeHtml(item.publisher)}</span>` : ''}
                                 <span class="text-xs text-brand-accent font-semibold sm:hidden font-body">
                                     ${price.toLocaleString()} MMK
                                 </span>

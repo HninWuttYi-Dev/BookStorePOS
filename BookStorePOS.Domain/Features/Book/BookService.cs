@@ -106,6 +106,7 @@ public class BookService : IBookService
                         PageCount = e.PageCount,
                         ReorderLevel = e.ReorderLevel,
                         CoverImageUrl = e.CoverImageUrl,
+                        Publisher = e.Publisher,
                         IsDeleted = e.IsDeleted
                     }).ToList()
                 });
@@ -185,6 +186,7 @@ public class BookService : IBookService
                     PageCount = e.PageCount,
                     ReorderLevel = e.ReorderLevel,
                     CoverImageUrl = e.CoverImageUrl,
+                    Publisher = e.Publisher,
                     IsDeleted = e.IsDeleted
                 }).ToList()
             }, "Book fetched successfully");
@@ -333,6 +335,7 @@ public class BookService : IBookService
             PublishDate = requestModel.PublishDate ?? DateTime.Now,
             PageCount = requestModel.PageCount,
             CoverImageUrl = requestModel.CoverImageUrl,
+            Publisher = requestModel.Publisher,
             IsDeleted = false,
             CreatedAt = DateTime.Now
         };
@@ -376,6 +379,7 @@ public class BookService : IBookService
                         PageCount = bookEdition.PageCount,
                         ReorderLevel = bookEdition.ReorderLevel,
                         CoverImageUrl = bookEdition.CoverImageUrl,
+                        Publisher = bookEdition.Publisher,
                         IsDeleted = bookEdition.IsDeleted
                     }
                 }
@@ -571,6 +575,7 @@ public class BookService : IBookService
                         PageCount = e.PageCount,
                         ReorderLevel = e.ReorderLevel,
                         CoverImageUrl = e.CoverImageUrl,
+                        Publisher = e.Publisher,
                         IsDeleted = e.IsDeleted
                     }).ToList()
                 });
@@ -673,6 +678,7 @@ public class BookService : IBookService
                 PublishDate = requestModel.PublishDate ?? DateTime.Now,
                 PageCount = requestModel.PageCount,
                 CoverImageUrl = requestModel.CoverImageUrl,
+                Publisher = requestModel.Publisher,
                 IsDeleted = false,
                 CreatedAt = DateTime.Now
             };
@@ -697,6 +703,7 @@ public class BookService : IBookService
                 PageCount = bookEdition.PageCount,
                 ReorderLevel = bookEdition.ReorderLevel,
                 CoverImageUrl = bookEdition.CoverImageUrl,
+                Publisher = bookEdition.Publisher,
                 IsDeleted = bookEdition.IsDeleted
             }, "Created new book edition successfully");
         }
@@ -775,6 +782,7 @@ public class BookService : IBookService
             bookEdition.Price = requestModel.Price;
             bookEdition.StockQuantity = requestModel.StockQuantity;
             bookEdition.EditionNote = requestModel.EditionNote;
+            bookEdition.Publisher = requestModel.Publisher;
             if (requestModel.PublishDate.HasValue)
             {
                 bookEdition.PublishDate = requestModel.PublishDate.Value;
@@ -803,6 +811,7 @@ public class BookService : IBookService
                     PageCount = bookEdition.PageCount,
                     ReorderLevel = bookEdition.ReorderLevel,
                     CoverImageUrl = bookEdition.CoverImageUrl,
+                    Publisher = bookEdition.Publisher,
                     IsDeleted = bookEdition.IsDeleted
                 }, "No changes detected.");
             }
@@ -826,6 +835,7 @@ public class BookService : IBookService
                 PageCount = bookEdition.PageCount,
                 ReorderLevel = bookEdition.ReorderLevel,
                 CoverImageUrl = bookEdition.CoverImageUrl,
+                Publisher = bookEdition.Publisher,
                 IsDeleted = bookEdition.IsDeleted
             }, "Updated book edition successfully");
         }

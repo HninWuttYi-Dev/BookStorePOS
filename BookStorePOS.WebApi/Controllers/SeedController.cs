@@ -104,6 +104,9 @@ namespace BookStorePOS.WebApi.Controllers
                     _db.TblBooks.Add(book);
                     await _db.SaveChangesAsync();
 
+                    var samplePublishers = new[] { "Bloomsbury Publishing", "Penguin Random House", "HarperCollins", "Simon & Schuster", "Macmillan Publishers", "Vintage Books", "Hachette Book Group" };
+                    var publisherName = samplePublishers[r.Next(0, samplePublishers.Length)];
+
                     // Paperback edition
                     _db.TblBookEditions.Add(new TblBookEdition
                     {
@@ -113,6 +116,7 @@ namespace BookStorePOS.WebApi.Controllers
                         Price = r.Next(10, 25) * 1000,
                         StockQuantity = r.Next(10, 100),
                         PublishDate = DateTime.Now.AddDays(-r.Next(100, 1000)),
+                        Publisher = publisherName,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
                         CoverImageUrl = b.CoverUrl
@@ -129,6 +133,7 @@ namespace BookStorePOS.WebApi.Controllers
                             Price = r.Next(25, 50) * 1000,
                             StockQuantity = r.Next(5, 40),
                             PublishDate = DateTime.Now.AddDays(-r.Next(100, 1000)),
+                            Publisher = publisherName,
                             CreatedAt = DateTime.Now,
                             UpdatedAt = DateTime.Now,
                             CoverImageUrl = b.CoverUrl

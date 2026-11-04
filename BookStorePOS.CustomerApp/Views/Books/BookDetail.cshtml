@@ -97,10 +97,13 @@ else
 
                 <div class="w-20 h-1 bg-brand-accent/70 mb-8 rounded-full"></div>
 
-                <div class="prose prose-brand prose-lg text-brand-ink/90 mb-8 max-w-none font-body leading-relaxed">
-                    <h3 class="text-lg font-bold font-heading mb-2 text-brand-ink">Plot Summary</h3>
-                    <p class="whitespace-pre-wrap text-sm sm:text-base text-brand-inkLight leading-relaxed">@(string.IsNullOrWhiteSpace(book.Description) ? "No plot summary available for this timeless piece. Please contact our bookstore for more details." : book.Description)</p>
-                </div>
+                @if (!string.IsNullOrWhiteSpace(book.Description))
+                {
+                    <div class="prose prose-brand prose-lg text-brand-ink/90 mb-8 max-w-none font-body leading-relaxed">
+                        <h3 class="text-lg font-bold font-heading mb-2 text-brand-ink">Plot Summary</h3>
+                        <p class="whitespace-pre-wrap text-sm sm:text-base text-brand-inkLight leading-relaxed">@book.Description</p>
+                    </div>
+                }
 
                 <!-- Edition Note Section (Dynamically updated when an edition is chosen) -->
                 <div id="edition-notes-section" class="hidden bg-brand-surface p-5 sm:p-6 rounded-2xl border border-brand-border/70 shadow-2xs mb-8">
@@ -110,6 +113,10 @@ else
                     </h3>
                     <p id="display-edition-note" class="text-brand-ink/80 text-sm whitespace-pre-wrap font-body leading-relaxed"></p>
                     <div class="mt-4 pt-3 border-t border-brand-border/50 flex flex-wrap gap-4 text-xs font-body">
+                        <div class="flex items-center gap-1.5 hidden" id="display-publisher-container">
+                            <svg class="w-4 h-4 text-brand-inkLight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            <span class="text-brand-inkLight font-medium">Publisher: <span id="display-publisher" class="text-brand-ink font-semibold"></span></span>
+                        </div>
                         <div class="flex items-center gap-1.5 hidden" id="display-publish-date-container">
                             <svg class="w-4 h-4 text-brand-inkLight" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             <span class="text-brand-inkLight font-medium">Published Date: <span id="display-publish-date" class="text-brand-ink font-semibold"></span></span>
@@ -134,10 +141,11 @@ else
                                 <button type="button" class="edition-selector px-4 py-2.5 border-2 rounded-xl transition-all font-body flex flex-col items-start gap-1 bg-brand-surface border-brand-border/70 hover:border-brand-accent/60 text-left cursor-pointer group"
                                         data-edition-id="@edition.BookEditionId"
                                         data-price="@edition.Price.ToString("N0")"
-                                        data-isbn="@(edition.Isbn ?? "N/A")"
+                                        data-isbn="@(edition.Isbn ?? "")"
                                         data-stock="@edition.StockQuantity"
                                         data-image="@edition.CoverImageUrl"
                                         data-note="@edition.EditionNote"
+                                        data-publisher="@(edition.Publisher ?? "")"
                                         data-publish-date="@(edition.PublishDate > DateTime.MinValue && edition.PublishDate.Year > 1900 ? edition.PublishDate.ToString("dd MMMM yyyy") : "")"
                                         data-page-count="@edition.PageCount">
                                     <span class="text-brand-ink font-semibold text-sm group-hover:text-brand-accent transition-colors">@edition.EditionName</span>
@@ -163,14 +171,14 @@ else
                         </div>
                     </div>
                     
-                    <!-- ISBN Card with Barcode/Tag Logo -->
-                    <div class="bg-brand-surface p-5 rounded-2xl border border-brand-border/60 shadow-2xs flex items-center gap-4">
+                    <!-- ISBN Card with Barcode/Tag Logo (Hidden if edition has no ISBN) -->
+                    <div id="isbn-card-container" class="hidden bg-brand-surface p-5 rounded-2xl border border-brand-border/60 shadow-2xs flex items-center gap-4">
                         <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-brand-accent shadow-2xs border border-brand-border/50 shrink-0">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                         </div>
                         <div>
                             <span class="block text-[11px] font-bold text-brand-inkLight/80 uppercase tracking-widest mb-0.5 font-body">ISBN</span>
-                            <span id="display-isbn" class="text-base sm:text-lg font-semibold text-brand-ink font-body">Select an edition</span>
+                            <span id="display-isbn" class="text-base sm:text-lg font-semibold text-brand-ink font-body"></span>
                         </div>
                     </div>
                 </div>
@@ -202,6 +210,8 @@ else
             const editionInput = document.getElementById('selected-edition-id');
             const editionNotesSection = document.getElementById('edition-notes-section');
             const displayEditionNote = document.getElementById('display-edition-note');
+            const displayPublisherContainer = document.getElementById('display-publisher-container');
+            const displayPublisher = document.getElementById('display-publisher');
             const displayPublishDateContainer = document.getElementById('display-publish-date-container');
             const displayPublishDate = document.getElementById('display-publish-date');
             const displayPageCountContainer = document.getElementById('display-page-count-container');
@@ -229,7 +239,13 @@ else
 
                 // Update price and ISBN
                 if (priceEl) priceEl.innerHTML = btn.dataset.price + ' <span class="text-sm font-medium font-body">MMK</span>';
-                if (isbnEl) isbnEl.textContent = btn.dataset.isbn;
+                const isbnCard = document.getElementById('isbn-card-container');
+                if (btn.dataset.isbn && btn.dataset.isbn.trim() !== '' && btn.dataset.isbn.trim().toUpperCase() !== 'N/A') {
+                    if (isbnEl) isbnEl.textContent = btn.dataset.isbn.trim();
+                    if (isbnCard) isbnCard.classList.remove('hidden');
+                } else {
+                    if (isbnCard) isbnCard.classList.add('hidden');
+                }
                 
                 // Update edition details (EditionNote, PublishDate, PageCount)
                 let hasNoteOrDetails = false;
@@ -240,6 +256,14 @@ else
                     hasNoteOrDetails = true;
                 } else {
                     displayEditionNote.classList.add('hidden');
+                }
+
+                if (btn.dataset.publisher && btn.dataset.publisher.trim() !== '') {
+                    displayPublisher.textContent = btn.dataset.publisher;
+                    displayPublisherContainer.classList.remove('hidden');
+                    hasNoteOrDetails = true;
+                } else {
+                    displayPublisherContainer.classList.add('hidden');
                 }
 
                 if (btn.dataset.publishDate && btn.dataset.publishDate.trim() !== '') {
@@ -371,6 +395,7 @@ else
                                 bookId: @book.BookId,
                                 title: @Html.Raw(JsonConvert.SerializeObject(book.Title)),
                                 editionName: editionName,
+                                publisher: currentSelectedBtn.dataset.publisher || '',
                                 price: price,
                                 coverImageUrl: coverImg,
                                 quantity: 1,

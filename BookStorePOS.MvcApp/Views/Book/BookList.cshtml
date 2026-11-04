@@ -132,6 +132,7 @@
                                             <thead class="bg-slate-50 text-slate-500 font-semibold">
                                                 <tr>
                                                     <th class="px-4 py-3">Edition Name</th>
+                                                    <th class="px-4 py-3">Publisher</th>
                                                     <th class="px-4 py-3">ISBN</th>
                                                     <th class="px-4 py-3">Price (MMK)</th>
                                                     <th class="px-4 py-3 text-center">Stock</th>
@@ -145,6 +146,7 @@
                                                         <td class="px-4 py-3 font-medium max-w-[200px] truncate" title="@edition.EditionName">
                                                             <a href="/Book/Detail/@book.BookId?editionId=@edition.BookEditionId" class="text-teal-700 hover:text-teal-900 transition-colors block truncate" onclick="event.stopPropagation();">@edition.EditionName</a>
                                                         </td>
+                                                        <td class="px-4 py-3 text-slate-600 max-w-[150px] truncate" title="@edition.Publisher">@(string.IsNullOrWhiteSpace(edition.Publisher) ? "-" : edition.Publisher)</td>
                                                         <td class="px-4 py-3 text-slate-500">@edition.Isbn</td>
                                                         <td class="px-4 py-3 text-slate-700">@edition.Price.ToString("#,##0")</td>
                                                         <td class="px-4 py-3 text-center">

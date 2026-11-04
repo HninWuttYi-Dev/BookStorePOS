@@ -55,5 +55,6 @@ public class BookEditionModel
     public int? PageCount { get; set; }
     public int ReorderLevel { get; set; }
     public string? CoverImageUrl { get; set; }
+    public string? Publisher { get; set; }
     public bool IsDeleted { get; set; }
 }

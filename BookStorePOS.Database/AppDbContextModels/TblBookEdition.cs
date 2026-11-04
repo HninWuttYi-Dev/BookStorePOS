@@ -33,6 +33,8 @@ public partial class TblBookEdition
 
     public DateTime UpdatedAt { get; set; }
 
+    public string? Publisher { get; set; }
+
     public virtual TblBook Book { get; set; } = null!;
 
     public virtual TblEdition Edition { get; set; } = null!;

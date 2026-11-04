@@ -519,6 +519,7 @@
                             <span class="text-[10px] text-brand-inkLight bg-brand-surface px-1.5 py-0.5 rounded border border-brand-border/60">
                                 ${escapeHtml(item.editionName || 'Standard')}
                             </span>
+                            ${item.publisher ? `<span class="text-[10px] text-brand-inkLight truncate max-w-[120px]" title="${escapeHtml(item.publisher)}">· ${escapeHtml(item.publisher)}</span>` : ''}
                             <span class="text-[11px] text-brand-inkLight">
                                 Qty: <strong class="text-brand-ink">${qty}</strong>
                             </span>

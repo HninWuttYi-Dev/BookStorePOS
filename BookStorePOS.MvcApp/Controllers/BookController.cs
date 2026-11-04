@@ -182,6 +182,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel.EditionNote != null) content.Add(new StringContent(requestModel.EditionNote), "EditionNote");
                 if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("O")), "PublishDate");
                 if (requestModel.PageCount.HasValue) content.Add(new StringContent(requestModel.PageCount.Value.ToString()), "PageCount");
+                if (requestModel.Publisher != null) content.Add(new StringContent(requestModel.Publisher), "Publisher");
 
                 if (photo != null && photo.Length > 0)
                 {
@@ -411,6 +412,7 @@ namespace BookStorePOS.MvcApp.Controllers
             if (requestModel.EditionNote != null) content.Add(new StringContent(requestModel.EditionNote), "EditionNote");
             if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("O")), "PublishDate");
             if (requestModel.PageCount.HasValue) content.Add(new StringContent(requestModel.PageCount.Value.ToString()), "PageCount");
+            if (requestModel.Publisher != null) content.Add(new StringContent(requestModel.Publisher), "Publisher");
 
             if (photo != null && photo.Length > 0)
             {
@@ -519,6 +521,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["PublishDate"] = edition.PublishDate;
                 ViewData["PageCount"] = edition.PageCount;
                 ViewData["EditionNote"] = edition.EditionNote;
+                ViewData["Publisher"] = edition.Publisher;
                 
                 return View("BookEditEdition", model.Data);
             }
@@ -547,6 +550,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (requestModel.EditionNote != null) content.Add(new StringContent(requestModel.EditionNote), "EditionNote");
                 if (requestModel.PublishDate.HasValue) content.Add(new StringContent(requestModel.PublishDate.Value.ToString("yyyy-MM-dd")), "PublishDate");
                 if (requestModel.PageCount.HasValue) content.Add(new StringContent(requestModel.PageCount.Value.ToString()), "PageCount");
+                if (requestModel.Publisher != null) content.Add(new StringContent(requestModel.Publisher), "Publisher");
 
                 if (photo != null && photo.Length > 0)
                 {

@@ -56,14 +56,20 @@
             </div>
             
             <div class="mt-8 grid grid-cols-2 gap-y-6 gap-x-8">
-                <div>
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">ISBN</h4>
-                    <p class="text-slate-800 font-medium">@(string.IsNullOrEmpty(selectedEdition?.Isbn) ? "N/A" : selectedEdition?.Isbn)</p>
-                </div>
-                <div>
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Edition Name</h4>
-                    <p class="text-slate-800 font-medium">@(string.IsNullOrEmpty(selectedEdition?.EditionName) ? "N/A" : selectedEdition?.EditionName)</p>
-                </div>
+                @if (!string.IsNullOrWhiteSpace(selectedEdition?.Isbn))
+                {
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">ISBN</h4>
+                        <p class="text-slate-800 font-medium">@selectedEdition.Isbn</p>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(selectedEdition?.EditionName))
+                {
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Edition Name</h4>
+                        <p class="text-slate-800 font-medium">@selectedEdition.EditionName</p>
+                    </div>
+                }
                 <div>
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Price</h4>
                     <p class="text-xl font-bold text-slate-900">@(selectedEdition?.Price.ToString("#,##0") ?? "0") <span class="text-sm font-medium text-slate-500">MMK</span></p>
@@ -74,6 +80,13 @@
                         @(selectedEdition?.StockQuantity ?? 0) in stock
                     </span>
                 </div>
+                @if (!string.IsNullOrWhiteSpace(selectedEdition?.Publisher))
+                {
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Publisher</h4>
+                        <p class="text-slate-800 font-medium">@selectedEdition.Publisher</p>
+                    </div>
+                }
                 <div>
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Reorder Level</h4>
                     <p class="text-slate-800 font-medium">@(selectedEdition?.ReorderLevel ?? 0)</p>
@@ -81,26 +94,59 @@
             </div>
             
             <div class="mt-8 pt-8 border-t border-slate-100 flex-1">
-                <h4 class="text-sm font-bold text-slate-900 mb-3">Plot Summary</h4>
-                <div class="text-slate-600 leading-relaxed text-sm mb-6">
-                    @(string.IsNullOrEmpty(book.Description) ? "No description available." : book.Description)
-                </div>
-
-                <h4 class="text-sm font-bold text-slate-900 mb-3">About this Edition</h4>
-                <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-700">
-                    <p class="mb-4 whitespace-pre-wrap">@(string.IsNullOrWhiteSpace(selectedEdition?.EditionNote) ? "No edition notes provided." : selectedEdition.EditionNote)</p>
-                    
-                    <div class="grid grid-cols-2 gap-4 border-t border-slate-200 pt-3">
-                        <div>
-                            <span class="text-slate-500 font-medium block text-xs uppercase">Publication Date</span>
-                            <span class="font-semibold text-slate-800">@(selectedEdition?.PublishDate != null && selectedEdition.PublishDate != default(DateTime) ? selectedEdition.PublishDate.ToString("dd/MM/yyyy") : "N/A")</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-500 font-medium block text-xs uppercase">Page Count</span>
-                            <span class="font-semibold text-slate-800">@(selectedEdition?.PageCount?.ToString() ?? "N/A")</span>
-                        </div>
+                @if (!string.IsNullOrWhiteSpace(book.Description))
+                {
+                    <h4 class="text-sm font-bold text-slate-900 mb-3">Plot Summary</h4>
+                    <div class="text-slate-600 leading-relaxed text-sm mb-6 whitespace-pre-wrap">
+                        @book.Description
                     </div>
-                </div>
+                }
+
+                @{
+                    bool hasNote = !string.IsNullOrWhiteSpace(selectedEdition?.EditionNote);
+                    bool hasPublisher = !string.IsNullOrWhiteSpace(selectedEdition?.Publisher);
+                    bool hasPubDate = selectedEdition?.PublishDate != null && selectedEdition.PublishDate != default(DateTime) && selectedEdition.PublishDate.Year > 1900;
+                    bool hasPageCount = selectedEdition?.PageCount.HasValue == true && selectedEdition.PageCount.Value > 0;
+                    bool hasAnyEditionInfo = hasNote || hasPublisher || hasPubDate || hasPageCount;
+                }
+
+                @if (hasAnyEditionInfo)
+                {
+                    <h4 class="text-sm font-bold text-slate-900 mb-3">About this Edition</h4>
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-700">
+                        @if (hasNote)
+                        {
+                            <p class="mb-4 whitespace-pre-wrap">@selectedEdition!.EditionNote</p>
+                        }
+                        
+                        @if (hasPublisher || hasPubDate || hasPageCount)
+                        {
+                            <div class="flex flex-wrap gap-6 border-t border-slate-200 pt-3">
+                                @if (hasPublisher)
+                                {
+                                    <div>
+                                        <span class="text-slate-500 font-medium block text-xs uppercase">Publisher</span>
+                                        <span class="font-semibold text-slate-800">@selectedEdition!.Publisher</span>
+                                    </div>
+                                }
+                                @if (hasPubDate)
+                                {
+                                    <div>
+                                        <span class="text-slate-500 font-medium block text-xs uppercase">Publication Date</span>
+                                        <span class="font-semibold text-slate-800">@selectedEdition!.PublishDate.ToString("dd/MM/yyyy")</span>
+                                    </div>
+                                }
+                                @if (hasPageCount)
+                                {
+                                    <div>
+                                        <span class="text-slate-500 font-medium block text-xs uppercase">Page Count</span>
+                                        <span class="font-semibold text-slate-800">@(selectedEdition?.PageCount) Pages</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>

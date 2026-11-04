@@ -21,6 +21,7 @@ public class BookCreateRequestModel
     public int? PageCount { get; set; }
     public int ReorderLevel { get; set; } = 5;
     public string? CoverImageUrl { get; set; }
+    public string? Publisher { get; set; }
 }
 
 public class BookCreateResponseModel : Result<BookModel>
