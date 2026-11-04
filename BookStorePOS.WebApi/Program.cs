@@ -8,6 +8,7 @@ using BookStorePOS.Domain.Features.Order;
 using BookStorePOS.Domain.Features.User;
 using BookStorePOS.Domain.Features.Auth;
 using BookStorePOS.Domain.Features.RolePermission;
+using BookStorePOS.WebApi.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add SignalR & CORS
+builder.Services.AddSignalR();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        policy.SetIsOriginAllowed(_ => true)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 
 // Configure Swagger/OpenAPI with Bearer auth
@@ -94,10 +108,12 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseCors("SignalRPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
 
 await BookStorePOS.WebApi.Data.AuthDataSeeder.EnsureSeedDataAsync(app.Services);
 

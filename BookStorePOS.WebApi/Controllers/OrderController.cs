@@ -8,10 +8,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using BookStorePOS.Domain.Features.Order;
 using BookStorePOS.Shared.Models.Common;
+using BookStorePOS.Shared.Models.Notification;
 using BookStorePOS.Shared.Models.Order;
 using BookStorePOS.WebApi.Filters;
+using BookStorePOS.WebApi.Hubs;
 using Microsoft.Extensions.Logging;
 
 namespace BookStorePOS.WebApi.Controllers;
@@ -23,15 +26,18 @@ public class OrderController : BaseController
 {
     private readonly IOrderService _orderService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IHubContext<NotificationHub> _hubContext;
     private readonly ILogger<OrderController> _logger;
 
     public OrderController(
         IOrderService orderService, 
         IFileStorageService fileStorageService,
+        IHubContext<NotificationHub> hubContext,
         ILogger<OrderController> logger)
     {
         _orderService = orderService;
         _fileStorageService = fileStorageService;
+        _hubContext = hubContext;
         _logger = logger;
     }
 
@@ -197,6 +203,30 @@ public class OrderController : BaseController
 
             _logger.LogInformation("Create Online Order Async => Creating online order for customer {CustomerName}", requestModel.CustomerName);
             var response = await _orderService.CreateOnlineOrderAsync(requestModel);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                // Only broadcast notification for fresh new orders (suppress duplicate broadcast on network retries)
+                bool isDuplicateRetry = string.Equals(response.Message, "Order already received.", StringComparison.OrdinalIgnoreCase);
+                if (!isDuplicateRetry)
+                {
+                    var order = response.Data;
+                    var orderCode = $"C{(order.OrderDate ?? DateTime.Now):yyMMdd}{order.OrderId:0000}";
+                    var notif = new NotificationModel
+                    {
+                        Id = Guid.NewGuid().ToString("N"),
+                        Title = "New Online Order",
+                        Message = $"Order #{orderCode} placed by {order.CustomerName ?? "Customer"} ({order.TotalPrice:N0} MMK)",
+                        Type = "OrderPlaced",
+                        OrderId = order.OrderId,
+                        OrderCode = orderCode,
+                        TargetUrl = $"/OnlineOrders?orderId={order.OrderId}&orderNo={orderCode}",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notif);
+                }
+            }
+
             return ExecuteResult(response);
         }
         catch (Exception ex)
@@ -218,6 +248,44 @@ public class OrderController : BaseController
         {
             _logger.LogInformation("Confirm Order Async => Confirming order {OrderId}", id);
             var response = await _orderService.ConfirmOrderAsync(new OrderConfirmRequestModel { OrderId = id });
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                var order = response.Data;
+                var orderCode = $"C{(order.OrderDate ?? DateTime.Now):yyMMdd}{order.OrderId:0000}";
+                
+                // Notify Staff
+                var notifStaff = new NotificationModel
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    Title = "Order Confirmed",
+                    Message = $"Order #{orderCode} verified and completed.",
+                    Type = "OrderConfirmed",
+                    OrderId = order.OrderId,
+                    OrderCode = orderCode,
+                    TargetUrl = $"/OnlineOrders?orderId={order.OrderId}&orderNo={orderCode}",
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notifStaff);
+
+                // Notify Customer
+                if (order.CustomerId.HasValue && order.CustomerId.Value > 0)
+                {
+                    var notifCust = new NotificationModel
+                    {
+                        Id = Guid.NewGuid().ToString("N"),
+                        Title = "Order Confirmed!",
+                        Message = $"Your order #{orderCode} has been verified and confirmed.",
+                        Type = "OrderConfirmed",
+                        OrderId = order.OrderId,
+                        OrderCode = orderCode,
+                        TargetUrl = $"/Orders/Detail/{order.OrderId}",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _hubContext.Clients.Group($"User_{order.CustomerId.Value}").SendAsync("ReceiveNotification", notifCust);
+                }
+            }
+
             return ExecuteResult(response);
         }
         catch (Exception ex)
@@ -241,6 +309,44 @@ public class OrderController : BaseController
             requestModel ??= new OrderRejectRequestModel();
             requestModel.OrderId = id;
             var response = await _orderService.RejectOrderAsync(requestModel);
+
+            if (response.IsSuccess && response.Data != null)
+            {
+                var order = response.Data;
+                var orderCode = $"C{(order.OrderDate ?? DateTime.Now):yyMMdd}{order.OrderId:0000}";
+                
+                // Notify Staff
+                var notifStaff = new NotificationModel
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    Title = "Order Rejected",
+                    Message = $"Order #{orderCode} was rejected.",
+                    Type = "OrderRejected",
+                    OrderId = order.OrderId,
+                    OrderCode = orderCode,
+                    TargetUrl = $"/OnlineOrders?orderId={order.OrderId}&orderNo={orderCode}",
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notifStaff);
+
+                // Notify Customer
+                if (order.CustomerId.HasValue && order.CustomerId.Value > 0)
+                {
+                    var notifCust = new NotificationModel
+                    {
+                        Id = Guid.NewGuid().ToString("N"),
+                        Title = "Order Rejected",
+                        Message = $"Your order #{orderCode} was rejected. Reason: {requestModel.RejectReason ?? "Details invalid"}",
+                        Type = "OrderRejected",
+                        OrderId = order.OrderId,
+                        OrderCode = orderCode,
+                        TargetUrl = $"/Orders/Detail/{order.OrderId}",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _hubContext.Clients.Group($"User_{order.CustomerId.Value}").SendAsync("ReceiveNotification", notifCust);
+                }
+            }
+
             return ExecuteResult(response);
         }
         catch (Exception ex)

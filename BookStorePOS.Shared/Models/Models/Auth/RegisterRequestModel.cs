@@ -14,6 +14,7 @@ public class RegisterRequestModel
 
 public class RegisterResponseModel : Result<string?>
 {
+    public int UserId { get; set; }
     public string? AccessToken { get; set; }
     public string? RefreshToken { get; set; }
     public string? Role { get; set; }

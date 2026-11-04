@@ -55,6 +55,28 @@ public class Result<T>
         };
     }
 
+    public static Result<T> Success(string message)
+    {
+        return new Result<T>
+        {
+            IsSuccess = true,
+            Type = EnumResType.Success,
+            Data = default,
+            Message = message
+        };
+    }
+
+    public static Result<T> SuccessResult(string message = "Success", T? data = default)
+    {
+        return new Result<T>
+        {
+            IsSuccess = true,
+            Type = EnumResType.Success,
+            Data = data,
+            Message = message
+        };
+    }
+
     public static Result<T> DeleteSuccess(string message = "Delete success")
     {
         return new Result<T>
@@ -143,6 +165,8 @@ public class Result : Result<object?>
             Message = message
         };
     }
+
+    public static Result SuccessResult(string message = "Success") => Ok(message);
 
     public static Result Fail(string message, EnumResType type = EnumResType.ValidationError)
     {

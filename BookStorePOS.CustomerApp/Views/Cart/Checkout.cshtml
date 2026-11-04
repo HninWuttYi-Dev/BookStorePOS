@@ -422,7 +422,7 @@
 
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row gap-3 font-body">
-            <button type="button" onclick="window.closeOrderConfirmModal()" class="w-full order-2 sm:order-1 inline-flex items-center justify-center py-3 px-5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/30 text-brand-ink font-semibold text-sm transition-all shadow-xs cursor-pointer">
+            <button type="button" id="modalCancelOrderBtn" onclick="window.closeOrderConfirmModal()" class="w-full order-2 sm:order-1 inline-flex items-center justify-center py-3 px-5 rounded-xl border border-brand-border bg-brand-bg hover:bg-brand-border/30 text-brand-ink font-semibold text-sm transition-all shadow-xs cursor-pointer">
                 Edit Details
             </button>
             <button type="button" id="modalConfirmOrderBtn" onclick="window.executePlaceOrder()" class="w-full order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg font-bold py-3 px-5 rounded-xl transition-all shadow-md text-sm cursor-pointer">
@@ -896,13 +896,23 @@
         const $btn = document.getElementById('modalConfirmOrderBtn');
         const $text = document.getElementById('modalConfirmOrderBtnText');
         const $spinner = document.getElementById('modalConfirmOrderSpinner');
+        const $cancelBtn = document.getElementById('modalCancelOrderBtn');
+        const $mainBtn = document.getElementById('btnPlaceOrder');
 
         isSubmittingOrder = true;
         if ($btn) {
             $btn.disabled = true;
-            $btn.classList.add('opacity-70', 'cursor-not-allowed');
+            $btn.classList.add('opacity-60', 'cursor-not-allowed', 'pointer-events-none');
         }
-        if ($text) $text.textContent = "Placing Order...";
+        if ($cancelBtn) {
+            $cancelBtn.disabled = true;
+            $cancelBtn.classList.add('opacity-50', 'pointer-events-none');
+        }
+        if ($mainBtn) {
+            $mainBtn.disabled = true;
+            $mainBtn.classList.add('opacity-60', 'cursor-not-allowed', 'pointer-events-none');
+        }
+        if ($text) $text.textContent = "Placing Order, please wait...";
         if ($spinner) $spinner.classList.remove('hidden');
 
         $.ajax({
@@ -911,7 +921,7 @@
             data: formData,
             processData: false,
             contentType: false,
-            timeout: 30000,
+            timeout: 35000,
             success: function(response) {
                 const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true);
                 if (isSuccess) {
@@ -938,16 +948,20 @@
                     if (typeof window.showToast === 'function') {
                         window.showToast(msg, false);
                     }
-                    resetModalSubmitButton();
+                    resetModalSubmitButton(2);
                 }
             },
             error: function(xhr, textStatus, errorThrown) {
                 console.error("Order submission failed:", textStatus, errorThrown, xhr.status, xhr.responseText);
                 let msg = "Failed to communicate with order service.";
+                let cooldown = 3;
+
                 if (textStatus === "timeout") {
-                    msg = "Order request timed out. Please check your network connection or check your order history before submitting again.";
+                    msg = "Network timed out. Please check your order history or wait a moment before trying again.";
+                    cooldown = 5;
                 } else if (xhr.status === 0) {
-                    msg = "Network connection lost. Please check your connection and try again.";
+                    msg = "Network connection lost. Please verify your connection before placing again.";
+                    cooldown = 4;
                 } else {
                     try {
                         const parsed = JSON.parse(xhr.responseText);
@@ -960,23 +974,62 @@
                 if (typeof window.showToast === 'function') {
                     window.showToast(msg, false);
                 }
-                resetModalSubmitButton();
+                resetModalSubmitButton(cooldown);
             }
         });
     };
 
-    function resetModalSubmitButton() {
-        isSubmittingOrder = false;
+    function resetModalSubmitButton(cooldownSeconds = 0) {
         const $btn = document.getElementById('modalConfirmOrderBtn');
         const $text = document.getElementById('modalConfirmOrderBtnText');
         const $spinner = document.getElementById('modalConfirmOrderSpinner');
+        const $cancelBtn = document.getElementById('modalCancelOrderBtn');
+        const $mainBtn = document.getElementById('btnPlaceOrder');
 
-        if ($btn) {
-            $btn.disabled = false;
-            $btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        if (cooldownSeconds > 0) {
+            let remaining = cooldownSeconds;
+            if ($spinner) $spinner.classList.add('hidden');
+            if ($text) $text.textContent = `Please wait ${remaining}s...`;
+
+            const cooldownInterval = setInterval(function() {
+                remaining--;
+                if (remaining > 0) {
+                    if ($text) $text.textContent = `Please wait ${remaining}s...`;
+                } else {
+                    clearInterval(cooldownInterval);
+                    isSubmittingOrder = false;
+                    if ($btn) {
+                        $btn.disabled = false;
+                        $btn.classList.remove('opacity-60', 'opacity-70', 'cursor-not-allowed', 'pointer-events-none');
+                    }
+                    if ($cancelBtn) {
+                        $cancelBtn.disabled = false;
+                        $cancelBtn.classList.remove('opacity-50', 'pointer-events-none');
+                    }
+                    if ($mainBtn) {
+                        $mainBtn.disabled = false;
+                        $mainBtn.classList.remove('opacity-60', 'cursor-not-allowed', 'pointer-events-none');
+                    }
+                    if ($text) $text.textContent = "Confirm & Place Order";
+                }
+            }, 1000);
+        } else {
+            isSubmittingOrder = false;
+            if ($btn) {
+                $btn.disabled = false;
+                $btn.classList.remove('opacity-60', 'opacity-70', 'cursor-not-allowed', 'pointer-events-none');
+            }
+            if ($cancelBtn) {
+                $cancelBtn.disabled = false;
+                $cancelBtn.classList.remove('opacity-50', 'pointer-events-none');
+            }
+            if ($mainBtn) {
+                $mainBtn.disabled = false;
+                $mainBtn.classList.remove('opacity-60', 'cursor-not-allowed', 'pointer-events-none');
+            }
+            if ($text) $text.textContent = "Confirm & Place Order";
+            if ($spinner) $spinner.classList.add('hidden');
         }
-        if ($text) $text.textContent = "Confirm & Place Order";
-        if ($spinner) $spinner.classList.add('hidden');
     }
 
     function escapeHtml(str) {

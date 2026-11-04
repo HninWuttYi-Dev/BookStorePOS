@@ -1087,6 +1087,30 @@
             btnText.textContent = 'Confirm Rejection';
         }
     }
+
+    // Expose openDetailModal globally so notification click can trigger it directly
+    window.openDetailModal = openDetailModal;
+
+    // Auto-open order detail if orderId is in the URL query string
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderIdParam = urlParams.get('orderId');
+            if (orderIdParam) {
+                const parsedId = parseInt(orderIdParam, 10);
+                if (!isNaN(parsedId) && parsedId > 0) {
+                    const row = document.getElementById(`order-row-${parsedId}`);
+                    if (row) {
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        row.classList.add('bg-[#FAF0FA]');
+                    }
+                    setTimeout(() => openDetailModal(parsedId), 200);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to auto-open order detail from URL:', e);
+        }
+    });
 </script>
 }
 

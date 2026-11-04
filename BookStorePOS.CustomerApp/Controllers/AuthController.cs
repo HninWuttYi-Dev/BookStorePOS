@@ -117,6 +117,16 @@ namespace BookStorePOS.CustomerApp.Controllers
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
+
+                    if (model.UserId > 0)
+                    {
+                        Response.Cookies.Append("customer_user_id", model.UserId.ToString(), new CookieOptions
+                        {
+                            HttpOnly = false,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
+                    }
                 }
                 else
                 {
@@ -222,6 +232,16 @@ namespace BookStorePOS.CustomerApp.Controllers
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
+
+                    if (model.UserId > 0)
+                    {
+                        Response.Cookies.Append("customer_user_id", model.UserId.ToString(), new CookieOptions
+                        {
+                            HttpOnly = false,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
+                    }
                 }
                 else
                 {

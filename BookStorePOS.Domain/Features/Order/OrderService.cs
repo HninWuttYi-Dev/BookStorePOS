@@ -360,32 +360,10 @@ public class OrderService : IOrderService
                 }
             }
 
-            // 3. Create order header
-            var order = new TblOrder
-            {
-                OrderDate = DateTime.Now,
-                TotalPrice = 0,
-                TotalQuantity = 0,
-                OrderStatus = (byte)OrderStatus.Pending,
-                OrderSource = "Online",
-                PaymentStatus = !string.IsNullOrWhiteSpace(requestModel.PaymentScreenshotUrl)
-                    ? (byte)PaymentStatus.Submitted
-                    : (byte)PaymentStatus.Unpaid,
-                PaymentMethod = !string.IsNullOrWhiteSpace(requestModel.PaymentMethod)
-                    ? requestModel.PaymentMethod.Trim()
-                    : "BankTransfer",
-                PaymentScreenshotUrl = requestModel.PaymentScreenshotUrl?.Trim(),
-                CustomerId = requestModel.CustomerId,
-                CustomerName = requestModel.CustomerName.Trim(),
-                CustomerPhone = requestModel.CustomerPhone.Trim(),
-                ShippingAddress = requestModel.ShippingAddress.Trim(),
-                Notes = requestModel.Notes,
-                CreatedAt = DateTime.Now
-            };
-
-            // 4. Compute UnitPrice from edition.Price and assemble items
+            // 3. Compute UnitPrice from edition.Price and assemble items
             decimal orderTotal = 0;
             int orderQuantity = 0;
+            var newOrderItems = new List<TblOrderItem>();
 
             foreach (var item in requestModel.Items)
             {
@@ -404,11 +382,80 @@ public class OrderService : IOrderService
                     UnitPrice = price,
                     Subtotal = subtotal
                 };
-                order.TblOrderItems.Add(orderItem);
+                newOrderItems.Add(orderItem);
             }
 
-            order.TotalPrice = orderTotal;
-            order.TotalQuantity = orderQuantity;
+            // 4. Idempotency Check: Prevent duplicate online orders placed within 60 seconds (network hiccups/double clicks)
+            var recentCutoff = DateTime.Now.AddSeconds(-60);
+            var existingRecentOrder = await _db.TblOrders
+                .Include(o => o.TblOrderItems)
+                .Where(o => o.OrderSource == "Online"
+                         && o.CreatedAt >= recentCutoff
+                         && (
+                             (requestModel.CustomerId.HasValue && requestModel.CustomerId.Value > 0 && o.CustomerId == requestModel.CustomerId)
+                             || (!string.IsNullOrEmpty(requestModel.CustomerPhone) && o.CustomerPhone == requestModel.CustomerPhone.Trim())
+                         )
+                         && o.TotalPrice == orderTotal)
+                .OrderByDescending(o => o.OrderId)
+                .FirstOrDefaultAsync();
+
+            if (existingRecentOrder != null)
+            {
+                bool itemsMatch = existingRecentOrder.TblOrderItems.Count == requestModel.Items.Count
+                    && requestModel.Items.All(i => existingRecentOrder.TblOrderItems.Any(ei => ei.BookEditionId == i.BookEditionId && ei.Quantity == i.Quantity));
+
+                if (itemsMatch)
+                {
+                    _logger.LogInformation("Duplicate online order detected within 60s for customer {CustomerName} (existing OrderId #{OrderId}). Returning existing order without duplicate insertion.", requestModel.CustomerName, existingRecentOrder.OrderId);
+                    await transaction.RollbackAsync();
+
+                    var existingModelItems = existingRecentOrder.TblOrderItems.Select(oi =>
+                    {
+                        var ed = oi.BookEditionId.HasValue && editionLookup.TryGetValue(oi.BookEditionId.Value, out var val) ? val : null;
+                        return new OrderItemModel
+                        {
+                            OrderItemId = oi.OrderItemId,
+                            OrderId = oi.OrderId,
+                            BookEditionId = oi.BookEditionId ?? 0,
+                            BookTitle = ed?.Book?.Title,
+                            EditionName = ed?.Edition?.EditionName,
+                            Quantity = oi.Quantity,
+                            UnitPrice = oi.UnitPrice,
+                            Subtotal = oi.Subtotal ?? 0
+                        };
+                    }).ToList();
+
+                    return Result<OrderModel>.Success(MapToOrderModel(existingRecentOrder, existingModelItems), "Order already received.");
+                }
+            }
+
+            // 5. Create order header
+            var order = new TblOrder
+            {
+                OrderDate = DateTime.Now,
+                TotalPrice = orderTotal,
+                TotalQuantity = orderQuantity,
+                OrderStatus = (byte)OrderStatus.Pending,
+                OrderSource = "Online",
+                PaymentStatus = !string.IsNullOrWhiteSpace(requestModel.PaymentScreenshotUrl)
+                    ? (byte)PaymentStatus.Submitted
+                    : (byte)PaymentStatus.Unpaid,
+                PaymentMethod = !string.IsNullOrWhiteSpace(requestModel.PaymentMethod)
+                    ? requestModel.PaymentMethod.Trim()
+                    : "BankTransfer",
+                PaymentScreenshotUrl = requestModel.PaymentScreenshotUrl?.Trim(),
+                CustomerId = requestModel.CustomerId,
+                CustomerName = requestModel.CustomerName.Trim(),
+                CustomerPhone = requestModel.CustomerPhone.Trim(),
+                ShippingAddress = requestModel.ShippingAddress.Trim(),
+                Notes = requestModel.Notes,
+                CreatedAt = DateTime.Now
+            };
+
+            foreach (var item in newOrderItems)
+            {
+                order.TblOrderItems.Add(item);
+            }
 
             _db.TblOrders.Add(order);
 
