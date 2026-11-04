@@ -19,6 +19,10 @@ namespace BookStorePOS.MvcApp.Controllers
         [ActionName("Login")]
         public IActionResult Login(string? returnUrl = null)
         {
+            if (!string.IsNullOrEmpty(Request.Cookies["pos_token"]) || !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]))
+            {
+                return Redirect(returnUrl ?? "/Dashboard");
+            }
             ViewData["ReturnUrl"] = returnUrl ?? "/Dashboard";
             return View("Login");
         }
@@ -90,7 +94,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     {
                         HttpOnly = true,
                         SameSite = SameSiteMode.Lax,
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(15)
+                        Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
 
                     if (!string.IsNullOrEmpty(model.RefreshToken))
@@ -116,6 +120,16 @@ namespace BookStorePOS.MvcApp.Controllers
                         SameSite = SameSiteMode.Lax,
                         Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
+
+                    if (model.Permissions != null && model.Permissions.Count > 0)
+                    {
+                        Response.Cookies.Append("pos_permissions", string.Join(",", model.Permissions), new CookieOptions
+                        {
+                            HttpOnly = false,
+                            SameSite = SameSiteMode.Lax,
+                            Expires = DateTimeOffset.UtcNow.AddDays(7)
+                        });
+                    }
                 }
                 else
                 {
@@ -167,7 +181,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     {
                         HttpOnly = true,
                         SameSite = SameSiteMode.Lax,
-                        Expires = DateTimeOffset.UtcNow.AddMinutes(15)
+                        Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
 
                     if (!string.IsNullOrEmpty(model.RefreshToken))
@@ -221,6 +235,7 @@ namespace BookStorePOS.MvcApp.Controllers
             Response.Cookies.Delete("pos_refresh");
             Response.Cookies.Delete("pos_user");
             Response.Cookies.Delete("pos_role");
+            Response.Cookies.Delete("pos_permissions");
             return RedirectToAction("Login", "Auth");
         }
 

@@ -12,6 +12,11 @@
                                   as List<BookModel> 
                                  ?? new List<BookModel>();
                                  
+    string cookieRole = Context.Request.Cookies["pos_role"] ?? "Staff";
+    string greetingRole = !string.IsNullOrWhiteSpace(cookieRole) 
+        ? char.ToUpper(cookieRole[0]) + cookieRole.Substring(1) 
+        : "Staff";
+                                 
     bool hasMessage = TempData["Message"] != null || ViewData["Message"] != null;
     bool isSuccess = true;
     if (TempData["isSuccess"] != null)
@@ -51,23 +56,36 @@
     string FormatOrderNo(int id, DateTime? date)
     {
         var d = date ?? DateTime.Now;
-        // Format: C + yyMMdd + 4-digit OrderId (e.g. C2609260007)
         return $"C{d.ToString("yyMMdd")}{id.ToString("0000")}";
+    }
+
+    // Meaningful Status Colors (Rule 2)
+    (string bg, string text, string dot) GetStatusColors(string? status)
+    {
+        var s = status?.Trim().ToLowerInvariant() ?? "";
+        return s switch
+        {
+            "completed" => ("#E7F3EA", "#34764A", "#34764A"),
+            "pending" => ("#FFF3D9", "#A66B17", "#A66B17"),
+            "cancelled" => ("#FBE8E8", "#B84646", "#B84646"),
+            "processing" => ("#EAEFFD", "#4966A8", "#4966A8"),
+            _ => ("#E7F3EA", "#34764A", "#34764A")
+        };
     }
 }
 
 @if (!isSuccess && hasMessage)
 {
-    <div class="absolute inset-0 bg-white z-50 flex flex-col rounded-tl-3xl shadow-[-10px_0_15px_rgba(0,0,0,0.03)] overflow-hidden">
+    <div class="absolute inset-0 bg-white z-50 flex flex-col rounded-3xl shadow-sm overflow-hidden">
         <div class="flex flex-col items-center justify-center flex-1">
-            <div class="w-16 h-16 border-[5px] border-slate-100 border-t-teal-600 rounded-full animate-spin mb-6"></div>
-            <h2 class="text-teal-700 font-bold tracking-[0.2em] text-[15px] mb-2 uppercase">BookStore Loading</h2>
+            <div class="w-16 h-16 border-[5px] border-slate-100 border-t-[#B875C2] rounded-full animate-spin mb-6"></div>
+            <h2 class="text-[#9F54A6] font-bold tracking-[0.2em] text-[15px] mb-2 uppercase">BookStore Loading</h2>
             <p class="text-slate-400 font-bold tracking-[0.15em] text-[11px] uppercase">Preparing Workspace</p>
         </div>
         
-        <div class="w-full bg-teal-50 border-t border-teal-100 text-teal-900 px-6 py-3 flex justify-between items-center mt-auto shadow-inner">
-            <span class="text-sm font-medium">@message <a href="/" class="underline font-bold ml-1 hover:text-teal-950 cursor-pointer">Reload</a></span>
-            <button onclick="window.location.reload()" class="text-teal-600 hover:text-teal-950 transition-colors">
+        <div class="w-full bg-[#FAF0FA] border-t border-[#F3E2F6] text-[#9F54A6] px-6 py-3 flex justify-between items-center mt-auto shadow-inner">
+            <span class="text-sm font-medium">@message <a href="/" class="underline font-bold ml-1 hover:text-[#7E3B89] cursor-pointer">Reload</a></span>
+            <button onclick="window.location.reload()" class="text-[#9F54A6] hover:text-[#7E3B89] transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
@@ -76,177 +94,188 @@
 else
 {
 
-<!-- Top Greeting -->
-<div class="mb-8 flex items-center justify-between">
-    <div>
-        <h1 class="text-3xl font-extrabold text-[#2A2421] tracking-tight" id="dashboardGreetingTitle">Hi, Staff</h1>
-        <p class="text-[#C86D56] font-semibold mt-1 text-sm">Let's finish your task today!</p>
-    </div>
-    <div class="hidden sm:flex items-center gap-3">
-        <a href="/Checkout" class="px-5 py-2.5 bg-[#C86D56] hover:bg-[#B35D47] text-white rounded-xl text-sm font-semibold shadow-sm transition-all flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-            New Sale
-        </a>
-    </div>
-</div>
-
-@if (hasMessage)
-{
-    <div class="p-4 mb-4 text-sm rounded-xl border @(isSuccess ? "bg-[#EDF3EB] border-[#DCE8D8] text-[#55784C]" : "bg-[#FDF2F0] border-[#F6DDD8] text-[#C86D56]")" role="alert">
-        @message
-    </div>
-}
-
-<!-- Summary Cards -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <!-- Today Sales -->
-    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] flex items-center gap-5 transition-all hover:shadow-[0_12px_36px_-6px_rgba(42,36,33,0.08)] hover:-translate-y-0.5">
-        <div class="w-14 h-14 rounded-2xl bg-[#F9EFEA] flex items-center justify-center text-[#C86D56] shrink-0">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
+<div class="relative">
+    <!-- Top Greeting -->
+    <div class="mb-8 flex items-center justify-between relative z-10">
         <div>
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-bold text-[#C86D56] uppercase tracking-wider bg-[#F9EFEA] px-2 py-0.5 rounded-full">Revenue</span>
-            </div>
-            <h3 class="text-2xl font-bold text-[#2A2421] tracking-tight">@todaySales.ToString("#,##0")</h3>
-            <p class="text-[10px] font-bold text-[#C86D56] uppercase mt-1 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                MMK Today
-            </p>
+            <h1 class="text-3xl font-extrabold text-[#18181B] tracking-tight" id="dashboardGreetingTitle">Hi, @greetingRole</h1>
+            <p class="text-[#A76DAE] font-medium mt-1 text-sm">Let's finish your task today!</p>
+        </div>
+        <div class="hidden sm:flex items-center gap-3">
+            <a href="/Checkout" class="px-5 py-2.5 bg-[#B875C2] hover:bg-[#A662B0] text-white rounded-xl text-sm font-semibold shadow-sm transition-all inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                <span>New Sale</span>
+            </a>
         </div>
     </div>
-    
-    <!-- This Month Sales -->
-    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] flex items-center gap-5 transition-all hover:shadow-[0_12px_36px_-6px_rgba(42,36,33,0.08)] hover:-translate-y-0.5">
-        <div class="w-14 h-14 rounded-2xl bg-[#FDF7ED] flex items-center justify-center text-[#D89E4E] shrink-0">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-        </div>
-        <div>
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] font-bold text-[#D89E4E] uppercase tracking-wider bg-[#FDF7ED] px-2 py-0.5 rounded-full">This Month</span>
-            </div>
-            <h3 class="text-2xl font-bold text-[#2A2421] tracking-tight">@thisMonthSales.ToString("#,##0")</h3>
-            <p class="text-[10px] font-bold text-[#D89E4E] uppercase mt-1 flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                MMK Total
-            </p>
-        </div>
-    </div>
-    
-    <!-- Low Stock Items -->
-    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] flex items-center gap-5 transition-all hover:shadow-[0_12px_36px_-6px_rgba(42,36,33,0.08)] hover:-translate-y-0.5">
-        <div class="w-14 h-14 rounded-2xl bg-[#FAF5F2] flex items-center justify-center text-[#9C6452] shrink-0">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        </div>
-        <div>
-            <p class="text-sm font-semibold text-[#7D736D] mb-1">Low Stock Items</p>
-            <h3 class="text-2xl font-bold text-[#2A2421] tracking-tight">@lowStockItemsCount</h3>
-        </div>
-    </div>
-</div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Recent Orders -->
-    <div class="lg:col-span-2">
-        <div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] overflow-hidden flex flex-col h-full">
-            <div class="px-6 py-5 border-b border-[#EDE7DF] flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
-                <h2 class="text-lg font-bold text-[#2A2421]">Recent Orders</h2>
-                <a href="/Orders" class="text-sm font-semibold text-[#C86D56] hover:text-[#B35D47] hover:underline decoration-[#C86D56]/30 underline-offset-4 transition-all">View All</a>
+    @if (hasMessage)
+    {
+        <div class="p-4 mb-6 text-sm rounded-2xl border @(isSuccess ? "bg-[#E7F3EA] border-[#CDE5D2] text-[#34764A]" : "bg-[#FBE8E8] border-[#F7D2D2] text-[#B84646]") relative z-10" role="alert">
+            @message
+        </div>
+    }
+
+    <!-- Summary Cards (60-30-10: Consistent clean white surfaces, no colorful rainbow cards) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
+        <!-- Today Sales -->
+        <div class="bg-white rounded-3xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] relative overflow-hidden flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)]">
+            <div class="w-14 h-14 rounded-2xl bg-[#F6DFFB] flex items-center justify-center text-[#9F54A6] shrink-0 z-10">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v1m0 8v1m-2.5-7.5h4a1.5 1.5 0 010 3h-3a1.5 1.5 0 000 3h4"></path>
+                </svg>
             </div>
-            <div class="overflow-x-auto flex-1 p-2">
-                <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="text-[#7D736D] bg-[#FAF8F5] rounded-lg">
-                        <tr>
-                            <th class="px-4 py-3 font-semibold rounded-l-lg">Order ID</th>
-                            <th class="px-4 py-3 font-semibold">Date & Time</th>
-                            <th class="px-4 py-3 font-semibold">Items</th>
-                            <th class="px-4 py-3 font-semibold">Total (MMK)</th>
-                            <th class="px-4 py-3 font-semibold rounded-r-lg">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-[#534B45]">
-                        @if (recentOrders == null || recentOrders.Count == 0)
-                        {
+            <div class="z-10 min-w-0">
+                <div class="mb-1">
+                    <span class="text-[10px] font-bold text-[#C565AC] uppercase tracking-wider bg-[#FDF2F8] px-2.5 py-0.5 rounded-full inline-block">Revenue</span>
+                </div>
+                <h3 class="text-2xl font-bold text-[#18181B] tracking-tight">@todaySales.ToString("#,##0")</h3>
+                <p class="text-[11px] font-medium text-[#71717A] mt-1 flex items-center gap-1">
+                    ↑ MMK TODAY
+                </p>
+            </div>
+        </div>
+        
+        <!-- This Month Sales -->
+        <div class="bg-white rounded-3xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] relative overflow-hidden flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)]">
+            <div class="w-14 h-14 rounded-2xl bg-[#F6DFFB] flex items-center justify-center text-[#9F54A6] shrink-0 z-10">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+            <div class="z-10 min-w-0">
+                <div class="mb-1">
+                    <span class="text-[10px] font-bold text-[#C565AC] uppercase tracking-wider bg-[#FDF2F8] px-2.5 py-0.5 rounded-full inline-block">This Month</span>
+                </div>
+                <h3 class="text-2xl font-bold text-[#18181B] tracking-tight">@thisMonthSales.ToString("#,##0")</h3>
+                <p class="text-[11px] font-medium text-[#71717A] mt-1 flex items-center gap-1">
+                    ↑ MMK TOTAL
+                </p>
+            </div>
+        </div>
+        
+        <!-- Low Stock Items -->
+        <div class="bg-white rounded-3xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] relative overflow-hidden flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)]">
+            <div class="w-14 h-14 rounded-2xl bg-[#F6DFFB] flex items-center justify-center text-[#9F54A6] shrink-0 z-10">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <div class="z-10 min-w-0">
+                <p class="text-xs font-semibold text-[#71717A] mb-1">Low Stock Items</p>
+                <h3 class="text-2xl font-bold text-[#18181B] tracking-tight">@lowStockItemsCount</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Sections Grid: Recent Orders & Low Stock -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+        <!-- Recent Orders (2 cols) -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-3xl shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] overflow-hidden flex flex-col h-full">
+                <div class="px-6 py-5 border-b border-[#F3E2F6] flex justify-between items-center bg-white shrink-0">
+                    <h2 class="text-lg font-bold text-[#18181B]">Recent Orders</h2>
+                    <a href="/Orders" class="text-sm font-semibold text-[#B875C2] hover:text-[#9F54A6] hover:underline transition-colors">View All</a>
+                </div>
+                <div class="overflow-x-auto flex-1 p-3">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="text-[#71717A] bg-[#FAF0FA]/80 rounded-xl text-xs uppercase font-semibold">
                             <tr>
-                                <td colspan="5" class="px-4 py-8 text-center text-[#A59B94]">
-                                    No recent orders found.
-                                </td>
+                                <th class="px-4 py-3 rounded-l-xl">Order ID</th>
+                                <th class="px-4 py-3">Date & Time</th>
+                                <th class="px-4 py-3">Items</th>
+                                <th class="px-4 py-3">Total (MMK)</th>
+                                <th class="px-4 py-3 rounded-r-xl">Status</th>
                             </tr>
-                        }
-                        else
-                        {
-                            foreach (var order in recentOrders)
+                        </thead>
+                        <tbody class="divide-y divide-purple-50/50">
+                            @if (recentOrders == null || recentOrders.Count == 0)
                             {
-                                <tr class="hover:bg-[#FAF8F5]/80 transition-colors group">
-                                    <td class="px-4 py-4 font-semibold text-[#C86D56] rounded-l-xl group-hover:text-[#B35D47]">
-                                        <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
-                                            @FormatOrderNo(order.OrderId, order.OrderDate)
-                                        </a>
-                                    </td>
-                                    <td class="px-4 py-4">
-                                        <div class="font-medium text-[#2A2421]">@FormatOrderDateOnly(order.OrderDate)</div>
-                                        <div class="text-xs text-[#7D736D] mt-0.5">@FormatOrderTimeOnly(order.OrderDate)</div>
-                                    </td>
-                                    <td class="px-4 py-4 text-[#6C635C] font-medium">@order.TotalQuantity</td>
-                                    <td class="px-4 py-4 font-semibold text-[#2A2421]">@order.TotalPrice.ToString("#,##0")</td>
-                                    <td class="px-4 py-4 rounded-r-xl">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#EDF3EB] text-[#55784C] border border-[#DCE8D8]">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-[#7B9B73] mr-1.5"></span>
-                                            Completed
-                                        </span>
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-[#A1A1AA]">
+                                        No recent orders found.
                                     </td>
                                 </tr>
                             }
-                        }
-                    </tbody>
-                </table>
+                            else
+                            {
+                                foreach (var order in recentOrders)
+                                {
+                                    string statusStr = order.OrderStatus.ToString();
+                                    var (statusBg, statusText, statusDot) = GetStatusColors(statusStr);
+
+                                    <tr class="hover:bg-[#FAF0FA]/60 transition-colors">
+                                        <td class="px-4 py-4 font-semibold text-[#9F54A6]">
+                                            <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
+                                                @FormatOrderNo(order.OrderId, order.OrderDate)
+                                            </a>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="font-medium text-[#18181B]">@FormatOrderDateOnly(order.OrderDate)</div>
+                                            <div class="text-xs text-[#71717A] mt-0.5">@FormatOrderTimeOnly(order.OrderDate)</div>
+                                        </td>
+                                        <td class="px-4 py-4 text-[#71717A] font-medium">@order.TotalQuantity</td>
+                                        <td class="px-4 py-4 font-bold text-[#18181B]">@order.TotalPrice.ToString("#,##0")</td>
+                                        <td class="px-4 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background-color: @statusBg; color: @statusText;">
+                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5" style="background-color: @statusDot;"></span>
+                                                @statusStr
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Low Stock -->
-    <div class="h-full">
-        <div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(42,36,33,0.05)] border border-[#EDE7DF] overflow-hidden flex flex-col h-full">
-            <div class="px-6 py-5 border-b border-[#EDE7DF] flex justify-between items-center bg-white/50 backdrop-blur-sm shrink-0">
-                <h2 class="text-lg font-bold text-[#2A2421]">Low Stock</h2>
-                <span class="px-2.5 py-0.5 rounded-full bg-[#FAF5F2] text-[#9C6452] text-xs font-semibold border border-[#E8D7CD]">Action Needed</span>
-            </div>
-            <div class="p-3 flex-1 overflow-y-auto">
-                <ul class="space-y-1">
-                    @if (lowStockBooks == null || lowStockBooks.Count == 0)
-                    {
-                        <li class="p-6 text-center text-[#A59B94] text-sm">
-                            No low stock items. All good!
-                        </li>
-                    }
-                    else
-                    {
-                        foreach (var book in lowStockBooks)
+        <!-- Low Stock (1 col) -->
+        <div class="h-full">
+            <div class="bg-white rounded-3xl shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] overflow-hidden flex flex-col h-full">
+                <div class="px-6 py-5 border-b border-[#F3E2F6] flex justify-between items-center bg-white shrink-0">
+                    <h2 class="text-lg font-bold text-[#18181B]">Low Stock</h2>
+                    <span class="px-2.5 py-1 rounded-full bg-[#FDF2F8] text-[#C565AC] text-xs font-semibold">Action Needed</span>
+                </div>
+                <div class="p-3 flex-1 overflow-y-auto">
+                    <ul class="space-y-1">
+                        @if (lowStockBooks == null || lowStockBooks.Count == 0)
                         {
-                            var stockBg = book.TotalStockQuantity == 0 ? "bg-[#FDF2F0] text-[#C86D56] border-[#F6DDD8]" : "bg-[#FDF7ED] text-[#D89E4E] border-[#F7EAD0]";
-                            
-                            <li class="flex items-center justify-between p-3 hover:bg-[#FAF8F5] rounded-xl transition-colors cursor-pointer group">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-16 bg-[#FAF8F5] rounded-lg shadow-2xs flex items-center justify-center shrink-0 border border-[#EDE7DF] group-hover:border-[#C86D56]/40 transition-colors">
-                                        <svg class="w-6 h-6 text-[#A59B94] group-hover:text-[#C86D56] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-bold text-[#2A2421] group-hover:text-[#C86D56] transition-colors">@book.Title</p>
-                                        <p class="text-xs text-[#7D736D] font-medium mt-0.5">@book.Author</p>
-                                    </div>
-                                </div>
-                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm shrink-0 border @stockBg">
-                                    @book.TotalStockQuantity
-                                </span>
+                            <li class="p-6 text-center text-[#A1A1AA] text-sm">
+                                No low stock items. All good!
                             </li>
                         }
-                    }
-                </ul>
-            </div>
-            <div class="p-4 border-t border-[#EDE7DF] bg-[#FAF8F5]/50 shrink-0">
-                <a href="/Books?filter=low-stock" class="flex items-center justify-center w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-[#C86D56] bg-[#F9EFEA] hover:bg-[#F3DDD4] transition-colors">
-                    Manage Inventory
-                </a>
+                        else
+                        {
+                            foreach (var book in lowStockBooks)
+                            {
+                                <li class="flex items-center justify-between p-3 hover:bg-[#FAF0FA] rounded-2xl transition-colors cursor-pointer group">
+                                    <div class="flex items-center gap-3.5 min-w-0">
+                                        <div class="w-10 h-10 rounded-xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="truncate min-w-0">
+                                            <p class="text-sm font-bold text-[#18181B] truncate">@book.Title</p>
+                                            <p class="text-xs text-[#71717A] font-medium mt-0.5 truncate">@book.Author</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs shrink-0 bg-[#FDF2F8] text-[#C565AC] border border-[#FBCFE8]">
+                                        @book.TotalStockQuantity
+                                    </span>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+                <div class="p-4 border-t border-[#F3E2F6] bg-white shrink-0">
+                    <a href="/Book?filter=low-stock" class="flex items-center justify-center w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-[#9F54A6] bg-[#F6DFFB] hover:bg-[#EDCEF5] transition-colors">
+                        Manage Inventory
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -256,13 +285,11 @@ else
 @section Scripts {
 <script>
     $(document).ready(function() {
-        const posRole = localStorage.getItem('pos_role');
+        const posRole = localStorage.getItem('pos_role') || getCookie('pos_role');
         if (posRole && posRole.trim().length > 0) {
             let roleName = posRole.trim();
             roleName = roleName.charAt(0).toUpperCase() + roleName.slice(1);
             $('#dashboardGreetingTitle').text('Hi, ' + roleName);
-        } else {
-            $('#dashboardGreetingTitle').text('Hi, Staff');
         }
     });
 </script>

@@ -427,6 +427,38 @@ public class AuthService : IAuthService
 
             if (existingToken.RevokeAt is not null)
             {
+                // Grace period: allow reuse of recently rotated refresh token within 60 seconds
+                // to handle network retries, concurrent sub-requests, or page reload race conditions
+                if (existingToken.RevokeAt.Value.AddSeconds(60) >= DateTime.UtcNow && existingToken.User != null && !existingToken.User.IsDeleted)
+                {
+                    _logger.LogInformation("RefreshTokenAsync => Grace period matched for UserId: {UserId}. Looking up active token.", existingToken.UserId);
+                    var activeToken = await _context.TblRefreshTokens
+                        .Where(t => t.UserId == existingToken.UserId && t.RevokeAt == null && t.ExpiresAt > DateTime.UtcNow)
+                        .OrderByDescending(t => t.CreateAt)
+                        .FirstOrDefaultAsync();
+
+                    if (activeToken != null)
+                    {
+                        var userGrace = existingToken.User;
+                        var roleGrace = userGrace.Role?.RoleName ?? "";
+                        var permsGrace = await _rolePermissionService.GetUserPermissionsAsync(userGrace.UserId);
+                        var newAccessGrace = GenerateToken(userGrace, roleGrace, permsGrace);
+
+                        return new RefreshTokenResponseModel
+                        {
+                            IsSuccess = true,
+                            Type = EnumResType.Success,
+                            Message = "Token refreshed successfully.",
+                            AccessToken = newAccessGrace,
+                            RefreshToken = activeToken.Token,
+                            Role = roleGrace,
+                            Username = userGrace.Username,
+                            FullName = userGrace.FullName,
+                            Permissions = permsGrace
+                        };
+                    }
+                }
+
                 _logger.LogWarning("RefreshTokenAsync => Attempted reuse of revoked refresh token for UserId: {UserId}", existingToken.UserId);
                 return new RefreshTokenResponseModel
                 {

@@ -8,6 +8,8 @@
     int rejectedCount = ViewData["RejectedCount"] != null ? Convert.ToInt32(ViewData["RejectedCount"]) : 0;
     decimal totalRevenue = ViewData["TotalRevenue"] != null ? Convert.ToDecimal(ViewData["TotalRevenue"]) : 0;
     int totalCount = pendingCount + completedCount + rejectedCount;
+    int currentPage = ViewData["CurrentPage"] != null ? Convert.ToInt32(ViewData["CurrentPage"]) : 1;
+    int totalPages = ViewData["TotalPages"] != null ? Convert.ToInt32(ViewData["TotalPages"]) : 1;
 
     string FormatOrderDateOnly(DateTime? date)
     {
@@ -30,7 +32,7 @@
         return $"C{d.ToString("yyMMdd")}{id.ToString("0000")}";
     }
 
-    int rowNumber = 0;
+    int rowNumber = (currentPage - 1) * 10;
 }
 
 <div class="space-y-6">
@@ -50,7 +52,7 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="/OnlineOrders?tab=@currentTab" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-[#EDE7DF] rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs">
+            <a href="/OnlineOrders?tab=@currentTab" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-[#F3E2F6] rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs">
                 <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
@@ -62,7 +64,7 @@
     <!-- KPI Metric Cards Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Pending Verification Card -->
-        <a href="/OnlineOrders?tab=Pending" class="group bg-white rounded-2xl p-5 border @(currentTab == "Pending" ? "border-amber-400 ring-2 ring-amber-400/20 shadow-md" : "border-[#EDE7DF] shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)]") hover:-translate-y-0.5 transition-all">
+        <a href="/OnlineOrders?tab=Pending" class="group bg-white rounded-2xl p-5 border @(currentTab == "Pending" ? "border-amber-400 ring-2 ring-amber-400/20 shadow-md" : "border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]") hover:-translate-y-0.5 transition-all">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Pending Review</span>
                 <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center">
@@ -83,7 +85,7 @@
         </a>
 
         <!-- Completed / Verified Card -->
-        <a href="/OnlineOrders?tab=Completed" class="group bg-white rounded-2xl p-5 border @(currentTab == "Completed" ? "border-emerald-400 ring-2 ring-emerald-400/20 shadow-md" : "border-[#EDE7DF] shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)]") hover:-translate-y-0.5 transition-all">
+        <a href="/OnlineOrders?tab=Completed" class="group bg-white rounded-2xl p-5 border @(currentTab == "Completed" ? "border-emerald-400 ring-2 ring-emerald-400/20 shadow-md" : "border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]") hover:-translate-y-0.5 transition-all">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Verified & Completed</span>
                 <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
@@ -103,7 +105,7 @@
         </a>
 
         <!-- Rejected Card -->
-        <a href="/OnlineOrders?tab=Rejected" class="group bg-white rounded-2xl p-5 border @(currentTab == "Rejected" ? "border-rose-400 ring-2 ring-rose-400/20 shadow-md" : "border-[#EDE7DF] shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)]") hover:-translate-y-0.5 transition-all">
+        <a href="/OnlineOrders?tab=Rejected" class="group bg-white rounded-2xl p-5 border @(currentTab == "Rejected" ? "border-rose-400 ring-2 ring-rose-400/20 shadow-md" : "border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]") hover:-translate-y-0.5 transition-all">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Rejected</span>
                 <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/60 flex items-center justify-center">
@@ -123,7 +125,7 @@
         </a>
 
         <!-- Total Revenue Card -->
-        <div class="bg-white rounded-2xl p-5 border border-[#EDE7DF] shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)]">
+        <div class="bg-white rounded-2xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]">
             <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Online Revenue</span>
                 <span class="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 border border-primary-200/60 flex items-center justify-center">
@@ -144,7 +146,7 @@
     </div>
 
     <!-- Filter & Search Bar -->
-    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#EDE7DF] shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] space-y-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] space-y-4">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <!-- Tabs -->
             <div class="inline-flex p-1 bg-slate-100/80 rounded-xl border border-slate-200/70 overflow-x-auto max-w-full">
@@ -191,7 +193,7 @@
     </div>
 
     <!-- Orders Table Container -->
-    <div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(42,36,33,0.06)] border border-[#EDE7DF] overflow-hidden flex flex-col">
+    <div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] overflow-hidden flex flex-col">
         <div class="overflow-x-auto p-2">
             <table class="w-full text-left text-sm whitespace-nowrap">
                 <thead class="text-slate-500 bg-slate-50/60 rounded-xl">
@@ -381,7 +383,7 @@
                                         @if (order.OrderStatus == OrderStatus.Pending)
                                         {
                                             <!-- Verify & Confirm Button -->
-                                            <button type="button" onclick="openConfirmDialog(@order.OrderId, '@orderNo', '@order.TotalPrice.ToString("#,##0") MMK')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:shadow-xs flex items-center gap-1" title="Verify Payment & Deduct Inventory Stock">
+                                            <button type="button" onclick="openConfirmDialog(@order.OrderId, '@orderNo', '@order.TotalPrice.ToString("#,##0") MMK')" class="px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:shadow-xs flex items-center gap-1" title="Verify Payment & Deduct Inventory Stock">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                                 <span>Verify</span>
                                             </button>
@@ -408,6 +410,56 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination (10 per page, consistent with Orders) -->
+        @if (totalPages > 1)
+        {
+            <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-center bg-slate-50/30">
+                <div class="inline-flex items-center gap-1 bg-white rounded-full p-1.5 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6]">
+                    @if (currentPage > 1)
+                    {
+                        <a href="/OnlineOrders?tab=@currentTab&search=@search&page=@(currentPage - 1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors mr-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-300 mr-1 cursor-not-allowed">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </span>
+                    }
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        if (i == currentPage)
+                        {
+                            <span class="w-8 h-8 flex items-center justify-center rounded-full bg-primary-600 text-white text-sm font-semibold shadow-sm">@i</span>
+                        }
+                        else if (i == 1 || i == totalPages || Math.Abs(i - currentPage) <= 1)
+                        {
+                            <a href="/OnlineOrders?tab=@currentTab&search=@search&page=@i" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 text-sm hover:bg-slate-100 font-medium transition-colors">@i</a>
+                        }
+                        else if (Math.Abs(i - currentPage) == 2)
+                        {
+                            <span class="w-8 h-8 flex items-center justify-center text-slate-400 tracking-widest">...</span>
+                        }
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <a href="/OnlineOrders?tab=@currentTab&search=@search&page=@(currentPage + 1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors ml-1 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="w-8 h-8 flex items-center justify-center rounded-full bg-primary-600/50 text-white/70 ml-1 cursor-not-allowed shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </span>
+                    }
+                </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -584,7 +636,7 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
 
-        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shadow-xs">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary-50 border border-primary-100 text-primary-600 flex items-center justify-center shadow-xs">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
             </svg>
@@ -595,10 +647,10 @@
             Order <strong id="confirmOrderNoText" class="text-slate-800"></strong> &bull; Total: <strong id="confirmOrderTotalText" class="text-primary-700"></strong>
         </p>
 
-        <div class="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/70 text-left mb-6">
+        <div class="p-4 rounded-2xl bg-primary-50/60 border border-primary-200/70 text-left mb-6">
             <div class="flex items-start gap-2.5">
-                <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <div class="text-xs text-emerald-800/90 leading-relaxed">
+                <svg class="w-4 h-4 text-primary-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="text-xs text-primary-800/90 leading-relaxed">
                     By verifying this order, payment is recorded as <strong>Verified</strong>, inventory stock will be immediately deducted for each book edition, and the order will move to <strong>Completed</strong>.
                 </div>
             </div>
@@ -608,7 +660,7 @@
             <button type="button" onclick="closeConfirmDialog()" class="w-full order-2 sm:order-1 py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm transition-all">
                 Cancel
             </button>
-            <button type="button" id="btnExecuteConfirm" onclick="executeConfirmOrder()" class="w-full order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-all shadow-sm text-xs sm:text-sm">
+            <button type="button" id="btnExecuteConfirm" onclick="executeConfirmOrder()" class="w-full order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all shadow-sm text-xs sm:text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 <span id="btnExecuteConfirmText">Confirm & Deduct Stock</span>
             </button>
@@ -737,7 +789,7 @@
                 <button type="button" onclick="closeSlipModal(); openRejectDialog(${orderId}, '${orderNo}')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all">
                     Reject Slip
                 </button>
-                <button type="button" onclick="closeSlipModal(); openConfirmDialog(${orderId}, '${orderNo}', '')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
+                <button type="button" onclick="closeSlipModal(); openConfirmDialog(${orderId}, '${orderNo}', '')" class="px-3.5 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
                     Verify & Confirm
                 </button>
             `;
@@ -887,7 +939,7 @@
                     <button type="button" onclick="closeDetailModal(); openRejectDialog(${o.orderId}, '${orderNo}')" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all">
                         Reject Order
                     </button>
-                    <button type="button" onclick="closeDetailModal(); openConfirmDialog(${o.orderId}, '${orderNo}', '${Number(o.totalPrice).toLocaleString()} MMK')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
+                    <button type="button" onclick="closeDetailModal(); openConfirmDialog(${o.orderId}, '${orderNo}', '${Number(o.totalPrice).toLocaleString()} MMK')" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
                         Verify & Confirm
                     </button>
                 `;

@@ -26,14 +26,25 @@ namespace BookStorePOS.MvcApp.Controllers
         }
 
         [ActionName("Index")]
-        public async Task<IActionResult> OnlineOrderListAsync(string? tab = "Pending", string? search = "")
+        public async Task<IActionResult> OnlineOrderListAsync(string? tab = "Pending", string? search = "", int page = 1)
         {
             try
             {
+                var hasToken = !string.IsNullOrEmpty(Request.Cookies["pos_token"]);
+                var hasRefresh = !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]);
+                if (!hasToken && !hasRefresh)
+                {
+                    _logger.LogInformation("OnlineOrderListAsync => No auth cookies found, redirecting to Login");
+                    return RedirectToLogin();
+                }
+
                 _logger.LogInformation("Online Order List Async => Fetching online orders");
 
                 tab = string.IsNullOrWhiteSpace(tab) ? "Pending" : tab;
-                var qs = "?OrderSource=Online";
+                page = page <= 0 ? 1 : page;
+                int limit = 10; // Exactly 10 per page, consistent with Orders
+
+                var qs = $"?OrderSource=Online&Page={page}&Limit={limit}";
                 if (tab == "Pending") qs += "&OrderStatus=Pending";
                 else if (tab == "Completed") qs += "&OrderStatus=Completed";
                 else if (tab == "Rejected") qs += "&OrderStatus=Rejected";
@@ -45,6 +56,13 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/order{qs}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.Unauthorized || HttpContext.Items.ContainsKey("Auth_Expired"))
+                {
+                    _logger.LogWarning("OnlineOrderListAsync => Unauthorized access, redirecting to Login");
+                    return RedirectToLogin();
+                }
+
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<OrderListResponseModel>(jsonString);
 
@@ -57,6 +75,9 @@ namespace BookStorePOS.MvcApp.Controllers
                     ViewData["CompletedCount"] = response.CompletedCount;
                     ViewData["RejectedCount"] = response.RejectedCount;
                     ViewData["TotalRevenue"] = response.TotalRevenue;
+                    ViewData["CurrentPage"] = response.Page > 0 ? response.Page : page;
+                    ViewData["TotalPages"] = response.TotalPages > 0 ? response.TotalPages : 1;
+                    ViewData["TotalCount"] = response.TotalCount;
 
                     _logger.LogInformation("Online Order List Async => Online orders fetched successfully");
                 }
@@ -68,6 +89,9 @@ namespace BookStorePOS.MvcApp.Controllers
                     ViewData["Orders"] = new List<OrderModel>();
                     ViewData["CurrentTab"] = tab;
                     ViewData["Search"] = search ?? "";
+                    ViewData["CurrentPage"] = page;
+                    ViewData["TotalPages"] = 1;
+                    ViewData["TotalCount"] = 0;
                 }
 
                 return View("OnlineOrderList");
@@ -77,6 +101,16 @@ namespace BookStorePOS.MvcApp.Controllers
                 _logger.LogError(ex, "OnlineOrderListAsync => Exception occurred");
                 return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
+        }
+
+        private IActionResult RedirectToLogin()
+        {
+            Response.Cookies.Delete("pos_token");
+            Response.Cookies.Delete("pos_refresh");
+            Response.Cookies.Delete("pos_user");
+            Response.Cookies.Delete("pos_role");
+            Response.Cookies.Delete("pos_permissions");
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/OnlineOrders" });
         }
 
         [HttpGet]

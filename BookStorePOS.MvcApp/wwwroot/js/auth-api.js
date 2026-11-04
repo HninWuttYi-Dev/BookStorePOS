@@ -6,6 +6,14 @@ function getCookie(name) {
     return null;
 }
 
+function purgeAuthStorage() {
+    try {
+        localStorage.removeItem('pos_user');
+        localStorage.removeItem('pos_role');
+        localStorage.removeItem('pos_permissions');
+    } catch (e) {}
+}
+
 // 2. Refresh the staff POS token
 function refreshPosToken(onSuccess) {
     $.ajax({
@@ -15,19 +23,21 @@ function refreshPosToken(onSuccess) {
             if (response && response.isSuccess) {
                 if (onSuccess) onSuccess(response.accessToken);
             } else {
+                purgeAuthStorage();
                 window.location.href = '/Auth/Login';
             }
         },
         error: function () {
+            purgeAuthStorage();
             window.location.href = '/Auth/Login';
         }
     });
 }
 
-// 3. Auto-refresh in the background while staff is logged in (every 14 minutes)
+// 3. Auto-refresh in the background while staff is logged in (every 14 minutes for 15-minute tokens)
 $(document).ready(function () {
     if (getCookie('pos_user')) {
-        const refreshIntervalMs = 14 * 60 * 1000; // 14 minutes (token expires in 15 minutes)
+        const refreshIntervalMs = 14 * 60 * 1000; // 14 minutes
 
         setInterval(function () {
             refreshPosToken();

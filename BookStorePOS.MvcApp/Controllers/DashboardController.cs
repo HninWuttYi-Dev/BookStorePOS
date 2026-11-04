@@ -2,8 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using BookStorePOS.Shared.Models.Book;
+using BookStorePOS.Shared.Models.Order;
+using Newtonsoft.Json;
 
 namespace BookStorePOS.MvcApp.Controllers
 {
@@ -17,17 +21,33 @@ namespace BookStorePOS.MvcApp.Controllers
             _httpClientFactory = httpClientFactory;
             _logger = logger;
         }
+
         [ActionName("Index")]
         public async Task<IActionResult> DashboardIndexAsync()
         {
-        try
-        {
+            try
+            {
+                // 1. Session check: if neither token nor refresh token is in cookies, bounce to login
+                var hasToken = !string.IsNullOrEmpty(Request.Cookies["pos_token"]);
+                var hasRefresh = !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]);
+                if (!hasToken && !hasRefresh)
+                {
+                    _logger.LogInformation("DashboardIndexAsync => No auth cookies found, redirecting to Login");
+                    return RedirectToLogin();
+                }
+
                 _logger.LogInformation("Dashboard Index Async => Fetching dashboard data");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
 
-                // 1) Summary
+                // 2) Summary
                 var summaryHttp = await client.GetAsync("api/order/summary");
+                if (summaryHttp.StatusCode == HttpStatusCode.Unauthorized || HttpContext.Items.ContainsKey("Auth_Expired"))
+                {
+                    _logger.LogWarning("DashboardIndexAsync => Order summary unauthorized / session expired, redirecting to Login");
+                    return RedirectToLogin();
+                }
+
                 var summaryJson = await summaryHttp.Content.ReadAsStringAsync();
                 var summaryResponse = JsonConvert.DeserializeObject<OrderSummaryResponseModel>(summaryJson);
 
@@ -44,8 +64,14 @@ namespace BookStorePOS.MvcApp.Controllers
                     ViewData["Message"] = summaryResponse?.Message;
                 }
 
-                // 2) Low stock
+                // 3) Low stock
                 var lowStockHttp = await client.GetAsync("api/book/low-stock");
+                if (lowStockHttp.StatusCode == HttpStatusCode.Unauthorized || HttpContext.Items.ContainsKey("Auth_Expired"))
+                {
+                    _logger.LogWarning("DashboardIndexAsync => Low stock unauthorized / session expired, redirecting to Login");
+                    return RedirectToLogin();
+                }
+
                 var lowStockJson = await lowStockHttp.Content.ReadAsStringAsync();
                 var lowStockResponse = JsonConvert.DeserializeObject<BookListResponseModel>(lowStockJson);
 
@@ -56,8 +82,14 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["LowStockItemsCount"] = lowStockBooks.Count;
                 ViewData["LowStockBooks"] = lowStockBooks.Take(5).ToList();
 
-                // 3) Recent orders
+                // 4) Recent orders
                 var historyHttp = await client.GetAsync("api/order/history?Page=1&Limit=5");
+                if (historyHttp.StatusCode == HttpStatusCode.Unauthorized || HttpContext.Items.ContainsKey("Auth_Expired"))
+                {
+                    _logger.LogWarning("DashboardIndexAsync => Order history unauthorized / session expired, redirecting to Login");
+                    return RedirectToLogin();
+                }
+
                 var historyJson = await historyHttp.Content.ReadAsStringAsync();
                 var historyResponse = JsonConvert.DeserializeObject<OrderHistoryResponseModel>(historyJson);
 
@@ -68,16 +100,23 @@ namespace BookStorePOS.MvcApp.Controllers
                 ViewData["RecentOrders"] = recentOrders;
 
                 _logger.LogInformation("Dashboard Index Async => Dashboard data fetched successfully");
-
-                // Optional: pass one response model if you want @model
                 return View("Dashboard");
-        
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DashboardIndexAsync => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
         }
-        catch (Exception ex)
+
+        private IActionResult RedirectToLogin()
         {
-            _logger.LogError(ex, "DashboardIndexAsync => Exception occurred");
-            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            Response.Cookies.Delete("pos_token");
+            Response.Cookies.Delete("pos_refresh");
+            Response.Cookies.Delete("pos_user");
+            Response.Cookies.Delete("pos_role");
+            Response.Cookies.Delete("pos_permissions");
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Dashboard" });
         }
-    }
     }
 }
