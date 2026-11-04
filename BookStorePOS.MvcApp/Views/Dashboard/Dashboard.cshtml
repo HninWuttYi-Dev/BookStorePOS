@@ -13,9 +13,27 @@
                                  ?? new List<BookModel>();
                                  
     string cookieRole = Context.Request.Cookies["pos_role"] ?? "Staff";
+    string cookieUser = Context.Request.Cookies["pos_user"] ?? "";
+    string displayUser = !string.IsNullOrWhiteSpace(cookieUser) 
+        ? Uri.UnescapeDataString(cookieUser).Replace("+", " ") 
+        : "";
     string greetingRole = !string.IsNullOrWhiteSpace(cookieRole) 
         ? char.ToUpper(cookieRole[0]) + cookieRole.Substring(1) 
         : "Staff";
+    bool isCashier = string.Equals(cookieRole, "Cashier", StringComparison.OrdinalIgnoreCase);
+
+    string initials = "S";
+    if (!string.IsNullOrWhiteSpace(displayUser))
+    {
+        var words = displayUser.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        initials = words.Length >= 2 
+            ? (words[0][0].ToString() + words[^1][0].ToString()).ToUpper()
+            : (displayUser.Length >= 2 ? displayUser.Substring(0, 2).ToUpper() : displayUser.ToUpper());
+    }
+    else if (!string.IsNullOrWhiteSpace(cookieRole))
+    {
+        initials = cookieRole.Substring(0, 1).ToUpper();
+    }
                                  
     bool hasMessage = TempData["Message"] != null || ViewData["Message"] != null;
     bool isSuccess = true;
@@ -96,16 +114,46 @@ else
 
 <div class="relative">
     <!-- Top Greeting -->
-    <div class="mb-8 flex items-center justify-between relative z-10">
+    <div class="mb-8 flex items-center justify-between relative z-30">
         <div>
-            <h1 class="text-3xl font-extrabold text-[#18181B] tracking-tight" id="dashboardGreetingTitle">Hi, @greetingRole</h1>
-            <p class="text-[#A76DAE] font-medium mt-1 text-sm">Let's finish your task today!</p>
+            <h1 class="text-3xl font-extrabold text-[#18181B] tracking-tight flex items-center gap-2">
+                <span>Hi, <span id="topGreetingName">@(string.IsNullOrWhiteSpace(displayUser) ? greetingRole : displayUser)</span></span>
+                <span class="inline-block hover:rotate-12 transition-transform cursor-default select-none text-2xl sm:text-3xl">👋</span>
+            </h1>
+            <p class="text-[#71717A] font-medium mt-1 text-sm">Here's what's happening with your bookstore today.</p>
         </div>
-        <div class="hidden sm:flex items-center gap-3">
-            <a href="/Checkout" class="px-5 py-2.5 bg-[#B875C2] hover:bg-[#A662B0] text-white rounded-xl text-sm font-semibold shadow-sm transition-all inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                <span>New Sale</span>
-            </a>
+        <div class="flex items-center gap-3">
+            @if (!isCashier)
+            {
+                <!-- Notification Bell (Only on Dashboard) -->
+                <button type="button" onclick="window.openNotificationDrawer()" title="Notifications" class="pos-notif-bell relative group bg-white hover:bg-[#FAF0FA] border border-[#F3E2F6] hover:border-[#CE8FD4] shadow-xs hover:shadow-md w-11 h-11 rounded-2xl transition-all cursor-pointer flex items-center justify-center">
+                    <svg class="w-5 h-5 text-[#71717A] group-hover:text-[#9F54A6] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span class="pos-notif-badge hidden absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[10px] font-bold text-white bg-rose-500 rounded-full min-w-[18px] text-center shadow-xs">0</span>
+                </button>
+            }
+
+            <!-- Profile Avatar with Dropdown -->
+            <div class="relative z-40" id="topProfileDropdownContainer">
+                <button type="button" id="topProfileBtn" onclick="window.toggleTopProfileMenu()" title="Account & Sign Out" class="w-11 h-11 rounded-2xl bg-[#F6DFFB] hover:bg-[#ECD0F3] border border-[#ECD0F3] text-[#9F54A6] font-bold text-sm shadow-xs hover:shadow-md flex items-center justify-center transition-all cursor-pointer uppercase shrink-0">
+                    <span id="topUserInitials">@initials</span>
+                </button>
+                <!-- Dropdown Menu -->
+                <div id="topProfileMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-[#F3E2F6] py-2 z-50">
+                    <div class="px-4 py-2.5 border-b border-[#F7E7F9]">
+                        <p class="text-[11px] text-[#9C8EA4] uppercase tracking-wider font-semibold">Signed in as</p>
+                        <p class="text-sm font-bold text-[#18181B] truncate mt-0.5" id="topMenuUsername">@(string.IsNullOrWhiteSpace(displayUser) ? greetingRole : displayUser)</p>
+                        <span class="inline-block mt-1 px-2.5 py-0.5 text-[10px] font-bold bg-[#FAF0FA] text-[#9F54A6] rounded-md" id="topMenuUserRole">@(cookieRole) Role</span>
+                    </div>
+                    <div class="p-1.5">
+                        <button type="button" onclick="window.closeTopProfileMenu(); window.openLogoutConfirmModal()" class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-white hover:bg-rose-500 rounded-xl transition-colors text-left cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -284,12 +332,49 @@ else
 
 @section Scripts {
 <script>
+    window.toggleTopProfileMenu = function() {
+        const menu = document.getElementById('topProfileMenu');
+        if (menu) {
+            menu.classList.toggle('hidden');
+        }
+    };
+
+    window.closeTopProfileMenu = function() {
+        const menu = document.getElementById('topProfileMenu');
+        if (menu) {
+            menu.classList.add('hidden');
+        }
+    };
+
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('topProfileDropdownContainer');
+        if (container && !container.contains(e.target)) {
+            window.closeTopProfileMenu();
+        }
+    });
+
     $(document).ready(function() {
-        const posRole = localStorage.getItem('pos_role') || getCookie('pos_role');
-        if (posRole && posRole.trim().length > 0) {
-            let roleName = posRole.trim();
-            roleName = roleName.charAt(0).toUpperCase() + roleName.slice(1);
-            $('#dashboardGreetingTitle').text('Hi, ' + roleName);
+        let posUser = '';
+        try {
+            posUser = getCookie('pos_user') || localStorage.getItem('pos_user') || '';
+            if (posUser) {
+                posUser = decodeURIComponent(posUser).replace(/%20/g, ' ').replace(/\+/g, ' ').trim();
+            }
+        } catch(e) {}
+
+        const posRole = localStorage.getItem('pos_role') || getCookie('pos_role') || 'Staff';
+        const displayName = posUser && posUser.length > 0 ? posUser : (posRole.charAt(0).toUpperCase() + posRole.slice(1));
+
+        $('#topGreetingName').text(displayName);
+        $('#topMenuUsername').text(displayName);
+        $('#topMenuUserRole').text((posRole.charAt(0).toUpperCase() + posRole.slice(1)) + ' Role');
+
+        if (displayName) {
+            const words = displayName.split(/\s+/).filter(Boolean);
+            const initials = words.length >= 2 
+                ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+                : displayName.substring(0, 2).toUpperCase();
+            $('#topUserInitials').text(initials);
         }
     });
 </script>

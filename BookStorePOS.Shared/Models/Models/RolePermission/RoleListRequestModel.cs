@@ -52,8 +52,8 @@ public class PermissionModel
         ("Edition", "Update") => "Edit Editions",
         ("Edition", "Delete") => "Delete Editions",
 
-        ("Order", "View") => "View Orders & Receipts",
-        ("Order", "Create") => "POS Checkout & New Orders",
+        ("Order", "View") => "View Orders & Online Orders",
+        ("Order", "Create") => "POS Counter Checkout",
 
         ("Dashboard", "View") => "View Dashboard & Sales Analytics",
 
@@ -92,8 +92,8 @@ public class PermissionModel
         ("Edition", "Update") => "Modify existing edition format options",
         ("Edition", "Delete") => "Remove edition format options",
 
-        ("Order", "View") => "Browse transaction records, sales history, and invoices",
-        ("Order", "Create") => "Use the POS cash register, scan books, and complete customer checkouts",
+        ("Order", "View") => "Browse in-store transaction history, sales receipts, and view/process online customer orders",
+        ("Order", "Create") => "Operate the in-store POS cash register counter, scan books, and complete customer checkouts",
 
         ("Dashboard", "View") => "Access revenue charts, daily sales totals, and bestsellers",
 
