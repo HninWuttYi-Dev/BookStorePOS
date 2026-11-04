@@ -164,7 +164,25 @@
 
                 <div class="flex items-center justify-between mb-3 text-sm">
                     <span class="text-brand-inkLight font-semibold">Method:</span>
-                    <span class="font-bold text-brand-ink">@(order?.PaymentMethod ?? "Direct Transfer")</span>
+                    <span class="inline-flex items-center gap-2 font-bold text-brand-ink">
+                        @{
+                            var methodCode = (order?.PaymentMethod ?? "").Trim().ToLower();
+                            var logoUrl = methodCode switch
+                            {
+                                "kbzpay" => "/images/payments/kpay.png",
+                                "wavepay" => "/images/payments/wavepay.png",
+                                "ayapay" => "/images/payments/ayapay.png",
+                                "uabpay" => "/images/payments/uabpay.png",
+                                "cashondelivery" or "cod" => "/images/payments/cod.png",
+                                _ => ""
+                            };
+                        }
+                        @if (!string.IsNullOrEmpty(logoUrl))
+                        {
+                            <img src="@logoUrl" alt="@order?.PaymentMethod" class="w-5 h-5 rounded-md object-contain shrink-0 shadow-2xs border border-brand-border/60" />
+                        }
+                        <span>@(order?.PaymentMethod ?? "Direct Transfer")</span>
+                    </span>
                 </div>
 
                 @if (!string.IsNullOrWhiteSpace(order?.PaymentScreenshotUrl))

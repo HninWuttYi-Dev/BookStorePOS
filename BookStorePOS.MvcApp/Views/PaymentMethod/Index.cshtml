@@ -1,0 +1,266 @@
+@using BookStorePOS.Shared.Models.PaymentMethod
+@{
+    ViewData["Title"] = "Payment Methods";
+    var methods = ViewData["PaymentMethods"] as List<PaymentMethodModel> ?? new List<PaymentMethodModel>();
+    bool hasMessage = TempData["Message"] != null;
+    bool isSuccess = TempData["isSuccess"] != null ? Convert.ToBoolean(TempData["isSuccess"]) : true;
+    string message = TempData["Message"]?.ToString() ?? string.Empty;
+}
+
+<div class="max-w-6xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
+        <div>
+            <h1 class="text-3xl font-extrabold text-[#18181B] tracking-tight">Payment Methods</h1>
+            <p class="text-[#71717A] text-sm font-medium mt-1">Configure active payment channels, receiving phone/account numbers, and customer instructions.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#F6DFFB] text-[#9F54A6] border border-[#ECD0F3]">
+                <span class="w-2 h-2 rounded-full bg-[#9F54A6] animate-pulse"></span>
+                <span>@methods.Count(m => m.IsActive) Active Channels</span>
+            </span>
+        </div>
+    </div>
+
+    @if (hasMessage)
+    {
+        <div class="p-4 rounded-2xl text-sm font-medium border @(isSuccess ? "bg-[#E7F3EA] border-[#CDE5D2] text-[#34764A]" : "bg-[#FBE8E8] border-[#F7D2D2] text-[#B84646]")">
+            @message
+        </div>
+    }
+
+    <!-- Payment Methods Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @foreach (var method in methods.OrderBy(m => m.DisplayOrder))
+        {
+            var isCod = method.PaymentCode == "CashOnDelivery";
+            var badgeBg = !string.IsNullOrEmpty(method.BadgeBg) ? method.BadgeBg : "#9F54A6";
+
+            <div class="bg-white rounded-3xl p-6 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex flex-col justify-between relative overflow-hidden" id="card-@method.PaymentMethodId">
+                <div>
+                    <!-- Top Bar: Badge + Name + Active Switch -->
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div class="flex items-center gap-3.5">
+                            <img src="@method.LogoUrl" alt="@method.PaymentName" class="w-12 h-12 rounded-2xl object-contain shrink-0 shadow-xs border border-[#F3E2F6] bg-white p-1" />
+                            <div>
+                                <h3 class="font-bold text-lg text-[#18181B] leading-tight">@method.PaymentName</h3>
+                                <span class="text-[11px] font-mono text-[#9C8EA4] uppercase tracking-wider">@method.PaymentCode</span>
+                            </div>
+                        </div>
+
+                        <!-- Active Toggle Switch -->
+                        <label class="relative inline-flex items-center cursor-pointer select-none" title="Toggle Channel Active/Inactive">
+                            <input type="checkbox" class="sr-only peer toggle-active-checkbox" 
+                                   data-id="@method.PaymentMethodId" 
+                                   data-name="@method.PaymentName"
+                                   @(method.IsActive ? "checked" : "")>
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#9F54A6]"></div>
+                        </label>
+                    </div>
+
+                    <!-- Description -->
+                    <p class="text-xs text-[#71717A] mb-5 leading-relaxed line-clamp-2">
+                        @(string.IsNullOrWhiteSpace(method.Description) ? "No description provided." : method.Description)
+                    </p>
+
+                    <!-- Account Details Box -->
+                    <div class="bg-[#FAF0FA] border border-[#F3E2F6] rounded-2xl p-4 space-y-2 mb-4 font-body">
+                        @if (isCod)
+                        {
+                            <div class="flex items-center gap-2 text-xs font-semibold text-emerald-800">
+                                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>No advance transfer needed</span>
+                            </div>
+                            <p class="text-[11px] text-[#71717A]">Cash collected in person by courier upon order delivery.</p>
+                        }
+                        else
+                        {
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-[#9C8EA4] tracking-wider block">Account Holder</span>
+                                <span class="text-xs font-bold text-[#18181B] truncate block" id="holder-@method.PaymentMethodId">
+                                    @(string.IsNullOrWhiteSpace(method.AccountName) ? "Not configured" : method.AccountName)
+                                </span>
+                            </div>
+                            <div class="pt-1.5 border-t border-[#F3E2F6]">
+                                <span class="text-[10px] uppercase font-bold text-[#9C8EA4] tracking-wider block">Account / Phone Number</span>
+                                <span class="text-sm font-mono font-extrabold text-[#9F54A6] tracking-wider block truncate" id="number-@method.PaymentMethodId">
+                                    @(string.IsNullOrWhiteSpace(method.AccountNumber) ? "Not configured" : method.AccountNumber)
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Footer: Status Pill + Edit Button -->
+                <div class="flex items-center justify-between pt-4 border-t border-[#F7E7F9]">
+                    <span class="inline-flex items-center gap-1.5 text-xs font-bold status-pill-@method.PaymentMethodId @(method.IsActive ? "text-emerald-700" : "text-slate-400")">
+                        <span class="w-1.5 h-1.5 rounded-full @(method.IsActive ? "bg-emerald-500" : "bg-slate-300")"></span>
+                        <span class="status-text">@(method.IsActive ? "Available at Checkout" : "Disabled")</span>
+                    </span>
+
+                    @if (!isCod)
+                    {
+                        <button type="button" 
+                                onclick="window.openEditPaymentModal(@method.PaymentMethodId, '@Html.Raw(Html.Encode(method.PaymentName))', '@Html.Raw(Html.Encode(method.AccountName ?? ""))', '@Html.Raw(Html.Encode(method.AccountNumber ?? ""))', '@Html.Raw(Html.Encode(method.Description ?? ""))')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#9F54A6] hover:bg-[#F6DFFB] transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <span>Edit Account</span>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Edit Payment Method Modal -->
+<dialog id="editPaymentModal" class="m-auto rounded-3xl p-0 border border-[#F3E2F6] bg-white shadow-2xl backdrop:bg-slate-900/50 backdrop:backdrop-blur-sm max-w-lg w-[92%] sm:w-full transition-all overflow-hidden">
+    <div class="p-6 sm:p-8 relative font-body">
+        <!-- Close Button -->
+        <button type="button" onclick="window.closeEditPaymentModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-2xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-[#18181B]" id="modalTitle">Edit Account</h3>
+                <p class="text-xs text-[#71717A]">Update receiving credentials shown to customers during checkout.</p>
+            </div>
+        </div>
+
+        <form id="editPaymentForm" onsubmit="window.savePaymentMethod(event)" class="space-y-4">
+            <input type="hidden" id="editPaymentId" value="" />
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Account Holder Name <span class="text-rose-500">*</span></label>
+                <input type="text" id="editAccountName" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CE8FD4] focus:border-[#9F54A6] transition-all" placeholder="e.g. Hnin Wutt Yi" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Account / Phone Number <span class="text-rose-500">*</span></label>
+                <input type="text" id="editAccountNumber" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#CE8FD4] focus:border-[#9F54A6] transition-all" placeholder="e.g. 09 789 456 123" />
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Customer Instructions / Description</label>
+                <textarea id="editDescription" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#CE8FD4] focus:border-[#9F54A6] transition-all" placeholder="Add any instructions for customer payment transfers..."></textarea>
+            </div>
+
+            <div class="flex gap-3 pt-3">
+                <button type="button" onclick="window.closeEditPaymentModal()" class="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-sm transition-all cursor-pointer">
+                    Cancel
+                </button>
+                <button type="submit" id="btnSaveModal" class="w-full py-2.5 px-4 rounded-xl bg-[#9F54A6] hover:bg-[#873693] text-white font-semibold text-sm transition-all shadow-sm cursor-pointer">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+@section Scripts {
+<script>
+    function showToast(message, isSuccess = true) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, isSuccess);
+        } else {
+            alert(message);
+        }
+    }
+
+    // Toggle Active Status AJAX
+    $('.toggle-active-checkbox').on('change', function() {
+        const checkbox = $(this);
+        const id = checkbox.data('id');
+        const name = checkbox.data('name');
+        const isActive = checkbox.is(':checked');
+        const pill = $('.status-pill-' + id);
+
+        $.ajax({
+            type: 'POST',
+            url: '/PaymentMethod/ToggleStatus/' + id,
+            contentType: 'application/json',
+            data: JSON.stringify({ paymentMethodId: id, isActive: isActive }),
+            success: function(res) {
+                if (res && res.isSuccess) {
+                    showToast(res.message || `${name} status updated.`, true);
+                    if (isActive) {
+                        pill.removeClass('text-slate-400').addClass('text-emerald-700');
+                        pill.find('.w-1\\.5').removeClass('bg-slate-300').addClass('bg-emerald-500');
+                        pill.find('.status-text').textContent = 'Available at Checkout';
+                    } else {
+                        pill.removeClass('text-emerald-700').addClass('text-slate-400');
+                        pill.find('.w-1\\.5').removeClass('bg-emerald-500').addClass('bg-slate-300');
+                        pill.find('.status-text').textContent = 'Disabled';
+                    }
+                } else {
+                    checkbox.prop('checked', !isActive);
+                    showToast(res?.message || 'Failed to update status.', false);
+                }
+            },
+            error: function() {
+                checkbox.prop('checked', !isActive);
+                showToast('Network error updating payment method status.', false);
+            }
+        });
+    });
+
+    // Modal Handlers
+    window.openEditPaymentModal = function(id, name, holder, number, desc) {
+        $('#editPaymentId').val(id);
+        $('#modalTitle').text('Edit ' + name);
+        $('#editAccountName').val(holder);
+        $('#editAccountNumber').val(number);
+        $('#editDescription').val(desc);
+        
+        const modal = document.getElementById('editPaymentModal');
+        if (modal) modal.showModal();
+    };
+
+    window.closeEditPaymentModal = function() {
+        const modal = document.getElementById('editPaymentModal');
+        if (modal) modal.close();
+    };
+
+    window.savePaymentMethod = function(e) {
+        e.preventDefault();
+        const id = parseInt($('#editPaymentId').val(), 10);
+        const holder = $('#editAccountName').val().trim();
+        const number = $('#editAccountNumber').val().trim();
+        const desc = $('#editDescription').val().trim();
+        const btn = $('#btnSaveModal');
+
+        btn.prop('disabled', true).text('Saving...');
+
+        $.ajax({
+            type: 'POST',
+            url: '/PaymentMethod/UpdateSave/' + id,
+            contentType: 'application/json',
+            data: JSON.stringify({
+                paymentMethodId: id,
+                accountName: holder,
+                accountNumber: number,
+                description: desc
+            }),
+            success: function(res) {
+                btn.prop('disabled', false).text('Save Changes');
+                if (res && res.isSuccess) {
+                    showToast(res.message || 'Payment method updated successfully.', true);
+                    $('#holder-' + id).text(holder);
+                    $('#number-' + id).text(number);
+                    window.closeEditPaymentModal();
+                } else {
+                    showToast(res?.message || 'Failed to save changes.', false);
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false).text('Save Changes');
+                showToast('Network error saving payment method.', false);
+            }
+        });
+    };
+</script>
+}

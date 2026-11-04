@@ -38,6 +38,26 @@ namespace BookStorePOS.MvcApp.Controllers
                     return RedirectToLogin();
                 }
 
+                var userRole = Request.Cookies["pos_role"] ?? "";
+                var userPerms = Request.Cookies["pos_permissions"] ?? "";
+                bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+
+                if (!isAdmin)
+                {
+                    var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    bool canView = permList.Contains("OnlineOrder.View", StringComparer.OrdinalIgnoreCase) || permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase);
+                    if (!canView)
+                    {
+                        _logger.LogWarning("OnlineOrderListAsync => Access denied for user '{User}' without OnlineOrder.View", Request.Cookies["pos_user"]);
+                        TempData["Message"] = "Access Denied: You do not have permission to view Online Orders.";
+                        TempData["isSuccess"] = false;
+                        return RedirectToAction("Index", "Dashboard");
+                    }
+                }
+
+                bool canProcess = isAdmin || userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Contains("OnlineOrder.Update", StringComparer.OrdinalIgnoreCase);
+                ViewData["CanProcessOrders"] = canProcess;
+
                 _logger.LogInformation("Online Order List Async => Fetching online orders");
 
                 tab = string.IsNullOrWhiteSpace(tab) ? "Pending" : tab;
@@ -164,6 +184,17 @@ namespace BookStorePOS.MvcApp.Controllers
                     return Json(new { isSuccess = false, message = "Invalid order ID." });
                 }
 
+                var userRole = Request.Cookies["pos_role"] ?? "";
+                var userPerms = Request.Cookies["pos_permissions"] ?? "";
+                bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+                bool canUpdate = isAdmin || userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Contains("OnlineOrder.Update", StringComparer.OrdinalIgnoreCase);
+
+                if (!canUpdate)
+                {
+                    _logger.LogWarning("OnlineOrderConfirmAsync => Access denied for user '{User}' without OnlineOrder.Update", Request.Cookies["pos_user"]);
+                    return Json(new { isSuccess = false, message = "Access Denied: You do not have permission to verify or confirm online orders." });
+                }
+
                 _logger.LogInformation($"Online Order Confirm Async => Confirming order {id}");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -197,6 +228,17 @@ namespace BookStorePOS.MvcApp.Controllers
                 if (id <= 0)
                 {
                     return Json(new { isSuccess = false, message = "Invalid order ID." });
+                }
+
+                var userRole = Request.Cookies["pos_role"] ?? "";
+                var userPerms = Request.Cookies["pos_permissions"] ?? "";
+                bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+                bool canUpdate = isAdmin || userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Contains("OnlineOrder.Update", StringComparer.OrdinalIgnoreCase);
+
+                if (!canUpdate)
+                {
+                    _logger.LogWarning("OnlineOrderRejectAsync => Access denied for user '{User}' without OnlineOrder.Update", Request.Cookies["pos_user"]);
+                    return Json(new { isSuccess = false, message = "Access Denied: You do not have permission to reject online orders." });
                 }
 
                 if (string.IsNullOrWhiteSpace(requestModel?.RejectReason))

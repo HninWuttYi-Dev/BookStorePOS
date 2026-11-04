@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using BookStorePOS.Shared.Models.Auth;
 using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.Order;
+using BookStorePOS.Shared.Models.PaymentMethod;
 using Newtonsoft.Json;
 
 namespace BookStorePOS.CustomerApp.Controllers
@@ -110,7 +111,7 @@ namespace BookStorePOS.CustomerApp.Controllers
         /// </summary>
         [HttpGet]
         [ActionName("Checkout")]
-        public IActionResult Checkout()
+        public async Task<IActionResult> CheckoutAsync()
         {
             _logger.LogInformation("Checkout => Rendering checkout page");
 
@@ -129,6 +130,26 @@ namespace BookStorePOS.CustomerApp.Controllers
             }
 
             ViewData["PreFillName"] = customerUser ?? "";
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.GetAsync("api/paymentmethod/active");
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                    var response = JsonConvert.DeserializeObject<PaymentMethodActiveListResponseModel>(jsonString);
+                    if (response != null && response.IsSuccess && response.Data != null)
+                    {
+                        ViewData["PaymentMethods"] = response.Data;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Checkout => Failed to fetch active payment methods from WebAPI");
+            }
+
             return View("Checkout");
         }
 

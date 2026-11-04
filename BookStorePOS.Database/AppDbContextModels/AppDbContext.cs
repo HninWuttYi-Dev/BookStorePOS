@@ -31,6 +31,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<TblPasswordReset> TblPasswordResets { get; set; }
 
+    public virtual DbSet<TblPaymentMethod> TblPaymentMethods { get; set; }
+
     public virtual DbSet<TblPermission> TblPermissions { get; set; }
 
     public virtual DbSet<TblRefreshToken> TblRefreshTokens { get; set; }
@@ -205,6 +207,31 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TblPasswordReset_User");
+        });
+
+        modelBuilder.Entity<TblPaymentMethod>(entity =>
+        {
+            entity.HasKey(e => e.PaymentMethodId).HasName("PK__TblPayme__DC31C1D35AD75F5F");
+
+            entity.ToTable("TblPaymentMethod");
+
+            entity.HasIndex(e => e.PaymentCode, "UQ__TblPayme__106D3BA8E5F49514").IsUnique();
+
+            entity.Property(e => e.AccountName).HasMaxLength(100);
+            entity.Property(e => e.AccountNumber).HasMaxLength(50);
+            entity.Property(e => e.BadgeBg).HasMaxLength(30);
+            entity.Property(e => e.BadgeCode).HasMaxLength(10);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Description).HasMaxLength(255);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.IsSlipRequired).HasDefaultValue(true);
+            entity.Property(e => e.PaymentCode).HasMaxLength(50);
+            entity.Property(e => e.PaymentName).HasMaxLength(100);
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
         });
 
         modelBuilder.Entity<TblPermission>(entity =>

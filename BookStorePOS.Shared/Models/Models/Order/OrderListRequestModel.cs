@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BookStorePOS.Shared.Models.Common;
+using BookStorePOS.Shared.Models.PaymentMethod;
 
 namespace BookStorePOS.Shared.Models.Order;
 
@@ -41,6 +42,17 @@ public class OrderModel
     public string? ShippingAddress { get; set; }
     public string? Notes { get; set; }
     public string? PaymentMethod { get; set; }
+    public PaymentType PaymentType
+    {
+        get
+        {
+            if (Enum.TryParse<PaymentType>(PaymentMethod, true, out var type))
+            {
+                return type;
+            }
+            return PaymentType.None;
+        }
+    }
     public PaymentStatus PaymentStatus { get; set; }
     public string? PaymentScreenshotUrl { get; set; }
     public string? RejectReason { get; set; }

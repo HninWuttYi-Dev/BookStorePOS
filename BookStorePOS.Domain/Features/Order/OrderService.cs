@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Shared.Models.Common;
 using BookStorePOS.Shared.Models.Order;
+using BookStorePOS.Shared.Models.PaymentMethod;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -442,7 +443,7 @@ public class OrderService : IOrderService
                     : (byte)PaymentStatus.Unpaid,
                 PaymentMethod = !string.IsNullOrWhiteSpace(requestModel.PaymentMethod)
                     ? requestModel.PaymentMethod.Trim()
-                    : "BankTransfer",
+                    : (requestModel.PaymentType != PaymentType.None ? requestModel.PaymentType.ToString() : null),
                 PaymentScreenshotUrl = requestModel.PaymentScreenshotUrl?.Trim(),
                 CustomerId = requestModel.CustomerId,
                 CustomerName = requestModel.CustomerName.Trim(),

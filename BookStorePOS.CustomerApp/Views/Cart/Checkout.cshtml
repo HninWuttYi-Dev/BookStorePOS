@@ -1,6 +1,21 @@
+@using BookStorePOS.Shared.Models.PaymentMethod
 @{
     ViewData["Title"] = "Checkout";
     string preFillName = ViewData["PreFillName"]?.ToString() ?? "";
+    var paymentMethods = ViewData["PaymentMethods"] as List<PaymentMethodModel> ?? new List<PaymentMethodModel>();
+    if (!paymentMethods.Any())
+    {
+        paymentMethods = new List<PaymentMethodModel>
+        {
+            new PaymentMethodModel { PaymentCode = "KBZPay", PaymentName = "KBZPay", AccountName = "Hnin Wutt Yi", AccountNumber = "09 789 456 123", BadgeCode = "KP", BadgeBg = "#00377B", Description = "Direct KPay transfer", IsSlipRequired = true, IsActive = true, DisplayOrder = 1 },
+            new PaymentMethodModel { PaymentCode = "WavePay", PaymentName = "WavePay", AccountName = "Hnin Wutt Yi", AccountNumber = "09 789 456 123", BadgeCode = "WP", BadgeBg = "#F8A01B", Description = "Wave Money transfer", IsSlipRequired = true, IsActive = true, DisplayOrder = 2 },
+            new PaymentMethodModel { PaymentCode = "UabPay", PaymentName = "uab Pay", AccountName = "Hnin Wutt Yi", AccountNumber = "09 789 456 123", BadgeCode = "uab", BadgeBg = "#7A227D", Description = "Direct pay with uabpay digital wallet", IsSlipRequired = true, IsActive = true, DisplayOrder = 3 },
+            new PaymentMethodModel { PaymentCode = "AyaPay", PaymentName = "AYA Pay", AccountName = "Hnin Wutt Yi", AccountNumber = "09 789 456 123", BadgeCode = "AYA", BadgeBg = "#E11B22", Description = "Direct pay with AYA Pay wallet or AYA Bank", IsSlipRequired = true, IsActive = true, DisplayOrder = 4 },
+            new PaymentMethodModel { PaymentCode = "CashOnDelivery", PaymentName = "Cash on Delivery", AccountName = null, AccountNumber = null, BadgeCode = "COD", BadgeBg = "#059669", Description = "Pay in cash when received", IsSlipRequired = false, IsActive = true, DisplayOrder = 5 }
+        };
+    }
+    bool isKpayAvailable = paymentMethods.Any(m => m.PaymentCode.Equals("KBZPay", StringComparison.OrdinalIgnoreCase) && m.IsActive);
+    var firstMethod = paymentMethods.FirstOrDefault(m => m.IsActive) ?? paymentMethods.First();
 }
 
 <div class="py-6 sm:py-10">
@@ -118,82 +133,69 @@
                     </div>
                 </div>
 
+                @if (!isKpayAvailable)
+                {
+                    <!-- KBZPay Unavailable Alert Notice -->
+                    <div class="mb-5 p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs flex items-start gap-3 shadow-2xs font-body">
+                        <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <span class="font-bold text-sm text-amber-950">KBZPay is currently unavailable</span>
+                                <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900">Notice</span>
+                            </div>
+                            <p class="text-amber-800 leading-relaxed">
+                                Due to account limit or maintenance, KBZPay is temporarily disabled. Please choose another active payment channel below (such as <strong>WavePay</strong>, <strong>uab Pay</strong>, <strong>AYA Pay</strong>, or <strong>Cash on Delivery</strong>) to complete your order.
+                            </p>
+                        </div>
+                    </div>
+                }
+
                 <!-- Payment Options Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-6 font-body">
-                    
-                    <!-- Option: KBZPay -->
-                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-accent shadow-xs" onclick="window.selectPaymentMethod('KBZPay')">
-                        <input type="radio" name="paymentMethodRadio" value="KBZPay" checked class="mt-1 text-brand-accent focus:ring-brand-accent">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="w-6 h-6 rounded-md bg-[#00377B] text-white flex items-center justify-center text-[10px] font-black tracking-tight shrink-0">KP</span>
-                                <span class="font-bold text-sm text-brand-ink">KBZPay</span>
-                            </div>
-                            <p class="text-xs text-brand-inkLight">Direct KPay transfer</p>
-                        </div>
-                    </label>
+                    @foreach (var method in paymentMethods.Where(m => m.IsActive).OrderBy(m => m.DisplayOrder))
+                    {
+                        var isSelected = method.PaymentCode == firstMethod.PaymentCode;
+                        var isCod = method.PaymentCode == "CashOnDelivery";
+                        var bg = !string.IsNullOrEmpty(method.BadgeBg) ? method.BadgeBg : "#9F54A6";
 
-                    <!-- Option: WavePay -->
-                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-border/70 hover:border-brand-accent/60 shadow-xs" onclick="window.selectPaymentMethod('WavePay')">
-                        <input type="radio" name="paymentMethodRadio" value="WavePay" class="mt-1 text-brand-accent focus:ring-brand-accent">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="w-6 h-6 rounded-md bg-[#F8A01B] text-white flex items-center justify-center text-[10px] font-black tracking-tight shrink-0">WP</span>
-                                <span class="font-bold text-sm text-brand-ink">WavePay</span>
+                        <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white @(isSelected ? "border-brand-accent shadow-xs" : "border-brand-border/70 hover:border-brand-accent/60 shadow-xs")" onclick="window.selectPaymentMethod('@method.PaymentCode')">
+                            <input type="radio" name="paymentMethodRadio" value="@method.PaymentCode" @(isSelected ? "checked" : "") class="mt-1 text-brand-accent focus:ring-brand-accent">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <img src="@method.LogoUrl" alt="@method.PaymentName" class="w-7 h-7 rounded-lg object-contain shrink-0 shadow-2xs border border-brand-border/60 bg-white" />
+                                    <span class="font-bold text-sm text-brand-ink">@method.PaymentName</span>
+                                </div>
+                                <p class="text-xs text-brand-inkLight">@(method.Description ?? (isCod ? "Pay in cash when received" : "Direct transfer"))</p>
                             </div>
-                            <p class="text-xs text-brand-inkLight">Wave Money transfer</p>
-                        </div>
-                    </label>
-
-                    <!-- Option: CB Bank -->
-                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-border/70 hover:border-brand-accent/60 shadow-xs" onclick="window.selectPaymentMethod('CBBank')">
-                        <input type="radio" name="paymentMethodRadio" value="CBBank" class="mt-1 text-brand-accent focus:ring-brand-accent">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="w-6 h-6 rounded-md bg-[#006838] text-white flex items-center justify-center text-[10px] font-black tracking-tight shrink-0">CB</span>
-                                <span class="font-bold text-sm text-brand-ink">CB Bank</span>
-                            </div>
-                            <p class="text-xs text-brand-inkLight">Mobile Banking / iBanking</p>
-                        </div>
-                    </label>
-
-                    <!-- Option: Cash on Delivery -->
-                    <label class="payment-method-card relative flex items-start gap-3.5 p-4 rounded-2xl border-2 cursor-pointer transition-all bg-white border-brand-border/70 hover:border-brand-accent/60 shadow-xs" onclick="window.selectPaymentMethod('CashOnDelivery')">
-                        <input type="radio" name="paymentMethodRadio" value="CashOnDelivery" class="mt-1 text-brand-accent focus:ring-brand-accent">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                </span>
-                                <span class="font-bold text-sm text-brand-ink">Cash on Delivery</span>
-                            </div>
-                            <p class="text-xs text-brand-inkLight">Pay in cash when received</p>
-                        </div>
-                    </label>
-
+                        </label>
+                    }
                 </div>
 
                 <!-- Digital Wallet / Bank Transfer Instructions Box -->
-                <div id="bankInstructionsBox" class="bg-white rounded-2xl border border-brand-border/80 p-5 mb-6 shadow-2xs font-body">
+                <div id="bankInstructionsBox" class="@(firstMethod.PaymentCode == "CashOnDelivery" || !firstMethod.IsSlipRequired ? "hidden" : "") bg-white rounded-2xl border border-brand-border/80 p-5 mb-6 shadow-2xs font-body">
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2">
-                            <span id="bankBadge" class="w-7 h-7 rounded-lg bg-[#00377B] text-white flex items-center justify-center text-xs font-black shrink-0">KP</span>
+                            <img id="bankBadge" src="@firstMethod.LogoUrl" alt="@firstMethod.PaymentName" class="w-8 h-8 rounded-xl object-contain shrink-0 shadow-2xs border border-brand-border/60 bg-white" />
                             <div>
-                                <h4 id="bankNameTitle" class="text-sm font-bold text-brand-ink">KBZPay Account Details</h4>
+                                <h4 id="bankNameTitle" class="text-sm font-bold text-brand-ink">@(firstMethod.PaymentName) Account Details</h4>
                                 <p class="text-[11px] text-brand-inkLight">Please transfer total amount to this account</p>
                             </div>
                         </div>
                         <span id="bankHolderName" class="text-xs font-semibold text-brand-accent bg-brand-surface px-2.5 py-1 rounded-full border border-brand-border/70">
-                            Babylon Books
+                            @(firstMethod.AccountName ?? "Hnin Wutt Yi")
                         </span>
                     </div>
 
                     <div class="flex items-center justify-between bg-brand-surface border border-brand-border/60 rounded-xl px-4 py-2.5">
-                        <div>
+                        <div class="min-w-0 pr-2">
                             <span class="text-[10px] uppercase tracking-wider font-semibold text-brand-inkLight block">Account / Phone Number</span>
-                            <span id="bankAccountNumber" class="font-mono font-bold text-base text-brand-ink tracking-wider">09 123 456 789</span>
+                            <span id="bankAccountNumber" class="font-mono font-bold text-sm sm:text-base text-brand-ink tracking-wider block truncate">
+                                @(string.IsNullOrWhiteSpace(firstMethod.AccountNumber) ? "" : $"{firstMethod.AccountNumber} ({(firstMethod.AccountName ?? "Hnin Wutt Yi")})")
+                            </span>
                         </div>
-                        <button type="button" onclick="window.copyCurrentAccountNumber()" class="text-xs font-semibold text-brand-accent hover:text-brand-ink bg-white border border-brand-border/80 hover:border-brand-accent px-3 py-1.5 rounded-lg transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                        <button type="button" onclick="window.copyCurrentAccountNumber()" class="text-xs font-semibold text-brand-accent hover:text-brand-ink bg-white border border-brand-border/80 hover:border-brand-accent px-3 py-1.5 rounded-lg transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                             </svg>
@@ -202,8 +204,8 @@
                     </div>
                 </div>
 
-                <!-- Cash on Delivery Notice Box (Hidden by default) -->
-                <div id="codNoticeBox" class="hidden bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-6 font-body">
+                <!-- Cash on Delivery Notice Box -->
+                <div id="codNoticeBox" class="@(firstMethod.PaymentCode == "CashOnDelivery" || !firstMethod.IsSlipRequired ? "" : "hidden") bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-6 font-body">
                     <div class="flex items-start gap-3">
                         <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -220,7 +222,7 @@
                 </div>
 
                 <!-- Payment Screenshot Uploader Section -->
-                <div id="slipUploadSection" class="font-body">
+                <div id="slipUploadSection" class="@(firstMethod.PaymentCode == "CashOnDelivery" || !firstMethod.IsSlipRequired ? "hidden" : "") font-body">
                     <div class="flex items-center justify-between mb-1.5">
                         <label class="block text-xs font-bold text-brand-ink uppercase tracking-wider">
                             Attach Payment Screenshot <span class="text-brand-danger">*</span>
@@ -445,30 +447,25 @@
 
     const CART_KEY = 'customer_cart';
     let isSubmittingOrder = false;
-    let selectedPaymentMethod = 'KBZPay';
+    let selectedPaymentMethod = '@firstMethod.PaymentCode';
     let selectedSlipFile = null;
 
     const PAYMENT_ACCOUNTS = {
-        'KBZPay': {
-            name: 'KBZPay Account Details',
-            holder: 'Babylon Books',
-            number: '09 123 456 789',
-            badge: 'KP',
-            badgeBg: 'bg-[#00377B]'
+        @foreach (var method in paymentMethods.Where(m => m.IsActive))
+        {
+            var isCod = method.PaymentCode == "CashOnDelivery" || !method.IsSlipRequired;
+            <text>
+        '@method.PaymentCode': {
+            name: '@(method.PaymentName) Account Details',
+            holder: '@(string.IsNullOrWhiteSpace(method.AccountName) ? "Hnin Wutt Yi" : method.AccountName)',
+            number: '@(string.IsNullOrWhiteSpace(method.AccountNumber) ? "" : method.AccountNumber)',
+            badge: '@(method.BadgeCode ?? "PAY")',
+            badgeBg: '@(!string.IsNullOrWhiteSpace(method.BadgeBg) ? method.BadgeBg : "#9F54A6")',
+            logoUrl: '@method.LogoUrl',
+            isSlipRequired: @(method.IsSlipRequired ? "true" : "false"),
+            isCod: @(isCod ? "true" : "false")
         },
-        'WavePay': {
-            name: 'WavePay Account Details',
-            holder: 'Babylon Books',
-            number: '09 987 654 321',
-            badge: 'WP',
-            badgeBg: 'bg-[#F8A01B]'
-        },
-        'CBBank': {
-            name: 'CB Bank Account Details',
-            holder: 'Babylon Co., Ltd',
-            number: '0012 3456 7890 1234',
-            badge: 'CB',
-            badgeBg: 'bg-[#006838]'
+            </text>
         }
     };
 
@@ -555,17 +552,20 @@
             }
         });
 
+        const info = PAYMENT_ACCOUNTS[method] || {};
+        const isSlipRequired = info.isSlipRequired !== false && method !== 'CashOnDelivery';
+
         // Update Review summary label
         const revPayment = document.getElementById('checkoutReviewPaymentMethod');
         if (revPayment) {
-            revPayment.textContent = method === 'CashOnDelivery' ? 'Cash on Delivery' : method;
+            revPayment.textContent = method === 'CashOnDelivery' ? 'Cash on Delivery' : (info.name ? info.name.replace(' Account Details', '') : method);
         }
 
         const bankBox = document.getElementById('bankInstructionsBox');
         const codBox = document.getElementById('codNoticeBox');
         const slipSection = document.getElementById('slipUploadSection');
 
-        if (method === 'CashOnDelivery') {
+        if (!isSlipRequired) {
             clearSlipWarning();
             if (bankBox) bankBox.classList.add('hidden');
             if (codBox) codBox.classList.remove('hidden');
@@ -575,28 +575,37 @@
             if (bankBox) bankBox.classList.remove('hidden');
             if (slipSection) slipSection.classList.remove('hidden');
 
-            const info = PAYMENT_ACCOUNTS[method] || PAYMENT_ACCOUNTS['KBZPay'];
             const $name = document.getElementById('bankNameTitle');
             const $holder = document.getElementById('bankHolderName');
             const $number = document.getElementById('bankAccountNumber');
             const $badge = document.getElementById('bankBadge');
 
-            if ($name) $name.textContent = info.name;
-            if ($holder) $holder.textContent = info.holder;
-            if ($number) $number.textContent = info.number;
+            if ($name) $name.textContent = info.name || `${method} Account Details`;
+            if ($holder) $holder.textContent = info.holder || 'Hnin Wutt Yi';
+            if ($number) {
+                const num = info.number || '';
+                const holder = info.holder ? ` (${info.holder})` : '';
+                $number.textContent = num ? `${num}${holder}` : '-';
+            }
             if ($badge) {
-                $badge.textContent = info.badge;
-                $badge.className = `w-7 h-7 rounded-lg ${info.badgeBg} text-white flex items-center justify-center text-xs font-black shrink-0`;
+                if (info.logoUrl) {
+                    $badge.src = info.logoUrl;
+                    $badge.alt = info.name || method;
+                } else {
+                    $badge.textContent = info.badge || 'PAY';
+                    $badge.style.backgroundColor = info.badgeBg || '#9F54A6';
+                }
             }
         }
     };
 
     window.copyCurrentAccountNumber = function() {
-        const info = PAYMENT_ACCOUNTS[selectedPaymentMethod] || PAYMENT_ACCOUNTS['KBZPay'];
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(info.number.replace(/\s+/g, '')).then(() => {
+        const info = PAYMENT_ACCOUNTS[selectedPaymentMethod];
+        if (info && info.number && navigator.clipboard) {
+            const cleanNumber = info.number.replace(/\D/g, '');
+            navigator.clipboard.writeText(cleanNumber).then(() => {
                 if (typeof window.showToast === 'function') {
-                    window.showToast(`${selectedPaymentMethod} account number copied!`, true);
+                    window.showToast(`${selectedPaymentMethod} number (${cleanNumber}) copied!`, true);
                 }
             });
         }
@@ -761,8 +770,10 @@
             clearInputWarning('shippingAddress');
         }
 
-        // 4. Payment Slip (if Bank Transfer / Digital Wallet)
-        if (selectedPaymentMethod !== 'CashOnDelivery') {
+        // 4. Payment Slip (if required)
+        const currentMethodInfo = PAYMENT_ACCOUNTS[selectedPaymentMethod] || {};
+        const isSlipReq = currentMethodInfo.isSlipRequired !== false && selectedPaymentMethod !== 'CashOnDelivery';
+        if (isSlipReq) {
             if (!selectedSlipFile) {
                 isValid = false;
                 showSlipWarning(`Please attach your ${selectedPaymentMethod} transfer screenshot before proceeding`);
@@ -810,7 +821,10 @@
         if (modalAddress) modalAddress.textContent = address;
         if (modalPayment) modalPayment.textContent = selectedPaymentMethod === 'CashOnDelivery' ? 'Cash on Delivery' : selectedPaymentMethod;
 
-        if (selectedPaymentMethod === 'CashOnDelivery') {
+        const currentMethodInfo = PAYMENT_ACCOUNTS[selectedPaymentMethod] || {};
+        const isSlipReq = currentMethodInfo.isSlipRequired !== false && selectedPaymentMethod !== 'CashOnDelivery';
+
+        if (!isSlipReq) {
             if (modalSlipRow) modalSlipRow.classList.add('hidden');
             if (modalCodRow) modalCodRow.classList.remove('hidden');
         } else {
@@ -1045,6 +1059,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         renderCheckoutReview();
+        window.selectPaymentMethod(selectedPaymentMethod);
 
         // Dynamically clear warning banners when user types into blank fields
         ['customerName', 'customerPhone', 'shippingAddress'].forEach(id => {

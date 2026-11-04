@@ -8,6 +8,7 @@ using BookStorePOS.Domain.Features.Order;
 using BookStorePOS.Domain.Features.User;
 using BookStorePOS.Domain.Features.Auth;
 using BookStorePOS.Domain.Features.RolePermission;
+using BookStorePOS.Domain.Features.PaymentMethod;
 using BookStorePOS.WebApi.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -96,6 +97,7 @@ builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IEditionService, EditionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFileStorageService, R2FileStorageService>();
+builder.Services.AddScoped<IPaymentMethodService, PaymentMethodService>();
 
 var app = builder.Build();
 
