@@ -50,6 +50,33 @@ public class OrderController : BaseController
         return ExecuteResult(response);
     }
 
+    [HttpGet("revenue-chart")]
+    [Permission("Dashboard.View")]
+    public async Task<IActionResult> GetSalesRevenueChartAsync([FromQuery] SalesRevenueChartRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Sales Revenue Chart Async => Fetching chart data");
+        var response = await _orderService.GetSalesRevenueChartAsync(requestModel);
+        return ExecuteResult(response);
+    }
+
+    [HttpGet("top-sellers")]
+    [Permission("Dashboard.View")]
+    public async Task<IActionResult> GetTopSellersAsync([FromQuery] TopSellersRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Top Sellers Async => Fetching top sellers");
+        var response = await _orderService.GetTopSellersAsync(requestModel);
+        return ExecuteResult(response);
+    }
+
+    [HttpGet("top-sellers-dashboard")]
+    [Permission("Dashboard.View")]
+    public async Task<IActionResult> GetDashboardTopSellersAsync([FromQuery] int limit = 5)
+    {
+        _logger.LogInformation("Get Dashboard Top Sellers Async => Fetching dashboard top sellers");
+        var response = await _orderService.GetDashboardTopSellersAsync(limit);
+        return ExecuteResult(response);
+    }
+
     [HttpGet("history")]
     [Permission("Order.View")]
     public async Task<IActionResult> GetOrderHistoryAsync([FromQuery] OrderHistoryRequestModel requestModel)

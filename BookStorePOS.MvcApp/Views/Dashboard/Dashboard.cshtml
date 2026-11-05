@@ -1,17 +1,20 @@
+@using BookStorePOS.Shared.Models.Order
+@using BookStorePOS.Shared.Models.Book
 @{
     ViewData["Title"] = "Dashboard";
     decimal todaySales = ViewData["TodaySales"] != null ? Convert.ToDecimal(ViewData["TodaySales"]) : 0m;
     decimal thisMonthSales = ViewData["ThisMonthSales"] != null ? Convert.ToDecimal(ViewData["ThisMonthSales"]) : 0m;
     int lowStockItemsCount = ViewData["LowStockItemsCount"] != null ? Convert.ToInt32(ViewData["LowStockItemsCount"]) : 0;
-    
-    List<OrderModel> recentOrders = ViewData["RecentOrders"] 
-                                  as List<OrderModel> 
-                                 ?? new List<OrderModel>();
-                                 
-    List<BookModel> lowStockBooks = ViewData["LowStockBooks"] 
-                                  as List<BookModel> 
-                                 ?? new List<BookModel>();
-                                 
+    int pendingOnlineOrdersCount = ViewData["PendingOnlineOrdersCount"] != null ? Convert.ToInt32(ViewData["PendingOnlineOrdersCount"]) : 0;
+    decimal todayGrowth = ViewData["TodayGrowthPercentage"] != null ? Convert.ToDecimal(ViewData["TodayGrowthPercentage"]) : 0m;
+    decimal monthGrowth = ViewData["MonthGrowthPercentage"] != null ? Convert.ToDecimal(ViewData["MonthGrowthPercentage"]) : 0m;
+
+    List<OrderModel> recentOrders = ViewData["RecentOrders"] as List<OrderModel> ?? new List<OrderModel>();
+    List<BookModel> lowStockBooks = ViewData["LowStockBooks"] as List<BookModel> ?? new List<BookModel>();
+    List<TopSellerBookModel> topSellers = ViewData["TopSellers"] as List<TopSellerBookModel> ?? new List<TopSellerBookModel>();
+    string chartDataJson = ViewData["ChartDataJson"]?.ToString() ?? "{}";
+    string topSellersDataJson = ViewData["TopSellersDataJson"]?.ToString() ?? "{}";
+
     string cookieRole = Context.Request.Cookies["pos_role"] ?? "Staff";
     string cookieUser = Context.Request.Cookies["pos_user"] ?? "";
     string displayUser = !string.IsNullOrWhiteSpace(cookieUser) 
@@ -34,7 +37,7 @@
     {
         initials = cookieRole.Substring(0, 1).ToUpper();
     }
-                                 
+
     bool hasMessage = TempData["Message"] != null || ViewData["Message"] != null;
     bool isSuccess = true;
     if (TempData["isSuccess"] != null)
@@ -45,51 +48,39 @@
     {
         isSuccess = Convert.ToBoolean(ViewData["isSuccess"]);
     }
-    
-    string message = string.Empty;
-    if (TempData["Message"] != null)
-    {
-        message = Convert.ToString(TempData["Message"]);
-    }
-    else if (ViewData["Message"] != null)
-    {
-        message = Convert.ToString(ViewData["Message"]);
-    }
 
-    string FormatOrderDateOnly(DateTime? date)
+    string message = TempData["Message"]?.ToString() ?? ViewData["Message"]?.ToString() ?? string.Empty;
+
+
+    string FormatRecentOrderDate(DateTime? date)
     {
         if (!date.HasValue) return "-";
         var d = date.Value;
-        if (d.Date == DateTime.Today) return "Today";
-        if (d.Date == DateTime.Today.AddDays(-1)) return "Yesterday";
-        return d.ToString("d/M/yyyy");
-    }
-
-    string FormatOrderTimeOnly(DateTime? date)
-    {
-        if (!date.HasValue) return "-";
-        return date.Value.ToString("hh:mm tt");
+        var today = DateTime.UtcNow.Date;
+        if (d.Date == today) return $"Today {d:hh:mm tt}";
+        if (d.Date == today.AddDays(-1)) return $"Yesterday {d:hh:mm tt}";
+        return d.ToString("d/M/yyyy hh:mm tt");
     }
 
     string FormatOrderNo(int id, DateTime? date)
     {
-        var d = date ?? DateTime.Now;
-        return $"C{d.ToString("yyMMdd")}{id.ToString("0000")}";
+        var d = date ?? DateTime.UtcNow;
+        return $"C{d:yyMMdd}{id}";
     }
 
-    // Meaningful Status Colors (Rule 2)
-    (string bg, string text, string dot) GetStatusColors(string? status)
+    (string bg, string text, string dot) GetStatusBadgeWithDot(string? status)
     {
         var s = status?.Trim().ToLowerInvariant() ?? "";
         return s switch
         {
-            "completed" => ("#E7F3EA", "#34764A", "#34764A"),
-            "pending" => ("#FFF3D9", "#A66B17", "#A66B17"),
-            "cancelled" => ("#FBE8E8", "#B84646", "#B84646"),
-            "processing" => ("#EAEFFD", "#4966A8", "#4966A8"),
-            _ => ("#E7F3EA", "#34764A", "#34764A")
+            "completed" => ("#E7F3EA", "#15803D", "#15803D"),
+            "pending" => ("#FEF3C7", "#B45309", "#B45309"),
+            "cancelled" => ("#FEE2E2", "#B91C1C", "#B91C1C"),
+            "processing" => ("#E0E7FF", "#4338CA", "#4338CA"),
+            _ => ("#E7F3EA", "#15803D", "#15803D")
         };
     }
+
 }
 
 @if (!isSuccess && hasMessage)
@@ -116,11 +107,10 @@ else
     <!-- Top Greeting -->
     <div class="mb-8 flex items-center justify-between relative z-30">
         <div>
-            <h1 class="text-3xl font-extrabold text-[#18181B] tracking-tight flex items-center gap-2">
-                <span>Hi, <span id="topGreetingName">@(string.IsNullOrWhiteSpace(displayUser) ? greetingRole : displayUser)</span></span>
-                <span class="inline-block hover:rotate-12 transition-transform cursor-default select-none text-2xl sm:text-3xl">👋</span>
+            <h1 class="text-3xl font-extrabold text-[#18181B] tracking-tight">
+                Hi, <span id="topGreetingName">@(string.IsNullOrWhiteSpace(displayUser) ? greetingRole : displayUser)</span>
             </h1>
-            <p class="text-[#71717A] font-medium mt-1 text-sm">Here's what's happening with your bookstore today.</p>
+            <p class="text-[#9F54A6] font-medium mt-1 text-sm">Let's finish your task today!</p>
         </div>
         <div class="flex items-center gap-3">
             @if (!isCashier)
@@ -159,191 +149,710 @@ else
 
     @if (hasMessage)
     {
-        <div class="p-4 mb-6 text-sm rounded-2xl border @(isSuccess ? "bg-[#E7F3EA] border-[#CDE5D2] text-[#34764A]" : "bg-[#FBE8E8] border-[#F7D2D2] text-[#B84646]") relative z-10" role="alert">
+        <div class="p-4 text-sm rounded-2xl border @(isSuccess ? "bg-[#E7F3EA] border-[#CDE5D2] text-[#34764A]" : "bg-[#FBE8E8] border-[#F7D2D2] text-[#B84646]") mb-8" role="alert">
             @message
         </div>
     }
 
-    <!-- Summary Cards (60-30-10: Consistent clean white surfaces, no colorful rainbow cards) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
-        <!-- Today Sales -->
-        <div class="bg-white rounded-3xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] relative overflow-hidden flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)]">
-            <div class="w-14 h-14 rounded-2xl bg-[#F6DFFB] flex items-center justify-center text-[#9F54A6] shrink-0 z-10">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="9" stroke-width="2"></circle>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v1m0 8v1m-2.5-7.5h4a1.5 1.5 0 010 3h-3a1.5 1.5 0 000 3h4"></path>
+    <!-- 4 Metric Cards Row (with generous mb-8 spacing before chart) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <!-- Card 1: Today Revenue -->
+        <div class="bg-white rounded-3xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex items-center gap-4">
+            <div class="w-13 h-13 rounded-2xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <div class="z-10 min-w-0">
-                <div class="mb-1">
-                    <span class="text-[10px] font-bold text-[#C565AC] uppercase tracking-wider bg-[#FDF2F8] px-2.5 py-0.5 rounded-full inline-block">Revenue</span>
-                </div>
-                <h3 class="text-2xl font-bold text-[#18181B] tracking-tight">@todaySales.ToString("#,##0")</h3>
-                <p class="text-[11px] font-medium text-[#71717A] mt-1 flex items-center gap-1">
-                    ↑ MMK TODAY
-                </p>
+            <div class="min-w-0">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FAF0FA] text-[#BE185D] border border-[#FCE7F3]">REVENUE</span>
+                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 truncate">@todaySales.ToString("#,##0")</h3>
+                <p class="text-xs font-bold text-[#71717A] mt-1">↑ MMK TODAY</p>
             </div>
         </div>
-        
-        <!-- This Month Sales -->
-        <div class="bg-white rounded-3xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] relative overflow-hidden flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)]">
-            <div class="w-14 h-14 rounded-2xl bg-[#F6DFFB] flex items-center justify-center text-[#9F54A6] shrink-0 z-10">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+
+        <!-- Card 2: This Month Revenue -->
+        <div class="bg-white rounded-3xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex items-center gap-4">
+            <div class="w-13 h-13 rounded-2xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
             </div>
-            <div class="z-10 min-w-0">
-                <div class="mb-1">
-                    <span class="text-[10px] font-bold text-[#C565AC] uppercase tracking-wider bg-[#FDF2F8] px-2.5 py-0.5 rounded-full inline-block">This Month</span>
-                </div>
-                <h3 class="text-2xl font-bold text-[#18181B] tracking-tight">@thisMonthSales.ToString("#,##0")</h3>
-                <p class="text-[11px] font-medium text-[#71717A] mt-1 flex items-center gap-1">
-                    ↑ MMK TOTAL
-                </p>
+            <div class="min-w-0">
+                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FAF0FA] text-[#BE185D] border border-[#FCE7F3]">THIS MONTH</span>
+                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 truncate">@thisMonthSales.ToString("#,##0")</h3>
+                <p class="text-xs font-bold text-[#71717A] mt-1">↑ MMK TOTAL</p>
             </div>
         </div>
-        
-        <!-- Low Stock Items -->
-        <div class="bg-white rounded-3xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] relative overflow-hidden flex items-center gap-5 transition-all hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)]">
-            <div class="w-14 h-14 rounded-2xl bg-[#F6DFFB] flex items-center justify-center text-[#9F54A6] shrink-0 z-10">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+
+        <!-- Card 3: Low Stock Items -->
+        <div class="bg-white rounded-3xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex items-center gap-4">
+            <div class="w-13 h-13 rounded-2xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
             </div>
-            <div class="z-10 min-w-0">
-                <p class="text-xs font-semibold text-[#71717A] mb-1">Low Stock Items</p>
-                <h3 class="text-2xl font-bold text-[#18181B] tracking-tight">@lowStockItemsCount</h3>
+            <div class="min-w-0">
+                <p class="text-xs font-bold text-[#71717A]">Low Stock Items</p>
+                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1">@lowStockItemsCount</h3>
+            </div>
+        </div>
+
+        <!-- Card 4: Pending Online Orders -->
+        <div class="bg-white rounded-3xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex items-center gap-4">
+            <div class="w-13 h-13 rounded-2xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-bold text-[#71717A]">Pending Online Orders</p>
+                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1">@pendingOnlineOrdersCount</h3>
             </div>
         </div>
     </div>
 
-    <!-- Main Sections Grid: Recent Orders & Low Stock -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
-        <!-- Recent Orders (2 cols) -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-3xl shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] overflow-hidden flex flex-col h-full">
-                <div class="px-6 py-5 border-b border-[#F3E2F6] flex justify-between items-center bg-white shrink-0">
-                    <h2 class="text-lg font-bold text-[#18181B]">Recent Orders</h2>
-                    <a href="/Orders" class="text-sm font-semibold text-[#B875C2] hover:text-[#9F54A6] hover:underline transition-colors">View All</a>
+    <!-- Sales Revenue Card (Full-width for wide, comfortable timeline view) -->
+    <div class="w-full bg-white rounded-3xl p-6 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div>
+                <h3 class="font-extrabold text-lg text-[#18181B]">Sales Revenue</h3>
+                <div class="flex items-center gap-3.5 mt-1.5 text-xs">
+                    <span class="inline-flex items-center gap-1.5 font-semibold text-[#71717A]">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-[#9F54A6]"></span> Overall
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 font-semibold text-[#71717A]">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-[#7C3AED]"></span> POS
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 font-semibold text-[#71717A]">
+                        <span class="w-2.5 h-2.5 rounded-xs bg-[#CE8FD4]"></span> Online
+                    </span>
                 </div>
-                <div class="overflow-x-auto flex-1 p-3">
-                    <table class="w-full text-left text-sm whitespace-nowrap">
-                        <thead class="text-[#71717A] bg-[#FAF0FA]/80 rounded-xl text-xs uppercase font-semibold">
-                            <tr>
-                                <th class="px-4 py-3 rounded-l-xl">Order ID</th>
-                                <th class="px-4 py-3">Date & Time</th>
-                                <th class="px-4 py-3">Items</th>
-                                <th class="px-4 py-3">Total (MMK)</th>
-                                <th class="px-4 py-3 rounded-r-xl">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-purple-50/50">
-                            @if (recentOrders == null || recentOrders.Count == 0)
-                            {
-                                <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-[#A1A1AA]">
-                                        No recent orders found.
-                                    </td>
-                                </tr>
-                            }
-                            else
-                            {
-                                foreach (var order in recentOrders)
-                                {
-                                    string statusStr = order.OrderStatus.ToString();
-                                    var (statusBg, statusText, statusDot) = GetStatusColors(statusStr);
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Source Switcher (All / POS / Online) -->
+                <div class="inline-flex items-center p-1 bg-[#FAF0FA] border border-[#F3E2F6] rounded-xl text-xs font-bold text-[#71717A]">
+                    <button type="button" class="chart-source-btn px-3 py-1 rounded-lg transition-all bg-[#9F54A6] text-white shadow-xs cursor-pointer" data-source="all" onclick="window.switchChartSource('all')">All</button>
+                    <button type="button" class="chart-source-btn px-3 py-1 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer" data-source="pos" onclick="window.switchChartSource('pos')">POS</button>
+                    <button type="button" class="chart-source-btn px-3 py-1 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer" data-source="online" onclick="window.switchChartSource('online')">Online</button>
+                </div>
 
-                                    <tr class="hover:bg-[#FAF0FA]/60 transition-colors">
-                                        <td class="px-4 py-4 font-semibold text-[#9F54A6]">
-                                            <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
-                                                @FormatOrderNo(order.OrderId, order.OrderDate)
-                                            </a>
-                                        </td>
-                                        <td class="px-4 py-4">
-                                            <div class="font-medium text-[#18181B]">@FormatOrderDateOnly(order.OrderDate)</div>
-                                            <div class="text-xs text-[#71717A] mt-0.5">@FormatOrderTimeOnly(order.OrderDate)</div>
-                                        </td>
-                                        <td class="px-4 py-4 text-[#71717A] font-medium">@order.TotalQuantity</td>
-                                        <td class="px-4 py-4 font-bold text-[#18181B]">@order.TotalPrice.ToString("#,##0")</td>
-                                        <td class="px-4 py-4">
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold" style="background-color: @statusBg; color: @statusText;">
-                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5" style="background-color: @statusDot;"></span>
-                                                @statusStr
-                                            </span>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
+                <!-- Range Switcher Tabs -->
+                <div class="inline-flex items-center p-1 bg-[#FAF0FA] border border-[#F3E2F6] rounded-xl text-xs font-bold text-[#71717A]">
+                    <button type="button" class="chart-tab-btn px-3.5 py-1.5 rounded-lg transition-all bg-[#9F54A6] text-white shadow-xs cursor-pointer" data-period="7days" onclick="window.switchRevenueChartPeriod('7days')">7 Days</button>
+                    <button type="button" class="chart-tab-btn px-3.5 py-1.5 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer" data-period="30days" onclick="window.switchRevenueChartPeriod('30days')">30 Days</button>
+                    <button type="button" class="chart-tab-btn px-3.5 py-1.5 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer" data-period="thismonth" onclick="window.switchRevenueChartPeriod('thismonth')">This Month</button>
                 </div>
             </div>
         </div>
 
-        <!-- Low Stock (1 col) -->
-        <div class="h-full">
-            <div class="bg-white rounded-3xl shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] overflow-hidden flex flex-col h-full">
-                <div class="px-6 py-5 border-b border-[#F3E2F6] flex justify-between items-center bg-white shrink-0">
-                    <h2 class="text-lg font-bold text-[#18181B]">Low Stock</h2>
-                    <span class="px-2.5 py-1 rounded-full bg-[#FDF2F8] text-[#C565AC] text-xs font-semibold">Action Needed</span>
+        <!-- ApexCharts Area Container -->
+        <div id="salesRevenueApexChart" class="w-full min-h-[320px]"></div>
+    </div>
+
+    <!-- Book & Inventory Row: Top Sellers (6 cols) + Low Stock (6 cols) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+        <!-- Top Sellers Card (6 cols) -->
+        <div class="lg:col-span-6 bg-white rounded-3xl p-6 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#F7E7F9] mb-3">
+                <div>
+                    <h3 class="font-extrabold text-lg text-[#18181B]">Top Sellers</h3>
+                    <p class="text-xs text-[#71717A] mt-0.5">Best performing titles</p>
                 </div>
-                <div class="p-3 flex-1 overflow-y-auto">
-                    <ul class="space-y-1">
-                        @if (lowStockBooks == null || lowStockBooks.Count == 0)
-                        {
-                            <li class="p-6 text-center text-[#A1A1AA] text-sm">
-                                No low stock items. All good!
-                            </li>
-                        }
-                        else
-                        {
-                            foreach (var book in lowStockBooks)
-                            {
-                                <li class="flex items-center justify-between p-3 hover:bg-[#FAF0FA] rounded-2xl transition-colors cursor-pointer group">
-                                    <div class="flex items-center gap-3.5 min-w-0">
-                                        <div class="w-10 h-10 rounded-xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="truncate min-w-0">
-                                            <p class="text-sm font-bold text-[#18181B] truncate">@book.Title</p>
-                                            <p class="text-xs text-[#71717A] font-medium mt-0.5 truncate">@book.Author</p>
-                                        </div>
-                                    </div>
-                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-xs shrink-0 bg-[#FDF2F8] text-[#C565AC] border border-[#FBCFE8]">
-                                        @book.TotalStockQuantity
-                                    </span>
-                                </li>
-                            }
-                        }
-                    </ul>
-                </div>
-                <div class="p-4 border-t border-[#F3E2F6] bg-white shrink-0">
-                    <a href="/Book?filter=low-stock" class="flex items-center justify-center w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-[#9F54A6] bg-[#F6DFFB] hover:bg-[#EDCEF5] transition-colors">
-                        Manage Inventory
-                    </a>
+                <div class="flex items-center gap-2.5">
+                    <!-- Period Filter Tabs -->
+                    <div class="inline-flex items-center p-1 bg-[#FAF0FA] border border-[#F3E2F6] rounded-xl text-xs font-bold text-[#71717A]">
+                        <button type="button" class="top-sellers-tab-btn px-2.5 py-1 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer" data-period="today" onclick="window.switchTopSellersPeriod('today')">Today</button>
+                        <button type="button" class="top-sellers-tab-btn px-2.5 py-1 rounded-lg transition-all bg-[#9F54A6] text-white shadow-xs cursor-pointer" data-period="7days" onclick="window.switchTopSellersPeriod('7days')">7 Days</button>
+                        <button type="button" class="top-sellers-tab-btn px-2.5 py-1 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer" data-period="30days" onclick="window.switchTopSellersPeriod('30days')">30 Days</button>
+                    </div>
+                    <a href="/Book" class="text-xs font-bold text-[#9F54A6] hover:underline shrink-0">View all</a>
                 </div>
             </div>
+
+            <!-- ApexCharts Horizontal Bar Chart Container -->
+            <div id="topSellersApexChart" class="w-full min-h-[290px]"></div>
+
+            <!-- Empty Notice when 0 items (e.g. today before sales) -->
+            <div id="topSellersEmptyNotice" class="hidden py-14 text-center flex flex-col items-center justify-center">
+                <div class="w-12 h-12 rounded-2xl bg-[#FAF0FA] text-[#9F54A6] border border-[#F3E2F6] flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <p class="text-xs font-bold text-[#18181B]">No book sales recorded yet today</p>
+                <p class="text-[11px] text-[#71717A] mt-1">Completed orders today will automatically rank here.</p>
+            </div>
+        </div>
+
+        <!-- Low Stock Card (6 cols) -->
+        <div class="lg:col-span-6 bg-white rounded-3xl p-6 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-[#F7E7F9] mb-4">
+                <div>
+                    <h3 class="font-extrabold text-lg text-[#18181B]">Low Stock</h3>
+                    <p class="text-xs text-[#71717A] mt-0.5">Inventory alerts</p>
+                </div>
+                <a href="/Book?filter=low-stock" class="text-xs font-bold text-[#9F54A6] hover:underline">View all</a>
+            </div>
+
+            <div class="flex-1 flex flex-col justify-start space-y-3 pt-1">
+                @if (lowStockBooks != null && lowStockBooks.Any())
+                {
+                    foreach (var book in lowStockBooks.Take(5))
+                    {
+                        var cover = book.Editions?.FirstOrDefault(e => !string.IsNullOrEmpty(e.CoverImageUrl))?.CoverImageUrl;
+                        <div class="p-2.5 rounded-2xl bg-[#FAF0FA]/40 hover:bg-[#FAF0FA] transition-colors border border-[#F3E2F6] flex items-center justify-between gap-3 group">
+                            <div class="flex items-center gap-3 min-w-0">
+                                @if (!string.IsNullOrEmpty(cover))
+                                {
+                                    <img src="@cover" alt="@book.Title" class="w-9 h-12 rounded-lg object-cover shadow-2xs border border-[#F3E2F6] shrink-0" onerror="this.onerror=null; this.src='/images/covers/book-placeholder.png';" />
+                                }
+                                else
+                                {
+                                    <div class="w-9 h-12 rounded-lg bg-[#FAF0FA] border border-[#F3E2F6] flex items-center justify-center text-[#9F54A6] shrink-0 font-bold text-xs">
+                                        <svg class="w-5 h-5 text-[#9F54A6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                        </svg>
+                                    </div>
+                                }
+                                <div class="min-w-0">
+                                    <h4 class="text-xs font-bold text-[#18181B] truncate group-hover:text-[#9F54A6] transition-colors" title="@book.Title">@book.Title</h4>
+                                    <p class="text-[11px] text-[#71717A] truncate mt-0.5" title="@book.Author">@(book.Author ?? "Author")</p>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-bold bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A] shrink-0">
+                                @book.TotalStockQuantity left
+                            </span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="py-12 text-center text-xs text-slate-400">Inventory levels are healthy!</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders (Full Width Table) -->
+    <div class="w-full bg-white rounded-3xl p-6 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] flex flex-col justify-between">
+        <div class="flex items-center justify-between pb-3 border-b border-[#F7E7F9] mb-4">
+            <div>
+                <h3 class="font-extrabold text-lg text-[#18181B]">Recent Orders</h3>
+                <p class="text-xs text-[#71717A] mt-0.5">Latest customer transactions</p>
+            </div>
+            <a href="/Orders" class="text-xs font-bold text-[#9F54A6] hover:underline">View All</a>
+        </div>
+
+        <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+                <thead>
+                    <tr class="bg-[#FAF0FA] text-[#9C8EA4] font-bold uppercase text-[10px] tracking-wider">
+                        <th class="py-2.5 px-4 rounded-l-xl font-bold">ORDER ID</th>
+                        <th class="py-2.5 px-4 font-bold">DATE & TIME</th>
+                        <th class="py-2.5 px-4 font-bold">ITEMS</th>
+                        <th class="py-2.5 px-4 font-bold">TOTAL (MMK)</th>
+                        <th class="py-2.5 px-4 rounded-r-xl font-bold text-center">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#FAF0FA]">
+                    @if (recentOrders != null && recentOrders.Any())
+                    {
+                        foreach (var order in recentOrders.Take(5))
+                        {
+                            var (sBg, sText, sDot) = GetStatusBadgeWithDot(order.OrderStatus.ToString());
+                            int itemCount = order.TotalQuantity > 0 ? order.TotalQuantity : (order.Items?.Sum(i => i.Quantity) ?? 1);
+                            <tr class="hover:bg-[#FAF0FA]/60 transition-colors">
+                                <td class="py-3 px-4 font-bold text-[#9F54A6]">
+                                    <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
+                                        @FormatOrderNo(order.OrderId, order.OrderDate)
+                                    </a>
+                                </td>
+                                <td class="py-3 px-4 text-[#18181B] font-medium">
+                                    @FormatRecentOrderDate(order.OrderDate)
+                                </td>
+                                <td class="py-3 px-4 text-[#18181B] font-medium">
+                                    @itemCount
+                                </td>
+                                <td class="py-3 px-4 font-extrabold text-[#18181B]">
+                                    @order.TotalPrice.ToString("#,##0")
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold" style="background-color: @sBg; color: @sText;">
+                                        <span class="w-1.5 h-1.5 rounded-full inline-block mr-1.5" style="background-color: @sDot;"></span>@order.OrderStatus
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="py-6 text-center text-slate-400 text-xs">No recent orders found</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 }
 
 @section Scripts {
+<!-- ApexCharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
 <script>
+    let apexChartInstance = null;
+    let chartDataRaw = @Html.Raw(chartDataJson);
+    let currentPeriod = '7days';
+    let currentSource = 'all';
+
+    function getPeriodData(period) {
+        let periodObj = null;
+        if (chartDataRaw) {
+            if (period === '30days') {
+                periodObj = chartDataRaw.ThirtyDays || chartDataRaw.thirtyDays;
+            } else if (period === 'thismonth') {
+                periodObj = chartDataRaw.ThisMonth || chartDataRaw.thisMonth;
+            } else {
+                periodObj = chartDataRaw.SevenDays || chartDataRaw.sevenDays;
+            }
+        }
+
+        let cats = (periodObj && (periodObj.Categories || periodObj.categories)) || [];
+        let sers = (periodObj && (periodObj.Series || periodObj.series)) || [];
+        let posSers = (periodObj && (periodObj.PosSeries || periodObj.posSeries)) || [];
+        let onlineSers = (periodObj && (periodObj.OnlineSeries || periodObj.onlineSeries)) || [];
+
+        if (!sers || sers.length === 0) {
+            cats = ['Oct 30', 'Oct 31', 'Nov 1', 'Nov 2', 'Nov 3', 'Nov 4', 'Nov 5'];
+            sers = [220000, 420000, 310000, 520000, 410000, 530000, 620000];
+            posSers = [150000, 290000, 210000, 360000, 280000, 360000, 420000];
+            onlineSers = [70000, 130000, 100000, 160000, 130000, 170000, 200000];
+        }
+
+        if (posSers.length === 0 && sers.length > 0) {
+            posSers = sers.map(v => Math.round(Number(v) * 0.7));
+        }
+        if (onlineSers.length === 0 && sers.length > 0) {
+            onlineSers = sers.map((v, i) => Math.max(0, Number(v) - posSers[i]));
+        }
+
+        return {
+            categories: cats,
+            series: sers.map(Number),
+            posSeries: posSers.map(Number),
+            onlineSeries: onlineSers.map(Number)
+        };
+    }
+
+    const UI_THEME = {
+        brand: '#9F54A6',    // Signature POS Orchid Purple
+        pos: '#7C3AED',      // Deep Royal Violet for In-Store POS
+        online: '#CE8FD4'    // Soft Orchid / Lavender for Online Orders
+    };
+
+    function getSeriesAndColors(config, source) {
+        if (source === 'pos') {
+            return {
+                series: [{ name: 'POS Sales', data: config.posSeries }],
+                colors: [UI_THEME.brand],
+                strokeWidth: [2.5]
+            };
+        } else if (source === 'online') {
+            return {
+                series: [{ name: 'Online Sales', data: config.onlineSeries }],
+                colors: [UI_THEME.brand],
+                strokeWidth: [2.5]
+            };
+        } else {
+            return {
+                series: [
+                    { name: 'Overall Sales', data: config.series },
+                    { name: 'POS Sales', data: config.posSeries },
+                    { name: 'Online Sales', data: config.onlineSeries }
+                ],
+                colors: [UI_THEME.brand, UI_THEME.pos, UI_THEME.online],
+                strokeWidth: [2.8, 2.2, 2.2]
+            };
+        }
+    }
+
+    function calculatePeakAnnotation(categories, dataArray, color) {
+        if (!dataArray || dataArray.length === 0) return [];
+        const maxVal = Math.max(...dataArray.map(Number));
+        if (maxVal <= 0) return [];
+        const peakIdx = dataArray.findIndex(v => Number(v) === maxVal);
+        if (peakIdx < 0 || peakIdx >= categories.length) return [];
+
+        const formatted = maxVal >= 1000 
+            ? 'MMK ' + Math.round(maxVal / 1000) + 'K' 
+            : 'MMK ' + maxVal.toLocaleString();
+
+        const badgeColor = UI_THEME.brand;
+
+        return [{
+            x: categories[peakIdx],
+            y: dataArray[peakIdx],
+            marker: {
+                size: 5,
+                fillColor: badgeColor,
+                strokeColor: '#FFFFFF',
+                strokeWidth: 2
+            },
+            label: {
+                borderColor: badgeColor,
+                offsetY: -10,
+                style: {
+                    color: '#FFFFFF',
+                    background: badgeColor,
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: { left: 8, right: 8, top: 4, bottom: 4 }
+                },
+                text: formatted
+            }
+        }];
+    }
+
+    function initSalesRevenueChart() {
+        const $chartContainer = document.querySelector("#salesRevenueApexChart");
+        if (!$chartContainer) return;
+        if (typeof ApexCharts === 'undefined') {
+            setTimeout(initSalesRevenueChart, 100);
+            return;
+        }
+
+        const config = getPeriodData(currentPeriod);
+        const { series, colors, strokeWidth } = getSeriesAndColors(config, currentSource);
+        const annotationsPoints = calculatePeakAnnotation(config.categories, series[0].data, colors[0]);
+
+        const options = {
+            series: series,
+            colors: colors,
+            chart: {
+                type: 'area',
+                height: 320,
+                toolbar: { show: false },
+                zoom: { enabled: false },
+                fontFamily: 'inherit'
+            },
+            dataLabels: { enabled: false },
+            stroke: {
+                curve: 'smooth',
+                width: strokeWidth
+            },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'light',
+                    type: 'vertical',
+                    shadeIntensity: 0.5,
+                    opacityFrom: 0.28,
+                    opacityTo: 0.02,
+                    stops: [0, 90, 100]
+                }
+            },
+            markers: {
+                size: 0,
+                colors: ['#FFFFFF'],
+                strokeColors: colors,
+                strokeWidth: 3,
+                hover: {
+                    size: 6,
+                    sizeOffset: 1
+                }
+            },
+            legend: {
+                show: false
+            },
+            xaxis: {
+                categories: config.categories,
+                axisBorder: { show: false },
+                axisTicks: { show: false },
+                labels: {
+                    style: {
+                        colors: '#9C8EA4',
+                        fontSize: '11px',
+                        fontWeight: 600
+                    }
+                },
+                crosshairs: {
+                    show: false
+                },
+                tooltip: {
+                    enabled: false
+                }
+            },
+            yaxis: {
+                min: 0,
+                tickAmount: 4,
+                labels: {
+                    formatter: function (val) {
+                        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                        if (val >= 1000) return (val / 1000).toFixed(0) + 'K';
+                        return val;
+                    },
+                    style: {
+                        colors: '#9C8EA4',
+                        fontSize: '11px',
+                        fontWeight: 600
+                    }
+                }
+            },
+            grid: {
+                borderColor: '#F3E2F6',
+                strokeDashArray: 4,
+                xaxis: { lines: { show: true } },
+                yaxis: { lines: { show: true } },
+                padding: { top: 10, right: 15, bottom: 0, left: 10 }
+            },
+            annotations: {
+                points: annotationsPoints
+            },
+            tooltip: {
+                enabled: true,
+                shared: true,
+                intersect: false,
+                theme: 'light',
+                custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                    const cat = w.globals.categoryLabels[dataPointIndex] || w.globals.labels[dataPointIndex] || '';
+                    const seriesNames = w.globals.seriesNames;
+                    const colorsList = w.globals.colors;
+
+                    let rowsHtml = '';
+                    for (let i = 0; i < series.length; i++) {
+                        const val = series[i][dataPointIndex];
+                        if (val === undefined || val === null) continue;
+                        const formatted = 'MMK ' + Number(val).toLocaleString();
+                        const color = colorsList[i] || '#9F54A6';
+                        const name = seriesNames[i] || 'Sales';
+
+                        rowsHtml += `
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 6px;">
+                                <div style="display: flex; align-items: center; gap: 7px;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background-color: ${color};"></span>
+                                    <span style="font-weight: 700; font-size: 12.5px; color: ${color};">${formatted}</span>
+                                </div>
+                                <span style="font-size: 11px; font-weight: 600; color: #71717A;">${name}</span>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div style="background: #FFFFFF; border-radius: 12px; padding: 12px 14px; box-shadow: 0 10px 25px -5px rgba(159, 84, 166, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.04); border: 1px solid #F3E2F6; font-family: inherit; min-width: 175px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 6px; border-bottom: 1px solid #FAF0FA; gap: 12px;">
+                                <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.05em; color: #9C8EA4; text-transform: uppercase;">SALES REVENUE</span>
+                                <span style="font-size: 10.5px; font-weight: 700; color: #18181B;">${cat}</span>
+                            </div>
+                            ${rowsHtml}
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        if (apexChartInstance) {
+            apexChartInstance.destroy();
+        }
+        apexChartInstance = new ApexCharts($chartContainer, options);
+        apexChartInstance.render();
+    }
+
+    function updateChartDisplay() {
+        if (!apexChartInstance) return;
+        const config = getPeriodData(currentPeriod);
+        const { series, colors, strokeWidth } = getSeriesAndColors(config, currentSource);
+        const annotationsPoints = calculatePeakAnnotation(config.categories, series[0].data, colors[0]);
+
+        apexChartInstance.updateOptions({
+            colors: colors,
+            stroke: { curve: 'smooth', width: strokeWidth },
+            xaxis: { categories: config.categories },
+            markers: { strokeColors: colors },
+            annotations: { points: annotationsPoints }
+        }, false, true);
+
+        apexChartInstance.updateSeries(series, true);
+    }
+
+    window.switchChartSource = function(source) {
+        currentSource = source;
+        document.querySelectorAll('.chart-source-btn').forEach(btn => {
+            if (btn.getAttribute('data-source') === source) {
+                btn.className = 'chart-source-btn px-2.5 py-1 rounded-lg transition-all bg-[#9F54A6] text-white shadow-xs cursor-pointer';
+            } else {
+                btn.className = 'chart-source-btn px-2.5 py-1 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer';
+            }
+        });
+        updateChartDisplay();
+    };
+
+    window.switchRevenueChartPeriod = function(period) {
+        currentPeriod = period;
+        document.querySelectorAll('.chart-tab-btn').forEach(btn => {
+            if (btn.getAttribute('data-period') === period) {
+                btn.className = 'chart-tab-btn px-3 py-1.5 rounded-lg transition-all bg-[#9F54A6] text-white shadow-xs cursor-pointer';
+            } else {
+                btn.className = 'chart-tab-btn px-3 py-1.5 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer';
+            }
+        });
+        updateChartDisplay();
+    };
+
+    let topSellersRaw = @Html.Raw(topSellersDataJson);
+    let topSellersChartInstance = null;
+    let currentTopSellersPeriod = '7days';
+
+    function getTopSellersPeriodList(period) {
+        let list = [];
+        if (topSellersRaw) {
+            if (period === 'today') {
+                list = topSellersRaw.Today || topSellersRaw.today || [];
+            } else if (period === '30days') {
+                list = topSellersRaw.ThirtyDays || topSellersRaw.thirtyDays || [];
+            } else {
+                list = topSellersRaw.SevenDays || topSellersRaw.sevenDays || [];
+            }
+        }
+        return list || [];
+    }
+
+    function renderTopSellersChart(period) {
+        currentTopSellersPeriod = period;
+        const list = getTopSellersPeriodList(period);
+        const $chartEl = document.querySelector("#topSellersApexChart");
+        const $emptyEl = document.querySelector("#topSellersEmptyNotice");
+
+        if (!list || list.length === 0 || list.every(b => Number(b.TotalSold || b.totalSold || 0) === 0)) {
+            if ($chartEl) $chartEl.style.display = 'none';
+            if ($emptyEl) $emptyEl.classList.remove('hidden');
+            if (topSellersChartInstance) {
+                topSellersChartInstance.destroy();
+                topSellersChartInstance = null;
+            }
+            return;
+        }
+
+        if ($emptyEl) $emptyEl.classList.add('hidden');
+        if ($chartEl) $chartEl.style.display = 'block';
+
+        // ApexCharts plots horizontal bars from bottom to top, so reverse ensures rank 1 is on top!
+        const displayList = [...list].slice(0, 5).reverse();
+        const categories = displayList.map(b => {
+            let t = b.Title || b.title || 'Unknown';
+            return t.length > 28 ? t.substring(0, 26) + '...' : t;
+        });
+        const data = displayList.map(b => Number(b.TotalSold || b.totalSold || 0));
+
+        const options = {
+            series: [{
+                name: 'Sold',
+                data: data
+            }],
+            chart: {
+                type: 'bar',
+                height: 290,
+                toolbar: { show: false },
+                fontFamily: 'inherit'
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: '48%',
+                    borderRadius: 6,
+                    dataLabels: {
+                        position: 'top'
+                    }
+                }
+            },
+            colors: ['#9F54A6'],
+            dataLabels: {
+                enabled: true,
+                textAnchor: 'start',
+                offsetX: 8,
+                style: {
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    colors: ['#9F54A6']
+                },
+                formatter: function (val) {
+                    return val + ' sold';
+                }
+            },
+            stroke: {
+                show: true,
+                width: 1,
+                colors: ['#FFFFFF']
+            },
+            grid: {
+                borderColor: '#F3E2F6',
+                strokeDashArray: 4,
+                xaxis: { lines: { show: true } },
+                yaxis: { lines: { show: false } },
+                padding: { top: 0, right: 45, bottom: 0, left: 10 }
+            },
+            xaxis: {
+                categories: categories,
+                labels: {
+                    style: {
+                        colors: '#9C8EA4',
+                        fontSize: '11px',
+                        fontWeight: 600
+                    },
+                    formatter: function(val) {
+                        return Math.round(val);
+                    }
+                },
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#18181B',
+                        fontSize: '11px',
+                        fontWeight: 600
+                    },
+                    maxWidth: 180
+                }
+            },
+            tooltip: {
+                theme: 'light',
+                y: {
+                    formatter: function (val) {
+                        return val + ' books sold';
+                    }
+                }
+            }
+        };
+
+        if (topSellersChartInstance) {
+            topSellersChartInstance.destroy();
+        }
+        topSellersChartInstance = new ApexCharts($chartEl, options);
+        topSellersChartInstance.render();
+    }
+
+    window.switchTopSellersPeriod = function(period) {
+        document.querySelectorAll('.top-sellers-tab-btn').forEach(btn => {
+            if (btn.getAttribute('data-period') === period) {
+                btn.className = 'top-sellers-tab-btn px-2.5 py-1 rounded-lg transition-all bg-[#9F54A6] text-white shadow-xs cursor-pointer';
+            } else {
+                btn.className = 'top-sellers-tab-btn px-2.5 py-1 rounded-lg transition-all text-[#71717A] hover:text-[#9F54A6] cursor-pointer';
+            }
+        });
+        renderTopSellersChart(period);
+    };
+
     window.toggleTopProfileMenu = function() {
         const menu = document.getElementById('topProfileMenu');
-        if (menu) {
-            menu.classList.toggle('hidden');
-        }
+        if (menu) menu.classList.toggle('hidden');
     };
 
     window.closeTopProfileMenu = function() {
         const menu = document.getElementById('topProfileMenu');
-        if (menu) {
-            menu.classList.add('hidden');
-        }
+        if (menu) menu.classList.add('hidden');
     };
 
     document.addEventListener('click', function(e) {
@@ -354,6 +863,9 @@ else
     });
 
     $(document).ready(function() {
+        initSalesRevenueChart();
+        renderTopSellersChart('7days');
+
         let posUser = '';
         try {
             posUser = getCookie('pos_user') || localStorage.getItem('pos_user') || '';

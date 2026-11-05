@@ -295,7 +295,11 @@ namespace BookStorePOS.MvcApp.Controllers
                 content.Add(new StringContent(id.ToString()), "BookId");
                 if (requestModel.Title != null) content.Add(new StringContent(requestModel.Title), "Title");
                 if (requestModel.Author != null) content.Add(new StringContent(requestModel.Author), "Author");
+                if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0)
+                    content.Add(new StringContent(requestModel.AuthorId.Value.ToString()), "AuthorId");
                 if (requestModel.Genre != null) content.Add(new StringContent(requestModel.Genre), "Genre");
+                if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0)
+                    content.Add(new StringContent(requestModel.GenreId.Value.ToString()), "GenreId");
                 if (requestModel.Description != null) content.Add(new StringContent(requestModel.Description), "Description");
                 
                 if (requestModel.Price.HasValue) content.Add(new StringContent(requestModel.Price.Value.ToString()), "Price");

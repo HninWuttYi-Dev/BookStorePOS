@@ -13,4 +13,7 @@ public class OrderSummaryModel
     public int todayOrderCount { get; set; }
     public decimal thisMonthTotalRevenue { get; set; }
     public int thisMonthOrderCount { get; set; }
+    public int pendingOnlineOrderCount { get; set; }
+    public decimal todayGrowthPercentage { get; set; }
+    public decimal monthGrowthPercentage { get; set; }
 }

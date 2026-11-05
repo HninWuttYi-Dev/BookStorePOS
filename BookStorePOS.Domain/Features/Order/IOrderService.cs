@@ -14,4 +14,7 @@ public interface IOrderService
     Task<OrderListResponseModel> GetOrdersAsync(OrderListRequestModel requestModel);
     Task<OrderSummaryResponseModel> GetOrderSummaryAsync();
     Task<OrderHistoryResponseModel> GetOrderHistoryAsync(OrderHistoryRequestModel requestModel);
+    Task<SalesRevenueChartResponseModel> GetSalesRevenueChartAsync(SalesRevenueChartRequestModel requestModel);
+    Task<TopSellersResponseModel> GetTopSellersAsync(TopSellersRequestModel requestModel);
+    Task<DashboardTopSellersResponseModel> GetDashboardTopSellersAsync(int limit = 5);
 }

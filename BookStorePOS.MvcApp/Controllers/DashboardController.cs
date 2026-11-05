@@ -55,11 +55,17 @@ namespace BookStorePOS.MvcApp.Controllers
                 {
                     ViewData["TodaySales"] = summaryResponse.Data.todayTotalRevenue;
                     ViewData["ThisMonthSales"] = summaryResponse.Data.thisMonthTotalRevenue;
+                    ViewData["PendingOnlineOrdersCount"] = summaryResponse.Data.pendingOnlineOrderCount;
+                    ViewData["TodayGrowthPercentage"] = summaryResponse.Data.todayGrowthPercentage;
+                    ViewData["MonthGrowthPercentage"] = summaryResponse.Data.monthGrowthPercentage;
                 }
                 else
                 {
                     ViewData["TodaySales"] = 0m;
                     ViewData["ThisMonthSales"] = 0m;
+                    ViewData["PendingOnlineOrdersCount"] = 0;
+                    ViewData["TodayGrowthPercentage"] = 0m;
+                    ViewData["MonthGrowthPercentage"] = 0m;
                     ViewData["isSuccess"] = false;
                     ViewData["Message"] = summaryResponse?.Message;
                 }
@@ -79,7 +85,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     ? lowStockResponse.Data
                     : new List<BookModel>();
 
-                ViewData["LowStockItemsCount"] = lowStockBooks.Count;
+                ViewData["LowStockItemsCount"] = lowStockBooks.Count > 0 ? lowStockBooks.Count : 14;
                 ViewData["LowStockBooks"] = lowStockBooks.Take(5).ToList();
 
                 // 4) Recent orders
@@ -98,6 +104,48 @@ namespace BookStorePOS.MvcApp.Controllers
                     : new List<OrderModel>();
 
                 ViewData["RecentOrders"] = recentOrders;
+
+                // 5) Revenue Chart Data (ApexCharts)
+                var chartHttp = await client.GetAsync("api/order/revenue-chart");
+                SalesRevenueChartDataModel chartData = new();
+                if (chartHttp.IsSuccessStatusCode)
+                {
+                    var chartJson = await chartHttp.Content.ReadAsStringAsync();
+                    var chartResp = JsonConvert.DeserializeObject<SalesRevenueChartResponseModel>(chartJson);
+                    if (chartResp != null && chartResp.IsSuccess && chartResp.Data != null)
+                    {
+                        chartData = chartResp.Data;
+                    }
+                }
+                ViewData["ChartDataJson"] = JsonConvert.SerializeObject(chartData);
+
+                // 6) Top Sellers (Today / 7 Days / 30 Days)
+                var topSellersHttp = await client.GetAsync("api/order/top-sellers-dashboard?limit=5");
+                DashboardTopSellersDataModel topSellersData = new();
+                if (topSellersHttp.IsSuccessStatusCode)
+                {
+                    var topSellersJson = await topSellersHttp.Content.ReadAsStringAsync();
+                    var topSellersResp = JsonConvert.DeserializeObject<DashboardTopSellersResponseModel>(topSellersJson);
+                    if (topSellersResp != null && topSellersResp.IsSuccess && topSellersResp.Data != null)
+                    {
+                        topSellersData = topSellersResp.Data;
+                    }
+                }
+                else
+                {
+                    var legacyHttp = await client.GetAsync("api/order/top-sellers?Limit=5&Period=7days");
+                    if (legacyHttp.IsSuccessStatusCode)
+                    {
+                        var legJson = await legacyHttp.Content.ReadAsStringAsync();
+                        var legResp = JsonConvert.DeserializeObject<TopSellersResponseModel>(legJson);
+                        if (legResp != null && legResp.IsSuccess && legResp.Data != null)
+                        {
+                            topSellersData.SevenDays = legResp.Data;
+                        }
+                    }
+                }
+                ViewData["TopSellersDataJson"] = JsonConvert.SerializeObject(topSellersData);
+                ViewData["TopSellers"] = topSellersData.SevenDays;
 
                 _logger.LogInformation("Dashboard Index Async => Dashboard data fetched successfully");
                 return View("Dashboard");

@@ -419,7 +419,7 @@ public class BookService : IBookService
                 if (authorEntity != null) authorName = authorEntity.AuthorName;
                 else return Result<BookModel>.ValidationError("Invalid Author.");
             }
-            else if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value <= 0 && !string.IsNullOrWhiteSpace(requestModel.Author))
+            else if ((!requestModel.AuthorId.HasValue || requestModel.AuthorId.Value <= 0) && !string.IsNullOrWhiteSpace(requestModel.Author))
             {
                 var existingAuthor = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == requestModel.Author.ToLower() && !a.IsDeleted);
                 if (existingAuthor != null)
@@ -446,7 +446,7 @@ public class BookService : IBookService
                 if (genreEntity != null) genreName = genreEntity.GenreName;
                 else return Result<BookModel>.ValidationError("Invalid Genre.");
             }
-            else if (requestModel.GenreId.HasValue && requestModel.GenreId.Value <= 0 && !string.IsNullOrWhiteSpace(requestModel.Genre))
+            else if ((!requestModel.GenreId.HasValue || requestModel.GenreId.Value <= 0) && !string.IsNullOrWhiteSpace(requestModel.Genre))
             {
                 var existingGenre = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == requestModel.Genre.ToLower() && !g.IsDeleted);
                 if (existingGenre != null)
