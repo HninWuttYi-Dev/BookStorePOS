@@ -118,6 +118,7 @@ app.MapControllers();
 app.MapHub<NotificationHub>("/notificationHub");
 
 await BookStorePOS.WebApi.Data.AuthDataSeeder.EnsureSeedDataAsync(app.Services);
+await BookStorePOS.WebApi.Data.BookDataSeeder.EnsureBookDataAsync(app.Services);
 
 app.Run();
 

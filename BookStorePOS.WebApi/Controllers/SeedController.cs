@@ -23,6 +23,68 @@ namespace BookStorePOS.WebApi.Controllers
             _passwordHasher = passwordHasher;
         }
 
+        [HttpPost("SeedCustomBooks")]
+        [HttpGet("SeedCustomBooks")]
+        public async Task<IActionResult> SeedCustomBooks([FromQuery] bool forceReset = true)
+        {
+            try
+            {
+                var success = await BookStorePOS.WebApi.Data.BookDataSeeder.EnsureBookDataAsync(HttpContext.RequestServices, forceReset);
+                if (!success)
+                {
+                    return StatusCode(500, new { IsSuccess = false, Message = "Failed to seed curated books." });
+                }
+
+                return Ok(new
+                {
+                    IsSuccess = true,
+                    Message = $"{BookStorePOS.WebApi.Data.BookDataSeeder.TargetBooks.Count} inventory books seeded successfully.",
+                    Count = BookStorePOS.WebApi.Data.BookDataSeeder.TargetBooks.Count,
+                    Books = BookStorePOS.WebApi.Data.BookDataSeeder.TargetBooks.Select(b => new { b.Title, b.Author, b.Genre, b.Price, b.StockQuantity, b.Isbn })
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { IsSuccess = false, Message = ex.Message });
+            }
+        }
+
+        [HttpPost("RemoveBooksWithoutImages")]
+        [HttpGet("RemoveBooksWithoutImages")]
+        public async Task<IActionResult> RemoveBooksWithoutImages()
+        {
+            try
+            {
+                var booksWithoutImages = await _db.TblBooks
+                    .Include(b => b.TblBookEditions)
+                    .Where(b => !b.IsDeleted && !b.TblBookEditions.Any(e => !e.IsDeleted && !string.IsNullOrWhiteSpace(e.CoverImageUrl) && !e.CoverImageUrl.Contains("placeholder")))
+                    .ToListAsync();
+
+                foreach (var b in booksWithoutImages)
+                {
+                    b.IsDeleted = true;
+                    foreach (var e in b.TblBookEditions)
+                    {
+                        e.IsDeleted = true;
+                    }
+                }
+
+                await _db.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    IsSuccess = true,
+                    Message = $"Successfully removed {booksWithoutImages.Count} books without images. Only books with uploaded images remain.",
+                    RemovedCount = booksWithoutImages.Count,
+                    RemainingCount = await _db.TblBooks.CountAsync(b => !b.IsDeleted)
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { IsSuccess = false, Message = ex.Message });
+            }
+        }
+
         [HttpPost("RealBooks")]
         public async Task<IActionResult> SeedRealBooks()
         {

@@ -32,6 +32,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     ViewData["Books"] = response.Data;
                     ViewData["CurrentPage"] = response.Page;
                     ViewData["TotalPages"] = response.TotalPages;
+                    ViewData["Limit"] = response.Limit > 0 ? response.Limit : 10;
                     ViewData["IsbnFilter"] = requestModel.Isbn;
                     ViewData["TitleFilter"] = requestModel.Title;
                     ViewData["AuthorFilter"] = requestModel.Author;

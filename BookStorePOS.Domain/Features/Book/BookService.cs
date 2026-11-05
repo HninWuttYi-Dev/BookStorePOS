@@ -413,61 +413,85 @@ public class BookService : IBookService
 
             // Handle Author
             string authorName = item.Author?.AuthorName ?? "";
+            TblAuthor? targetAuthor = null;
             if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0)
             {
-                var authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId);
-                if (authorEntity != null) authorName = authorEntity.AuthorName;
-                else return Result<BookModel>.ValidationError("Invalid Author.");
-            }
-            else if ((!requestModel.AuthorId.HasValue || requestModel.AuthorId.Value <= 0) && !string.IsNullOrWhiteSpace(requestModel.Author))
-            {
-                var existingAuthor = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == requestModel.Author.ToLower() && !a.IsDeleted);
-                if (existingAuthor != null)
+                var authorEntity = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorId == requestModel.AuthorId && !a.IsDeleted);
+                // If user changed the name manually and it differs from the entity with this ID, re-resolve by name
+                if (authorEntity != null && !string.IsNullOrWhiteSpace(requestModel.Author) && !string.Equals(authorEntity.AuthorName, requestModel.Author.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    requestModel.AuthorId = existingAuthor.AuthorId;
-                    authorName = existingAuthor.AuthorName;
+                    targetAuthor = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == requestModel.Author.Trim().ToLower() && !a.IsDeleted);
+                    if (targetAuthor == null)
+                    {
+                        targetAuthor = new TblAuthor { AuthorName = requestModel.Author.Trim(), CreateAt = DateTime.Now, IsDeleted = false };
+                        _db.TblAuthors.Add(targetAuthor);
+                        await _db.SaveChangesAsync();
+                    }
                 }
                 else
                 {
-                    var newAuthor = new TblAuthor { AuthorName = requestModel.Author, CreateAt = DateTime.Now, IsDeleted = false };
-                    _db.TblAuthors.Add(newAuthor);
-                    await _db.SaveChangesAsync();
-                    requestModel.AuthorId = newAuthor.AuthorId;
-                    authorName = newAuthor.AuthorName;
+                    targetAuthor = authorEntity;
                 }
             }
-            else if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value <= 0) requestModel.AuthorId = null;
+            else if (!string.IsNullOrWhiteSpace(requestModel.Author))
+            {
+                targetAuthor = await _db.TblAuthors.FirstOrDefaultAsync(a => a.AuthorName.ToLower() == requestModel.Author.Trim().ToLower() && !a.IsDeleted);
+                if (targetAuthor == null)
+                {
+                    targetAuthor = new TblAuthor { AuthorName = requestModel.Author.Trim(), CreateAt = DateTime.Now, IsDeleted = false };
+                    _db.TblAuthors.Add(targetAuthor);
+                    await _db.SaveChangesAsync();
+                }
+            }
+
+            if (targetAuthor != null)
+            {
+                item.Author = targetAuthor;
+                item.AuthorId = targetAuthor.AuthorId;
+                authorName = targetAuthor.AuthorName;
+            }
 
             // Handle Genre
             string genreName = item.Genre?.GenreName ?? "";
+            TblGenre? targetGenre = null;
             if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0)
             {
-                var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId);
-                if (genreEntity != null) genreName = genreEntity.GenreName;
-                else return Result<BookModel>.ValidationError("Invalid Genre.");
-            }
-            else if ((!requestModel.GenreId.HasValue || requestModel.GenreId.Value <= 0) && !string.IsNullOrWhiteSpace(requestModel.Genre))
-            {
-                var existingGenre = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == requestModel.Genre.ToLower() && !g.IsDeleted);
-                if (existingGenre != null)
+                var genreEntity = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreId == requestModel.GenreId && !g.IsDeleted);
+                // If user changed the name manually and it differs from the entity with this ID, re-resolve by name
+                if (genreEntity != null && !string.IsNullOrWhiteSpace(requestModel.Genre) && !string.Equals(genreEntity.GenreName, requestModel.Genre.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    requestModel.GenreId = existingGenre.GenreId;
-                    genreName = existingGenre.GenreName;
+                    targetGenre = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == requestModel.Genre.Trim().ToLower() && !g.IsDeleted);
+                    if (targetGenre == null)
+                    {
+                        targetGenre = new TblGenre { GenreName = requestModel.Genre.Trim(), CreatedAt = DateTime.Now, IsDeleted = false };
+                        _db.TblGenres.Add(targetGenre);
+                        await _db.SaveChangesAsync();
+                    }
                 }
                 else
                 {
-                    var newGenre = new TblGenre { GenreName = requestModel.Genre, CreatedAt = DateTime.Now, IsDeleted = false };
-                    _db.TblGenres.Add(newGenre);
-                    await _db.SaveChangesAsync();
-                    requestModel.GenreId = newGenre.GenreId;
-                    genreName = newGenre.GenreName;
+                    targetGenre = genreEntity;
                 }
             }
-            else if (requestModel.GenreId.HasValue && requestModel.GenreId.Value <= 0) requestModel.GenreId = null;
+            else if (!string.IsNullOrWhiteSpace(requestModel.Genre))
+            {
+                targetGenre = await _db.TblGenres.FirstOrDefaultAsync(g => g.GenreName.ToLower() == requestModel.Genre.Trim().ToLower() && !g.IsDeleted);
+                if (targetGenre == null)
+                {
+                    targetGenre = new TblGenre { GenreName = requestModel.Genre.Trim(), CreatedAt = DateTime.Now, IsDeleted = false };
+                    _db.TblGenres.Add(targetGenre);
+                    await _db.SaveChangesAsync();
+                }
+            }
+
+            if (targetGenre != null)
+            {
+                item.Genre = targetGenre;
+                item.GenreId = targetGenre.GenreId;
+                genreName = targetGenre.GenreName;
+            }
 
             if (!string.IsNullOrEmpty(requestModel.Title)) item.Title = requestModel.Title;
-            if (requestModel.AuthorId.HasValue && requestModel.AuthorId.Value > 0) item.AuthorId = requestModel.AuthorId;
-            if (requestModel.GenreId.HasValue && requestModel.GenreId.Value > 0) item.GenreId = requestModel.GenreId;
             if (requestModel.Description != null) item.Description = requestModel.Description;
 
             item.UpdatedAt = DateTime.Now;

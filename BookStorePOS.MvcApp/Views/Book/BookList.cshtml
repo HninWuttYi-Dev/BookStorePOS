@@ -10,7 +10,8 @@
     bool isSuccess = rawSuccess != null ? Convert.ToBoolean(rawSuccess) : false;
     string message = TempData["Message"]?.ToString() ?? string.Empty;
 
-    int count = (currentPage - 1) * 20;
+    int limit = ViewData["Limit"] != null ? Convert.ToInt32(ViewData["Limit"]) : 10;
+    int count = (currentPage - 1) * limit;
     string titleFilter = ViewData["TitleFilter"]?.ToString();
     string authorFilter = ViewData["AuthorFilter"]?.ToString();
     string genreFilter = ViewData["GenreFilter"]?.ToString();
