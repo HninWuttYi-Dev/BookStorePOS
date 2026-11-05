@@ -168,15 +168,221 @@
     </svg>
 </div>
 
-<!-- 3. New & Trending (Overlapping 3-Card Fan Stack beside Editorial Text) -->
+<!-- 3. New & Trending (Curated 3D Standing Books Fan-Stack & Physics Drop Animation) -->
 <section class="bg-brand-bg pt-10 sm:pt-14 pb-16 sm:pb-22 overflow-hidden" id="trendingSection">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <style>
+            /* 3D Overlapping Fan Stack Container */
+            .fan-stack-stage {
+                position: relative;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .fan-stack-wrapper {
+                position: relative;
+                width: 320px;
+                height: 380px;
+                perspective: 1200px;
+            }
+            @@media (min-width: 640px) {
+                .fan-stack-wrapper {
+                    width: 370px;
+                    height: 410px;
+                }
+            }
+
+            /* Each Fan Item is a 3D Standing Book */
+            .fan-card {
+                position: absolute;
+                top: 15px;
+                left: 50%;
+                margin-left: -95px;
+                width: 190px;
+                height: 275px;
+                transform-origin: 50% 90%;
+                transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease, opacity 0.4s ease;
+                will-change: transform, opacity, filter;
+                cursor: pointer;
+                user-select: none;
+                opacity: 0;
+                transform: translate3d(0, -750px, 0) scale(0.85);
+            }
+            @@media (min-width: 640px) {
+                .fan-card {
+                    margin-left: -105px;
+                    width: 210px;
+                    height: 305px;
+                }
+            }
+
+            /* Falling Entrance Keyframes from Above */
+            @@keyframes dropLeftBook {
+                0% {
+                    transform: translate3d(-75px, -800px, 0) rotate(0deg) scale(0.85);
+                    opacity: 0;
+                }
+                65% {
+                    transform: translate3d(-75px, 22px, 0) rotate(-16deg) scale(0.96);
+                    opacity: 1;
+                }
+                82% {
+                    transform: translate3d(-75px, 6px, 0) rotate(-13deg) scale(0.92);
+                }
+                100% {
+                    transform: translate3d(-75px, 12px, 0) rotate(-14deg) scale(0.92);
+                    opacity: 1;
+                }
+            }
+
+            @@keyframes dropRightBook {
+                0% {
+                    transform: translate3d(75px, -800px, 10px) rotate(0deg) scale(0.85);
+                    opacity: 0;
+                }
+                65% {
+                    transform: translate3d(75px, 22px, 10px) rotate(18deg) scale(0.96);
+                    opacity: 1;
+                }
+                82% {
+                    transform: translate3d(75px, 6px, 10px) rotate(15deg) scale(0.92);
+                }
+                100% {
+                    transform: translate3d(75px, 12px, 10px) rotate(16deg) scale(0.92);
+                    opacity: 1;
+                }
+            }
+
+            @@keyframes dropCenterBook {
+                0% {
+                    transform: translate3d(0, -850px, 25px) rotate(0deg) scale(0.88);
+                    opacity: 0;
+                }
+                65% {
+                    transform: translate3d(0, 20px, 25px) rotate(-4deg) scale(1.08);
+                    opacity: 1;
+                }
+                82% {
+                    transform: translate3d(0, -6px, 25px) rotate(-1deg) scale(1.03);
+                }
+                100% {
+                    transform: translate3d(0, 0px, 25px) rotate(-2deg) scale(1.04);
+                    opacity: 1;
+                }
+            }
+
+            /* Active Falling State (Triggered on Scroll or Replay) */
+            .fan-stack-wrapper.is-animating .fan-card.pos-left {
+                animation: dropLeftBook 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+                z-index: 10;
+            }
+            .fan-stack-wrapper.is-animating .fan-card.pos-right {
+                animation: dropRightBook 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+                z-index: 15;
+            }
+            .fan-stack-wrapper.is-animating .fan-card.pos-center {
+                animation: dropCenterBook 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.40s both;
+                z-index: 30;
+            }
+
+            /* Settled Positions */
+            .fan-stack-wrapper.is-settled .fan-card {
+                opacity: 1;
+            }
+            .fan-stack-wrapper.is-settled .fan-card.pos-left {
+                transform: translate3d(-75px, 12px, 0) rotate(-14deg) scale(0.92);
+                z-index: 10;
+                filter: brightness(0.88) drop-shadow(0 14px 22px rgba(25, 20, 15, 0.26));
+            }
+            .fan-stack-wrapper.is-settled .fan-card.pos-center {
+                transform: translate3d(0, 0px, 25px) rotate(-2deg) scale(1.04);
+                z-index: 30;
+                filter: brightness(1.0) drop-shadow(0 24px 40px rgba(25, 20, 15, 0.36));
+            }
+            .fan-stack-wrapper.is-settled .fan-card.pos-right {
+                transform: translate3d(75px, 12px, 10px) rotate(16deg) scale(0.92);
+                z-index: 15;
+                filter: brightness(0.88) drop-shadow(0 14px 22px rgba(25, 20, 15, 0.26));
+            }
+
+            /* Interactive Hover Fan-Out Physics */
+            .fan-stack-wrapper.is-settled:hover .fan-card.pos-left {
+                transform: translate3d(-105px, 6px, 0) rotate(-19deg) scale(0.95);
+            }
+            .fan-stack-wrapper.is-settled:hover .fan-card.pos-center {
+                transform: translate3d(0, -14px, 35px) rotate(0deg) scale(1.08);
+                filter: brightness(1.03) drop-shadow(0 32px 55px rgba(25, 20, 15, 0.42));
+            }
+            .fan-stack-wrapper.is-settled:hover .fan-card.pos-right {
+                transform: translate3d(105px, 6px, 10px) rotate(21deg) scale(0.95);
+            }
+
+            /* Authentic 3D Book Construction (Matches User Attached Image) */
+            .fan-book-3d {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                transform-style: preserve-3d;
+            }
+
+            .fan-book-front {
+                position: absolute;
+                inset: 0;
+                border-radius: 0 4px 4px 0;
+                overflow: hidden;
+                background: #2D241E;
+                box-shadow: inset 2px 0 3px rgba(255,255,255,0.35), inset -1.5px 0 3px rgba(0,0,0,0.30);
+                z-index: 10;
+            }
+
+            .fan-book-spine-fold {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 18px;
+                background: linear-gradient(to right, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.08) 18%, rgba(0,0,0,0.22) 24%, transparent 100%);
+                pointer-events-none;
+                z-index: 20;
+            }
+
+            .fan-book-side-pages {
+                position: absolute;
+                top: 3px;
+                bottom: 3px;
+                right: -15px;
+                width: 16px;
+                background: repeating-linear-gradient(to right, #FAF8F5, #FAF8F5 1.5px, #D6D0C5 1.5px, #D6D0C5 2.5px);
+                -webkit-clip-path: polygon(0% 0px, 100% 5px, 100% calc(100% - 9px), 0% 100%);
+                clip-path: polygon(0% 0px, 100% 5px, 100% calc(100% - 9px), 0% 100%);
+                box-shadow: inset 1px 0 3px rgba(0,0,0,0.25), inset -1px 0 2px rgba(0,0,0,0.12);
+                z-index: 5;
+            }
+
+            .fan-book-floor-shadow {
+                position: absolute;
+                bottom: -15px;
+                left: 50%;
+                transform: translateX(-48%) skewX(-24deg) scaleY(0.65);
+                width: 210px;
+                height: 22px;
+                background: radial-gradient(ellipse at center, rgba(25, 20, 15, 0.50) 0%, rgba(25, 20, 15, 0.18) 50%, transparent 75%);
+                filter: blur(6px);
+                pointer-events-none;
+                z-index: 1;
+            }
+        </style>
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             
             <!-- Left Column: Editorial Information & Controls -->
             <div class="lg:col-span-5 flex flex-col justify-center text-center lg:text-left">
                 <div class="inline-flex items-center gap-2 mb-3.5 self-center lg:self-start">
-                    <span class="w-2 h-2 rounded-full bg-brand-accent inline-block"></span>
+                    <span class="w-2 h-2 rounded-full bg-brand-accent inline-block animate-pulse"></span>
                     <span class="text-xs font-semibold uppercase tracking-widest text-brand-accent font-body">Curated Collection</span>
                 </div>
                 
@@ -229,211 +435,115 @@
                 </div>
             </div>
 
-            <!-- Right Column: Overlapping 3-Card Stack (Mirrors Reference Photo) -->
-            <div class="lg:col-span-7 flex justify-center items-center py-6 sm:py-8 overflow-visible relative">
+            <!-- Right Column: Overlapping 3D Books Fan Stack (No Cards, Pure 3D Books) -->
+            <div class="lg:col-span-7 flex flex-col justify-center items-center py-6 sm:py-8 overflow-visible relative">
                 
-                <!-- Subtle Diamond / Dot Grid Backdrop Matching Photo Canvas -->
-                <div class="absolute inset-0 max-w-[480px] mx-auto rounded-3xl opacity-30 pointer-events-none -z-10" 
-                     style="background-image: radial-gradient(#8C6F45 1.2px, transparent 1.2px); background-size: 20px 20px;"></div>
-
-                <style>
-                    /* 3D Overlapping Fan/Stack Container */
-                    .fan-stack-wrapper {
-                        position: relative;
-                        width: 320px;
-                        height: 480px;
-                        perspective: 1200px;
-                    }
-                    @@media (min-width: 640px) {
-                        .fan-stack-wrapper {
-                            width: 360px;
-                            height: 500px;
-                        }
-                    }
-                    .fan-card {
-                        position: absolute;
-                        top: 20px;
-                        left: 50%;
-                        margin-left: -135px;
-                        width: 270px;
-                        transform-origin: 50% 90%;
-                        transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease, opacity 0.4s ease;
-                        will-change: transform, opacity;
-                        cursor: pointer;
-                        user-select: none;
-                        opacity: 0;
-                        transform: translate3d(0, -700px, 0) scale(0.85);
-                    }
-                    @@media (min-width: 640px) {
-                        .fan-card {
-                            width: 284px;
-                            margin-left: -142px;
-                        }
-                    }
-
-                    /* Falling Entrance Keyframes from Above (Cascading Drop & Settle) */
-                    @@keyframes dropLeftCard {
-                        0% {
-                            transform: translate3d(-64px, -750px, 0) rotate(0deg) scale(0.88);
-                            opacity: 0;
-                        }
-                        65% {
-                            transform: translate3d(-64px, 14px, 0) rotate(-16deg) scale(0.97);
-                            opacity: 1;
-                        }
-                        82% {
-                            transform: translate3d(-64px, -6px, 0) rotate(-13deg) scale(0.95);
-                        }
-                        100% {
-                            transform: translate3d(-64px, 2px, 0) rotate(-14deg) scale(0.95);
-                            opacity: 1;
-                        }
-                    }
-
-                    @@keyframes dropRightCard {
-                        0% {
-                            transform: translate3d(64px, -750px, 10px) rotate(0deg) scale(0.88);
-                            opacity: 0;
-                        }
-                        65% {
-                            transform: translate3d(64px, 14px, 10px) rotate(18deg) scale(0.97);
-                            opacity: 1;
-                        }
-                        82% {
-                            transform: translate3d(64px, -6px, 10px) rotate(15deg) scale(0.95);
-                        }
-                        100% {
-                            transform: translate3d(64px, 2px, 10px) rotate(16deg) scale(0.95);
-                            opacity: 1;
-                        }
-                    }
-
-                    @@keyframes dropCenterCard {
-                        0% {
-                            transform: translate3d(0, -800px, 25px) rotate(0deg) scale(0.90);
-                            opacity: 0;
-                        }
-                        65% {
-                            transform: translate3d(0, 16px, 25px) rotate(-4deg) scale(1.02);
-                            opacity: 1;
-                        }
-                        82% {
-                            transform: translate3d(0, -6px, 25px) rotate(-1deg) scale(1.0);
-                        }
-                        100% {
-                            transform: translate3d(0, 0px, 25px) rotate(-2deg) scale(1.0);
-                            opacity: 1;
-                        }
-                    }
-
-                    /* Active Falling State (Triggered on Scroll or Replay) */
-                    .fan-stack-wrapper.is-animating .fan-card.pos-left {
-                        animation: dropLeftCard 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
-                        z-index: 10;
-                    }
-                    .fan-stack-wrapper.is-animating .fan-card.pos-right {
-                        animation: dropRightCard 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
-                        z-index: 15;
-                    }
-                    .fan-stack-wrapper.is-animating .fan-card.pos-center {
-                        animation: dropCenterCard 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.40s both;
-                        z-index: 30;
-                    }
-
-                    /* Settled Positions (Exact Overlapping Fan Structure as in Reference Image) */
-                    .fan-stack-wrapper.is-settled .fan-card {
-                        opacity: 1;
-                    }
-                    .fan-stack-wrapper.is-settled .fan-card.pos-left {
-                        transform: translate3d(-64px, 2px, 0) rotate(-14deg) scale(0.95);
-                        z-index: 10;
-                        box-shadow: 0 16px 36px -8px rgba(44, 38, 33, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
-                    }
-                    .fan-stack-wrapper.is-settled .fan-card.pos-center {
-                        transform: translate3d(0, 0px, 25px) rotate(-2deg) scale(1.0);
-                        z-index: 30;
-                        box-shadow: 0 26px 54px -12px rgba(44, 38, 33, 0.28), 0 8px 18px -4px rgba(44, 38, 33, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
-                    }
-                    .fan-stack-wrapper.is-settled .fan-card.pos-right {
-                        transform: translate3d(64px, 2px, 10px) rotate(16deg) scale(0.95);
-                        z-index: 15;
-                        box-shadow: 0 18px 40px -8px rgba(44, 38, 33, 0.20), 0 0 0 1px rgba(0, 0, 0, 0.04);
-                    }
-
-                    /* Interactive Hover Fan-Out (Cards spread slightly to inspect titles) */
-                    .fan-stack-wrapper.is-settled:hover .fan-card.pos-left {
-                        transform: translate3d(-92px, -2px, 0) rotate(-19deg) scale(0.97);
-                    }
-                    .fan-stack-wrapper.is-settled:hover .fan-card.pos-center {
-                        transform: translate3d(0, -10px, 30px) rotate(0deg) scale(1.03);
-                        box-shadow: 0 32px 64px -12px rgba(44, 38, 33, 0.32), 0 0 0 1px rgba(0, 0, 0, 0.04);
-                    }
-                    .fan-stack-wrapper.is-settled:hover .fan-card.pos-right {
-                        transform: translate3d(92px, -2px, 10px) rotate(21deg) scale(0.97);
-                    }
-                </style>
-
                 @if (trendingBooks.Any())
                 {
-                    <div class="fan-stack-wrapper" id="trendingFanStack">
-                        @for (int i = 0; i < trendingBooks.Count; i++)
-                        {
-                            var book = trendingBooks[i];
-                            var edition = book.Editions?.FirstOrDefault();
-                            var coverImg = edition?.CoverImageUrl;
-                            var displayPrice = (edition?.Price > 0 ? edition.Price : book.StartingPrice).ToString("N0") + " MMK";
+                    <div class="fan-stack-stage">
+                        
+                        <!-- 3D Fan Stack Wrapper -->
+                        <div class="fan-stack-wrapper" id="trendingFanStack">
+                            @for (int i = 0; i < trendingBooks.Count; i++)
+                            {
+                                var book = trendingBooks[i];
+                                var edition = book.Editions?.FirstOrDefault();
+                                var coverImg = edition?.CoverImageUrl;
+                                var displayPrice = (edition?.Price > 0 ? edition.Price : book.StartingPrice).ToString("N0") + " MMK";
 
-                            <div class="fan-card bg-white rounded-[26px] p-3 sm:p-3.5 border border-stone-200/90 flex flex-col justify-between" 
-                                 data-index="@i" role="button" tabindex="0" aria-label="Book: @book.Title by @book.Author">
-                                
-                                <!-- Top Image Container (Rounded photo framing exactly like reference) -->
-                                <div class="relative w-full h-56 sm:h-64 rounded-[20px] overflow-hidden bg-stone-100 shadow-inner group/img">
+                                <div class="fan-card" 
+                                     data-index="@i" 
+                                     data-id="@book.BookId"
+                                     data-title="@book.Title"
+                                     data-author="@book.Author"
+                                     data-genre="@(book.Genre ?? "Classic")"
+                                     data-price="@displayPrice"
+                                     role="button" 
+                                     tabindex="0" 
+                                     aria-label="Book: @book.Title by @book.Author">
                                     
-                                    <!-- Frosted "Top rated" Pill Badge (Clean, authentic, NO aeroplane icon) -->
-                                    <span class="absolute top-2.5 left-2.5 px-3 py-1 rounded-full bg-black/55 backdrop-blur-md text-white text-[10px] font-semibold tracking-wide font-body z-20 shadow-xs">
-                                        Top rated
-                                    </span>
+                                    <!-- Pure 3D Standing Book Construction -->
+                                    <div class="fan-book-3d">
+                                        <!-- Floor Ambient Shadow -->
+                                        <div class="fan-book-floor-shadow"></div>
 
-                                    @if (!string.IsNullOrEmpty(coverImg))
-                                    {
-                                        <img src="@coverImg" alt="@book.Title" 
-                                             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" 
-                                             class="w-full h-full object-cover">
-                                        <div class="hidden w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-4 flex flex-col justify-between text-white text-center">
-                                            <span class="text-[9px] uppercase tracking-wider text-amber-200 font-semibold font-body">@(book.Genre ?? "Classic")</span>
-                                            <p class="font-heading font-bold text-sm leading-snug line-clamp-3">@book.Title</p>
-                                            <span class="text-[10px] text-gray-300 font-heading italic truncate">@book.Author</span>
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-4 flex flex-col justify-between text-white text-center">
-                                            <span class="text-[9px] uppercase tracking-wider text-amber-200 font-semibold font-body">@(book.Genre ?? "Classic")</span>
-                                            <p class="font-heading font-bold text-sm leading-snug line-clamp-3">@book.Title</p>
-                                            <span class="text-[10px] text-gray-300 font-heading italic truncate">@book.Author</span>
-                                        </div>
-                                    }
-                                </div>
+                                        <!-- Right Paper Pages Block -->
+                                        <div class="fan-book-side-pages"></div>
 
-                                <!-- Bottom Card Meta (Clean title & author on row 1, full-width pill button on row 2) -->
-                                <div class="pt-3 px-1">
-                                    <div class="flex items-baseline justify-between gap-2 mb-2.5">
-                                        <h3 class="font-heading font-bold text-[15px] sm:text-base text-brand-ink leading-tight truncate flex-1" title="@book.Title">
-                                            @book.Title
-                                        </h3>
-                                        <span class="text-[11px] font-medium text-brand-inkLight/80 font-body truncate shrink-0 max-w-[105px]">
-                                            @(book.Author ?? "Classic")
-                                        </span>
+                                        <!-- Front Cover -->
+                                        <div class="fan-book-front">
+                                            <!-- Spine Crease Fold -->
+                                            <div class="fan-book-spine-fold"></div>
+
+                                            @if (!string.IsNullOrEmpty(coverImg))
+                                            {
+                                                <img src="@coverImg" alt="@book.Title" 
+                                                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" 
+                                                     class="w-full h-full object-cover select-none">
+                                                <div class="hidden w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] flex flex-col justify-between p-5 rounded-r-xs border-l-2 border-[#8C6F45]/50 shadow-inner select-none text-center">
+                                                    <div class="w-full flex justify-end">
+                                                        <span class="text-[9px] uppercase tracking-[0.2em] text-[#C8A265] font-semibold font-body">BABYLON</span>
+                                                    </div>
+                                                    <div class="my-auto px-2">
+                                                        <p class="font-heading font-bold text-[#F4F1EA] text-base sm:text-lg leading-snug line-clamp-3 drop-shadow-sm">@book.Title</p>
+                                                        <p class="text-xs sm:text-sm text-[#C8A265] mt-2 font-heading italic truncate">@book.Author</p>
+                                                    </div>
+                                                    <div class="w-full flex justify-center pb-2">
+                                                        <span class="w-8 h-[1.5px] bg-[#C8A265]/50 rounded-full"></span>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <!-- Exact Match to Reference Image (Leather & Gold Foil) -->
+                                                <div class="w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] flex flex-col justify-between p-5 rounded-r-xs border-l-2 border-[#8C6F45]/50 shadow-inner select-none text-center">
+                                                    <div class="w-full flex justify-end">
+                                                        <span class="text-[9px] uppercase tracking-[0.2em] text-[#C8A265] font-semibold font-body">BABYLON</span>
+                                                    </div>
+                                                    <div class="my-auto px-2">
+                                                        <p class="font-heading font-bold text-[#F4F1EA] text-base sm:text-lg leading-snug line-clamp-3 drop-shadow-sm">@book.Title</p>
+                                                        <p class="text-xs sm:text-sm text-[#C8A265] mt-2 font-heading italic truncate">@book.Author</p>
+                                                    </div>
+                                                    <div class="w-full flex justify-center pb-2">
+                                                        <span class="w-8 h-[1.5px] bg-[#C8A265]/50 rounded-full"></span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
                                     </div>
 
-                                    <!-- Full-Width Dark Pill Button (Matches 'Book Now' pill in photo) -->
-                                    <a href="/Books/Detail/@book.BookId" class="w-full py-2.5 rounded-full bg-[#221F1C] hover:bg-brand-accent text-white text-xs font-semibold text-center block transition-all duration-300 shadow-xs hover:shadow-md font-body tracking-wide">
-                                        View Details
-                                    </a>
                                 </div>
+                            }
+                        </div>
 
-                            </div>
+                        <!-- Active Center Book Details & Actions -->
+                        @{
+                            var activeBook = trendingBooks[0];
+                            var activePrice = (activeBook.Editions?.FirstOrDefault()?.Price > 0 ? activeBook.Editions.FirstOrDefault()!.Price : activeBook.StartingPrice).ToString("N0") + " MMK";
                         }
+                        <div id="activeBookMeta" class="mt-4 flex flex-col items-center text-center transition-all duration-300">
+                            <div class="text-amber-500 text-xs tracking-wider mb-1 font-body">★★★★★</div>
+                            <a href="/Books/Detail/@activeBook.BookId" id="activeBookTitleLink" class="block max-w-sm sm:max-w-md">
+                                <h3 id="activeBookTitle" class="font-heading font-bold text-xl sm:text-2xl text-brand-ink leading-snug hover:text-brand-accent transition-colors">
+                                    @activeBook.Title
+                                </h3>
+                            </a>
+                            <p id="activeBookAuthor" class="text-xs sm:text-sm text-brand-inkLight font-heading italic mt-1">
+                                @activeBook.Author
+                            </p>
+                            <div class="flex items-center gap-3.5 mt-3">
+                                <span id="activeBookPrice" class="text-sm sm:text-base font-bold text-brand-accent font-body">
+                                    @activePrice
+                                </span>
+                                <a href="/Books/Detail/@activeBook.BookId" id="activeBookDetailBtn" class="px-5 py-2 rounded-full bg-[#221F1C] hover:bg-brand-accent text-white text-xs font-semibold font-body transition-all duration-300 shadow-2xs hover:shadow-md tracking-wide">
+                                    View Details &rarr;
+                                </a>
+                                <button type="button" id="activeAddToCartBtn" onclick="window.handleAddToCart('@activeBook.BookId', event)" class="px-4 py-2 rounded-full bg-brand-surface hover:bg-brand-accent hover:text-white border border-brand-border/80 text-brand-ink text-xs font-semibold font-body transition-colors shadow-2xs">
+                                    Add to Cart
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 }
                 else
@@ -460,6 +570,15 @@
         const prevBtn = document.getElementById('fanPrevBtn');
         const nextBtn = document.getElementById('fanNextBtn');
         const replayBtn = document.getElementById('fanReplayBtn');
+
+        // Dynamic Active Meta Elements
+        const metaTitle = document.getElementById('activeBookTitle');
+        const metaTitleLink = document.getElementById('activeBookTitleLink');
+        const metaAuthor = document.getElementById('activeBookAuthor');
+        const metaPrice = document.getElementById('activeBookPrice');
+        const metaDetailBtn = document.getElementById('activeBookDetailBtn');
+        const metaAddToCartBtn = document.getElementById('activeAddToCartBtn');
+
         let activeIndex = 0; // Front/center card index
 
         function updateStackPositions() {
@@ -471,6 +590,18 @@
 
                 if (offset === 0) {
                     card.classList.add('pos-center');
+
+                    // Synchronize Active Meta below the 3D book stack
+                    if (metaTitle) metaTitle.textContent = card.dataset.title || '';
+                    if (metaTitleLink) metaTitleLink.href = '/Books/Detail/' + card.dataset.id;
+                    if (metaAuthor) metaAuthor.textContent = card.dataset.author || '';
+                    if (metaPrice) metaPrice.textContent = card.dataset.price || '';
+                    if (metaDetailBtn) metaDetailBtn.href = '/Books/Detail/' + card.dataset.id;
+                    if (metaAddToCartBtn) {
+                        metaAddToCartBtn.onclick = function(e) {
+                            window.handleAddToCart(card.dataset.id, e);
+                        };
+                    }
                 } else if (offset === 1) {
                     card.classList.add('pos-right');
                 } else {
@@ -527,8 +658,9 @@
         // Card Click Interaction
         cards.forEach((card, index) => {
             card.addEventListener('click', function(e) {
-                // If user clicked the button or link inside the front card, let them navigate
-                if (card.classList.contains('pos-center') && (e.target.closest('a') || e.target.closest('button'))) {
+                // If clicking center book, navigate to detail
+                if (card.classList.contains('pos-center')) {
+                    window.location.href = '/Books/Detail/' + card.dataset.id;
                     return;
                 }
                 e.preventDefault();
@@ -609,18 +741,32 @@
                                 <img src="@coverImg" alt="@book.Title" 
                                      onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
                                      class="w-full h-full object-cover rounded-r-md rounded-l-xs z-10 relative">
-                                <div class="hidden w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-2.5 flex flex-col justify-between text-white relative z-10">
-                                    <span class="text-[8px] uppercase tracking-wider text-amber-200 font-semibold font-body truncate">@(book.Genre ?? "Classic")</span>
-                                    <p class="font-heading font-bold text-xs leading-tight text-center px-0.5 line-clamp-2">@book.Title</p>
-                                    <span class="text-[8px] text-gray-300 font-heading italic text-center truncate">@book.Author</span>
+                                <div class="hidden w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] p-2 flex flex-col justify-between text-white relative z-10 border-l border-[#8C6F45]/50 shadow-inner">
+                                    <div class="w-full flex justify-end">
+                                        <span class="text-[6px] uppercase tracking-widest text-[#C8A265]/70 font-semibold font-body">Babylon</span>
+                                    </div>
+                                    <div class="text-center my-auto px-0.5">
+                                        <p class="font-heading font-bold text-[#F4F1EA] text-[10px] sm:text-[11px] leading-tight line-clamp-2">@book.Title</p>
+                                        <p class="text-[8px] text-[#C8A265] mt-0.5 font-heading italic truncate">@book.Author</p>
+                                    </div>
+                                    <div class="w-full flex justify-center">
+                                        <span class="w-3 h-[1px] bg-[#C8A265]/40"></span>
+                                    </div>
                                 </div>
                             }
                             else
                             {
-                                <div class="w-full h-full bg-gradient-to-br from-[#1C2C38] via-[#2A3E4E] to-[#121E28] p-2.5 flex flex-col justify-between text-white relative z-10">
-                                    <span class="text-[8px] uppercase tracking-wider text-amber-200 font-semibold font-body truncate">@(book.Genre ?? "Classic")</span>
-                                    <p class="font-heading font-bold text-xs leading-tight text-center px-0.5 line-clamp-2">@book.Title</p>
-                                    <span class="text-[8px] text-gray-300 font-heading italic text-center truncate">@book.Author</span>
+                                <div class="w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] p-2 flex flex-col justify-between text-white relative z-10 border-l border-[#8C6F45]/50 shadow-inner">
+                                    <div class="w-full flex justify-end">
+                                        <span class="text-[6px] uppercase tracking-widest text-[#C8A265]/70 font-semibold font-body">Babylon</span>
+                                    </div>
+                                    <div class="text-center my-auto px-0.5">
+                                        <p class="font-heading font-bold text-[#F4F1EA] text-[10px] sm:text-[11px] leading-tight line-clamp-2">@book.Title</p>
+                                        <p class="text-[8px] text-[#C8A265] mt-0.5 font-heading italic truncate">@book.Author</p>
+                                    </div>
+                                    <div class="w-full flex justify-center">
+                                        <span class="w-3 h-[1px] bg-[#C8A265]/40"></span>
+                                    </div>
                                 </div>
                             }
                         </a>
