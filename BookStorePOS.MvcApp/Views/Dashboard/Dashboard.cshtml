@@ -165,7 +165,7 @@ else
             </div>
             <div class="min-w-0">
                 <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FAF0FA] text-[#BE185D] border border-[#FCE7F3]">REVENUE</span>
-                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 truncate">@todaySales.ToString("#,##0")</h3>
+                <h3 id="metricTodaySales" class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 truncate transition-colors duration-500">@todaySales.ToString("#,##0")</h3>
                 <p class="text-xs font-bold text-[#71717A] mt-1">↑ MMK TODAY</p>
             </div>
         </div>
@@ -179,7 +179,7 @@ else
             </div>
             <div class="min-w-0">
                 <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#FAF0FA] text-[#BE185D] border border-[#FCE7F3]">THIS MONTH</span>
-                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 truncate">@thisMonthSales.ToString("#,##0")</h3>
+                <h3 id="metricThisMonthSales" class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 truncate transition-colors duration-500">@thisMonthSales.ToString("#,##0")</h3>
                 <p class="text-xs font-bold text-[#71717A] mt-1">↑ MMK TOTAL</p>
             </div>
         </div>
@@ -193,7 +193,7 @@ else
             </div>
             <div class="min-w-0">
                 <p class="text-xs font-bold text-[#71717A]">Low Stock Items</p>
-                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1">@lowStockItemsCount</h3>
+                <h3 id="metricLowStockCount" class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 transition-colors duration-500">@lowStockItemsCount</h3>
             </div>
         </div>
 
@@ -206,7 +206,7 @@ else
             </div>
             <div class="min-w-0">
                 <p class="text-xs font-bold text-[#71717A]">Pending Online Orders</p>
-                <h3 class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1">@pendingOnlineOrdersCount</h3>
+                <h3 id="metricPendingOrdersCount" class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 transition-colors duration-500">@pendingOnlineOrdersCount</h3>
             </div>
         </div>
     </div>
@@ -354,14 +354,14 @@ else
                         <th class="py-2.5 px-4 rounded-r-xl font-bold text-center">STATUS</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#FAF0FA]">
+                <tbody id="recentOrdersTbody" class="divide-y divide-[#FAF0FA]">
                     @if (recentOrders != null && recentOrders.Any())
                     {
                         foreach (var order in recentOrders.Take(5))
                         {
                             var (sBg, sText, sDot) = GetStatusBadgeWithDot(order.OrderStatus.ToString());
                             int itemCount = order.TotalQuantity > 0 ? order.TotalQuantity : (order.Items?.Sum(i => i.Quantity) ?? 1);
-                            <tr class="hover:bg-[#FAF0FA]/60 transition-colors">
+                            <tr id="recentOrderRow_@order.OrderId" class="hover:bg-[#FAF0FA]/60 transition-colors">
                                 <td class="py-3 px-4 font-bold text-[#9F54A6]">
                                     <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
                                         @FormatOrderNo(order.OrderId, order.OrderDate)
@@ -386,7 +386,7 @@ else
                     }
                     else
                     {
-                        <tr>
+                        <tr id="recentOrdersEmptyRow">
                             <td colspan="5" class="py-6 text-center text-slate-400 text-xs">No recent orders found</td>
                         </tr>
                     }
@@ -860,6 +860,119 @@ else
         if (container && !container.contains(e.target)) {
             window.closeTopProfileMenu();
         }
+    });
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function applyDashboardRealtimeUpdate(data) {
+        if (!data) return;
+        console.log("[Dashboard] Applying real-time update:", data);
+
+        // 1. Metric Cards
+        const todayRev = data.todayRevenue ?? data.TodayRevenue;
+        if (todayRev !== undefined && todayRev !== null) {
+            const el = $('#metricTodaySales');
+            el.text(Number(todayRev).toLocaleString());
+            el.addClass('text-[#9F54A6]');
+            setTimeout(() => el.removeClass('text-[#9F54A6]'), 2000);
+        }
+
+        const monthRev = data.thisMonthRevenue ?? data.ThisMonthRevenue;
+        if (monthRev !== undefined && monthRev !== null) {
+            const el = $('#metricThisMonthSales');
+            el.text(Number(monthRev).toLocaleString());
+            el.addClass('text-[#9F54A6]');
+            setTimeout(() => el.removeClass('text-[#9F54A6]'), 2000);
+        }
+
+        const lowStock = data.lowStockItemsCount ?? data.LowStockItemsCount;
+        if (lowStock !== undefined && lowStock !== null) {
+            $('#metricLowStockCount').text(Number(lowStock).toLocaleString());
+        }
+
+        const pendingOrders = data.pendingOnlineOrdersCount ?? data.PendingOnlineOrdersCount;
+        if (pendingOrders !== undefined && pendingOrders !== null) {
+            $('#metricPendingOrdersCount').text(Number(pendingOrders).toLocaleString());
+        }
+
+        // 2. Sales Revenue Chart
+        const chartData = data.revenueChart ?? data.RevenueChart;
+        if (chartData) {
+            chartDataRaw = chartData;
+            updateChartDisplay();
+        }
+
+        // 3. Top Sellers Chart
+        const topSellersData = data.topSellers ?? data.TopSellers;
+        if (topSellersData) {
+            topSellersRaw = topSellersData;
+            renderTopSellersChart(currentTopSellersPeriod);
+        }
+
+        // 4. Recent Orders Table (Prepend latest order if present)
+        const latest = data.latestOrder ?? data.LatestOrder;
+        if (latest && latest.orderId) {
+            const orderId = latest.orderId;
+            const existingRow = document.getElementById('recentOrderRow_' + orderId);
+            const emptyRow = document.getElementById('recentOrdersEmptyRow');
+            if (emptyRow) emptyRow.remove();
+
+            const orderCode = latest.orderCode || ('C' + orderId);
+            const dateStr = latest.dateFormatted || 'Just now';
+            const totalQty = latest.totalQuantity || 1;
+            const totalPrice = Number(latest.totalPrice || 0).toLocaleString();
+            const status = latest.status || 'Completed';
+            const statusBg = latest.statusBgColor || '#E7F3EA';
+            const statusText = latest.statusTextColor || '#15803D';
+            const statusDot = latest.statusDotColor || '#15803D';
+
+            const rowHtml = `
+                <tr id="recentOrderRow_${orderId}" class="hover:bg-[#FAF0FA]/60 transition-colors bg-[#FAF0FA]/40">
+                    <td class="py-3 px-4 font-bold text-[#9F54A6]">
+                        <a href="/Orders/OrderDetail/${orderId}" class="hover:underline">
+                            ${escapeHtml(orderCode)}
+                        </a>
+                    </td>
+                    <td class="py-3 px-4 text-[#18181B] font-medium">
+                        ${escapeHtml(dateStr)}
+                    </td>
+                    <td class="py-3 px-4 text-[#18181B] font-medium">
+                        ${totalQty}
+                    </td>
+                    <td class="py-3 px-4 font-extrabold text-[#18181B]">
+                        ${totalPrice}
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold" style="background-color: ${statusBg}; color: ${statusText};">
+                            <span class="w-1.5 h-1.5 rounded-full inline-block mr-1.5" style="background-color: ${statusDot};"></span>${escapeHtml(status)}
+                        </span>
+                    </td>
+                </tr>
+            `;
+
+            if (existingRow) {
+                $(existingRow).replaceWith(rowHtml);
+            } else {
+                $('#recentOrdersTbody').prepend(rowHtml);
+                const rows = $('#recentOrdersTbody tr');
+                if (rows.length > 5) {
+                    rows.slice(5).remove();
+                }
+            }
+        }
+    }
+
+    // Register listener for real-time SignalR updates dispatched by notification-hub.js
+    window.addEventListener('pos:dashboard-update', function(e) {
+        applyDashboardRealtimeUpdate(e.detail);
     });
 
     $(document).ready(function() {

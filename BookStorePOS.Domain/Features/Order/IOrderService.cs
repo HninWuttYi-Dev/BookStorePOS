@@ -17,4 +17,5 @@ public interface IOrderService
     Task<SalesRevenueChartResponseModel> GetSalesRevenueChartAsync(SalesRevenueChartRequestModel requestModel);
     Task<TopSellersResponseModel> GetTopSellersAsync(TopSellersRequestModel requestModel);
     Task<DashboardTopSellersResponseModel> GetDashboardTopSellersAsync(int limit = 5);
+    Task<DashboardRealtimeResponseModel> GetDashboardRealtimeSummaryAsync(int? latestOrderId = null);
 }

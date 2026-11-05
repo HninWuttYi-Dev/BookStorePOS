@@ -1123,6 +1123,105 @@ public class OrderService : IOrderService
         return list;
     }
 
+    public async Task<DashboardRealtimeResponseModel> GetDashboardRealtimeSummaryAsync(int? latestOrderId = null)
+    {
+        _logger.LogInformation("Get Dashboard Realtime Summary Async => Aggregating real-time summary data");
+        try
+        {
+            // 1. Order Summary (Revenue & Counts)
+            var summaryResp = await GetOrderSummaryAsync();
+            var summary = summaryResp.Data ?? new OrderSummaryModel();
+
+            // 2. Low stock count
+            int lowStockCount = await _db.TblBooks
+                .AsNoTracking()
+                .Where(b => !b.IsDeleted && b.TblBookEditions.Any(e => !e.IsDeleted && e.StockQuantity <= e.ReorderLevel))
+                .CountAsync();
+
+            // 3. Revenue Chart
+            var chartResp = await GetSalesRevenueChartAsync(new SalesRevenueChartRequestModel());
+            var chart = chartResp.Data ?? new SalesRevenueChartDataModel();
+
+            // 4. Top Sellers
+            var topSellersResp = await GetDashboardTopSellersAsync(5);
+            var topSellers = topSellersResp.Data ?? new DashboardTopSellersDataModel();
+
+            // 5. Latest Order (if requested)
+            RecentOrderItemModel? latestOrder = null;
+            if (latestOrderId.HasValue && latestOrderId.Value > 0)
+            {
+                var o = await _db.TblOrders
+                    .AsNoTracking()
+                    .Include(x => x.TblOrderItems)
+                    .FirstOrDefaultAsync(x => x.OrderId == latestOrderId.Value);
+
+                if (o != null)
+                {
+                    string orderCode = $"C{o.OrderDate:yyMMdd}{o.OrderId}";
+                    string timeStr = o.OrderDate.ToString("hh:mm tt");
+                    var today = DateTime.UtcNow.Date;
+                    string dateStr = o.OrderDate.Date == today 
+                        ? $"Today {timeStr}" 
+                        : (o.OrderDate.Date == today.AddDays(-1) ? $"Yesterday {timeStr}" : o.OrderDate.ToString("d/M/yyyy hh:mm tt"));
+
+                    string statusStr = ((OrderStatus)o.OrderStatus).ToString();
+                    var (bg, text, dot) = statusStr.ToLowerInvariant() switch
+                    {
+                        "completed" => ("#E7F3EA", "#15803D", "#15803D"),
+                        "pending" => ("#FEF3C7", "#B45309", "#B45309"),
+                        "cancelled" => ("#FEE2E2", "#B91C1C", "#B91C1C"),
+                        "processing" => ("#E0E7FF", "#4338CA", "#4338CA"),
+                        _ => ("#E7F3EA", "#15803D", "#15803D")
+                    };
+
+                    latestOrder = new RecentOrderItemModel
+                    {
+                        OrderId = o.OrderId,
+                        OrderCode = orderCode,
+                        DateFormatted = dateStr,
+                        TotalQuantity = o.TotalQuantity > 0 ? o.TotalQuantity : (o.TblOrderItems?.Sum(oi => oi.Quantity) ?? 1),
+                        TotalPrice = o.TotalPrice,
+                        Status = statusStr,
+                        StatusBgColor = bg,
+                        StatusTextColor = text,
+                        StatusDotColor = dot
+                    };
+                }
+            }
+
+            var model = new DashboardRealtimeSummaryModel
+            {
+                TodayRevenue = summary.todayTotalRevenue,
+                ThisMonthRevenue = summary.thisMonthTotalRevenue,
+                LowStockItemsCount = lowStockCount,
+                PendingOnlineOrdersCount = summary.pendingOnlineOrderCount,
+                TodayGrowthPercentage = summary.todayGrowthPercentage,
+                MonthGrowthPercentage = summary.monthGrowthPercentage,
+                RevenueChart = chart,
+                TopSellers = topSellers,
+                LatestOrder = latestOrder
+            };
+
+            return new DashboardRealtimeResponseModel
+            {
+                IsSuccess = true,
+                Type = EnumResType.Success,
+                Message = "Real-time dashboard summary aggregated successfully",
+                Data = model
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetDashboardRealtimeSummaryAsync => Exception occurred");
+            return new DashboardRealtimeResponseModel
+            {
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
+                Message = "Failed to aggregate real-time dashboard summary: " + ex.Message
+            };
+        }
+    }
+
     private static OrderModel MapToOrderModel(TblOrder item, List<OrderItemModel>? items = null)
     {
         var model = new OrderModel

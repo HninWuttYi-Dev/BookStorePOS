@@ -441,6 +441,15 @@
             }
         });
 
+        // Expose connection globally for pages that need it
+        window.posSignalRConnection = connection;
+
+        // Handle Realtime Dashboard Summary Updates (Push with Data pattern)
+        connection.on("ReceiveDashboardUpdateEvent", function (data) {
+            console.log("[NotificationHub] ReceiveDashboardUpdateEvent received:", data);
+            window.dispatchEvent(new CustomEvent('pos:dashboard-update', { detail: data }));
+        });
+
         // Connection state lifecycle
         connection.start()
             .then(function () {

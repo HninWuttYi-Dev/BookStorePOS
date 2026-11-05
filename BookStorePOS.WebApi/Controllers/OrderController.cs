@@ -139,6 +139,10 @@ public class OrderController : BaseController
     {
         _logger.LogInformation("Create Order Async => Creating POS order");
         var response = await _orderService.CreateOrder(requestModel);
+        if (response.IsSuccess && response.Data != null)
+        {
+            await BroadcastDashboardUpdateAsync(response.Data.OrderId);
+        }
         return ExecuteResult(response);
     }
 
@@ -252,6 +256,8 @@ public class OrderController : BaseController
                     };
                     await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notif);
                 }
+
+                await BroadcastDashboardUpdateAsync(response.Data.OrderId);
             }
 
             return ExecuteResult(response);
@@ -311,6 +317,8 @@ public class OrderController : BaseController
                     };
                     await _hubContext.Clients.Group($"User_{order.CustomerId.Value}").SendAsync("ReceiveNotification", notifCust);
                 }
+
+                await BroadcastDashboardUpdateAsync(response.Data.OrderId);
             }
 
             return ExecuteResult(response);
@@ -372,6 +380,8 @@ public class OrderController : BaseController
                     };
                     await _hubContext.Clients.Group($"User_{order.CustomerId.Value}").SendAsync("ReceiveNotification", notifCust);
                 }
+
+                await BroadcastDashboardUpdateAsync(response.Data.OrderId);
             }
 
             return ExecuteResult(response);
@@ -380,6 +390,23 @@ public class OrderController : BaseController
         {
             _logger.LogError(ex, "Reject Order Async => Exception occurred for order {OrderId}", id);
             return ExecuteResult(Result<OrderModel>.SystemError("Internal Server Error: " + ex.Message));
+        }
+    }
+
+    private async Task BroadcastDashboardUpdateAsync(int? latestOrderId = null)
+    {
+        try
+        {
+            var summaryResp = await _orderService.GetDashboardRealtimeSummaryAsync(latestOrderId);
+            if (summaryResp.IsSuccess && summaryResp.Data != null)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveDashboardUpdateEvent", summaryResp.Data);
+                _logger.LogInformation("BroadcastDashboardUpdateAsync => Real-time dashboard update dispatched to all clients");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "BroadcastDashboardUpdateAsync => Failed to broadcast real-time dashboard update");
         }
     }
 }
