@@ -203,7 +203,7 @@ public class OrderService : IOrderService
                 if (!editionLookup.TryGetValue(item.BookEditionId, out var edition))
                 {
                     return Result<OrderModel>.NotFound(
-                        $"Book Edition with ID {item.BookEditionId} not found or is deleted.");
+                        "One or more selected books are no longer available or have been removed.");
                 }
 
                 if (edition.StockQuantity < item.Quantity)
@@ -351,7 +351,7 @@ public class OrderService : IOrderService
                 if (!editionLookup.TryGetValue(item.BookEditionId, out var edition))
                 {
                     return Result<OrderModel>.NotFound(
-                        $"Book Edition with ID {item.BookEditionId} not found or is deleted.");
+                        "One or more selected books are no longer available or have been removed.");
                 }
 
                 if (edition.StockQuantity < item.Quantity)
@@ -551,7 +551,7 @@ public class OrderService : IOrderService
                 if (!item.BookEditionId.HasValue || !editionLookup.TryGetValue(item.BookEditionId.Value, out var edition))
                 {
                     await transaction.RollbackAsync();
-                    return Result<OrderModel>.NotFound($"Book Edition with ID {item.BookEditionId} not found or is deleted.");
+                    return Result<OrderModel>.NotFound("The requested book is no longer available or has been deleted.");
                 }
 
                 if (edition.StockQuantity < item.Quantity)
@@ -663,17 +663,17 @@ public class OrderService : IOrderService
                 .ToListAsync();
 
             var todayOrders = orders
-                .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow)
+                .Where(o => o.OrderDate >= today && o.OrderDate < tomorrow && o.OrderStatus == (byte)OrderStatus.Completed)
                 .ToList();
             var yesterdayOrders = orders
-                .Where(o => o.OrderDate >= yesterday && o.OrderDate < today)
+                .Where(o => o.OrderDate >= yesterday && o.OrderDate < today && o.OrderStatus == (byte)OrderStatus.Completed)
                 .ToList();
 
             var thisMonthOrders = orders
-                .Where(o => o.OrderDate >= thisMonth)
+                .Where(o => o.OrderDate >= thisMonth && o.OrderStatus == (byte)OrderStatus.Completed)
                 .ToList();
             var lastMonthOrders = orders
-                .Where(o => o.OrderDate >= lastMonthStart && o.OrderDate < lastMonthEnd)
+                .Where(o => o.OrderDate >= lastMonthStart && o.OrderDate < lastMonthEnd && o.OrderStatus == (byte)OrderStatus.Completed)
                 .ToList();
 
             var pendingOnlineCount = await _db.TblOrders
@@ -753,8 +753,11 @@ public class OrderService : IOrderService
                 query = query.Where(o => o.OrderDate < endDay);
             }
             var totalOrders = await query.CountAsync();
-            var totalRevenue = await query.SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
-            var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            var completedCount = await query.CountAsync(o => o.OrderStatus == (byte)OrderStatus.Completed);
+            var totalRevenue = await query
+                .Where(o => o.OrderStatus == (byte)OrderStatus.Completed)
+                .SumAsync(o => (decimal?)o.TotalPrice) ?? 0;
+            var averageOrderValue = completedCount > 0 ? totalRevenue / completedCount : 0;
             var summary = new OrderHistorySummaryModel
             {
                 TotalOrders = totalOrders,

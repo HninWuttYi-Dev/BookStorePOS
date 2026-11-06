@@ -59,6 +59,40 @@ public class BookController : BaseController
         }
     }
 
+    [HttpGet("trending")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetTrendingBooksAsync([FromQuery] int days = 7, [FromQuery] int limit = 6)
+    {
+        try
+        {
+            _logger.LogInformation("Get Trending Books Async => Days: {Days}, Limit: {Limit}", days, limit);
+            var response = await _bookService.GetTrendingBooksAsync(days, limit);
+            return ExecuteResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetTrendingBooksAsync => Exception occurred");
+            return ExecuteResult(Result<List<BookModel>>.SystemError("Internal Server Error: " + ex.Message));
+        }
+    }
+
+    [HttpGet("bestsellers")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBestsellerBooksAsync([FromQuery] int days = 30, [FromQuery] int limit = 8)
+    {
+        try
+        {
+            _logger.LogInformation("Get Bestseller Books Async => Days: {Days}, Limit: {Limit}", days, limit);
+            var response = await _bookService.GetBestsellerBooksAsync(days, limit);
+            return ExecuteResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetBestsellerBooksAsync => Exception occurred");
+            return ExecuteResult(Result<List<BookModel>>.SystemError("Internal Server Error: " + ex.Message));
+        }
+    }
+
     [HttpGet("low-stock")]
     [Permission("Book.View")]
     public async Task<IActionResult> GetLowStockBooksAsync()

@@ -1,5 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
+using BookStorePOS.CustomerApp.Models;
+using BookStorePOS.Shared.Models.Book;
+using BookStorePOS.Shared.Models.Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace BookStorePOS.CustomerApp.Controllers
 {
@@ -14,25 +22,57 @@ namespace BookStorePOS.CustomerApp.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(int page = 1, string search = "")
+        public async Task<IActionResult> Index()
         {
-        try
-        {
+            try
+            {
                 var client = _httpClientFactory.CreateClient("WebAPI");
-                var qs = $"?Page={page}&Limit=12&Title={Uri.EscapeDataString(search ?? "")}";
-                var httpResponse = await client.GetAsync($"api/book{qs}");
-                var jsonString = await httpResponse.Content.ReadAsStringAsync();
-                var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
-            
-                return View(response ?? new BookListResponseModel());
-        
+
+                // Request trending books (last 7 days, top 3 for 3D fan stack) and bestsellers (last 30 days, top 4 for shelf grid)
+                var trendingTask = client.GetAsync("api/book/trending?days=7&limit=3");
+                var bestsellersTask = client.GetAsync("api/book/bestsellers?days=30&limit=4");
+
+                await Task.WhenAll(trendingTask, bestsellersTask);
+
+                var trendingResp = await trendingTask;
+                var bestsellersResp = await bestsellersTask;
+
+                List<BookModel> trendingBooks = new();
+                if (trendingResp.IsSuccessStatusCode)
+                {
+                    var trendingJson = await trendingResp.Content.ReadAsStringAsync();
+                    var trendingResult = JsonConvert.DeserializeObject<Result<List<BookModel>>>(trendingJson);
+                    if (trendingResult?.Data != null)
+                    {
+                        trendingBooks = trendingResult.Data;
+                    }
+                }
+
+                List<BookModel> bestsellerBooks = new();
+                if (bestsellersResp.IsSuccessStatusCode)
+                {
+                    var bestsellersJson = await bestsellersResp.Content.ReadAsStringAsync();
+                    var bestsellersResult = JsonConvert.DeserializeObject<Result<List<BookModel>>>(bestsellersJson);
+                    if (bestsellersResult?.Data != null)
+                    {
+                        bestsellerBooks = bestsellersResult.Data;
+                    }
+                }
+
+                var viewModel = new HomeViewModel
+                {
+                    TrendingBooks = trendingBooks,
+                    BestsellerBooks = bestsellerBooks
+                };
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Index => Exception occurred");
+                return View(new HomeViewModel());
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Index => Exception occurred");
-            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
-    }
 
         [ActionName("NotFound")]
         public IActionResult PageNotFound()

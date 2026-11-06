@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BookStorePOS.Database.AppDbContextModels;
 using BookStorePOS.Shared.Models.Book;
 using BookStorePOS.Shared.Models.Common;
+using BookStorePOS.Shared.Models.Order;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -1023,5 +1024,203 @@ public class BookService : IBookService
             _logger.LogWarning("Delete Book Edition Async => Failed to delete book edition {Message}", ex.Message);
             return Result<BookEditionModel>.SystemError("Failed to delete book edition: " + ex.Message);
         }
+    }
+
+    public async Task<Result<List<BookModel>>> GetTrendingBooksAsync(int days = 7, int limit = 6)
+    {
+        try
+        {
+            if (days <= 0) days = 7;
+            if (limit <= 0) limit = 6;
+
+            var startDate = DateTime.Now.AddDays(-days);
+
+            // 1. Group completed order items in the last N days by BookId
+            var topSoldBooks = await _db.TblOrderItems
+                .AsNoTracking()
+                .Where(oi => oi.BookEdition != null
+                          && oi.BookEdition.Book != null
+                          && !oi.BookEdition.Book.IsDeleted
+                          && oi.Order != null
+                          && oi.Order.OrderStatus == (byte)OrderStatus.Completed
+                          && oi.Order.OrderDate >= startDate)
+                .GroupBy(oi => oi.BookEdition!.BookId)
+                .Select(g => new
+                {
+                    BookId = g.Key,
+                    TotalSold = g.Sum(oi => oi.Quantity)
+                })
+                .OrderByDescending(x => x.TotalSold)
+                .Take(limit)
+                .ToListAsync();
+
+            var topBookIds = topSoldBooks.Select(x => x.BookId).ToList();
+
+            // 2. Fetch full book details for these top sellers
+            var booksDict = await _db.TblBooks
+                .AsNoTracking()
+                .Include(b => b.Author)
+                .Include(b => b.Genre)
+                .Include(b => b.TblBookEditions.Where(e => !e.IsDeleted))
+                    .ThenInclude(e => e.Edition)
+                .Where(b => topBookIds.Contains(b.BookId) && !b.IsDeleted)
+                .ToDictionaryAsync(b => b.BookId);
+
+            var resultList = new List<BookModel>();
+            foreach (var id in topBookIds)
+            {
+                if (booksDict.TryGetValue(id, out var tblBook))
+                {
+                    resultList.Add(MapToBookModel(tblBook));
+                }
+            }
+
+            // 3. Fallback / Backfill if sales are fewer than limit
+            if (resultList.Count < limit)
+            {
+                var alreadyIds = resultList.Select(b => b.BookId).ToList();
+                var fallbackBooks = await _db.TblBooks
+                    .AsNoTracking()
+                    .Include(b => b.Author)
+                    .Include(b => b.Genre)
+                    .Include(b => b.TblBookEditions.Where(e => !e.IsDeleted))
+                        .ThenInclude(e => e.Edition)
+                    .Where(b => !b.IsDeleted 
+                             && !alreadyIds.Contains(b.BookId)
+                             && b.TblBookEditions.Any(e => !e.IsDeleted))
+                    .OrderByDescending(b => b.BookId)
+                    .Take(limit - resultList.Count)
+                    .ToListAsync();
+
+                foreach (var fb in fallbackBooks)
+                {
+                    resultList.Add(MapToBookModel(fb));
+                }
+            }
+
+            return Result<List<BookModel>>.Success(resultList, "Trending books fetched successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetTrendingBooksAsync => Exception occurred");
+            return Result<List<BookModel>>.SystemError("Failed to fetch trending books: " + ex.Message);
+        }
+    }
+
+    public async Task<Result<List<BookModel>>> GetBestsellerBooksAsync(int days = 30, int limit = 8)
+    {
+        try
+        {
+            if (limit <= 0) limit = 8;
+
+            IQueryable<TblOrderItem> query = _db.TblOrderItems
+                .AsNoTracking()
+                .Where(oi => oi.BookEdition != null
+                          && oi.BookEdition.Book != null
+                          && !oi.BookEdition.Book.IsDeleted
+                          && oi.Order != null
+                          && oi.Order.OrderStatus == (byte)OrderStatus.Completed);
+
+            if (days > 0)
+            {
+                var startDate = DateTime.Now.AddDays(-days);
+                query = query.Where(oi => oi.Order.OrderDate >= startDate);
+            }
+
+            var topSoldBooks = await query
+                .GroupBy(oi => oi.BookEdition!.BookId)
+                .Select(g => new
+                {
+                    BookId = g.Key,
+                    TotalSold = g.Sum(oi => oi.Quantity)
+                })
+                .OrderByDescending(x => x.TotalSold)
+                .Take(limit)
+                .ToListAsync();
+
+            var topBookIds = topSoldBooks.Select(x => x.BookId).ToList();
+
+            var booksDict = await _db.TblBooks
+                .AsNoTracking()
+                .Include(b => b.Author)
+                .Include(b => b.Genre)
+                .Include(b => b.TblBookEditions.Where(e => !e.IsDeleted))
+                    .ThenInclude(e => e.Edition)
+                .Where(b => topBookIds.Contains(b.BookId) && !b.IsDeleted)
+                .ToDictionaryAsync(b => b.BookId);
+
+            var resultList = new List<BookModel>();
+            foreach (var id in topBookIds)
+            {
+                if (booksDict.TryGetValue(id, out var tblBook))
+                {
+                    resultList.Add(MapToBookModel(tblBook));
+                }
+            }
+
+            // Fallback / Backfill if sales are fewer than limit
+            if (resultList.Count < limit)
+            {
+                var alreadyIds = resultList.Select(b => b.BookId).ToList();
+                var fallbackBooks = await _db.TblBooks
+                    .AsNoTracking()
+                    .Include(b => b.Author)
+                    .Include(b => b.Genre)
+                    .Include(b => b.TblBookEditions.Where(e => !e.IsDeleted))
+                        .ThenInclude(e => e.Edition)
+                    .Where(b => !b.IsDeleted 
+                             && !alreadyIds.Contains(b.BookId)
+                             && b.TblBookEditions.Any(e => !e.IsDeleted))
+                    .OrderByDescending(b => b.BookId)
+                    .Take(limit - resultList.Count)
+                    .ToListAsync();
+
+                foreach (var fb in fallbackBooks)
+                {
+                    resultList.Add(MapToBookModel(fb));
+                }
+            }
+
+            return Result<List<BookModel>>.Success(resultList, "Bestseller books fetched successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetBestsellerBooksAsync => Exception occurred");
+            return Result<List<BookModel>>.SystemError("Failed to fetch bestseller books: " + ex.Message);
+        }
+    }
+
+    private static BookModel MapToBookModel(TblBook item)
+    {
+        return new BookModel
+        {
+            BookId = item.BookId,
+            Title = item.Title,
+            Author = item.Author?.AuthorName,
+            AuthorId = item.AuthorId,
+            Genre = item.Genre?.GenreName,
+            GenreId = item.GenreId,
+            Description = item.Description,
+            IsDeleted = item.IsDeleted,
+            StartingPrice = item.TblBookEditions.Any(e => !e.IsDeleted) ? item.TblBookEditions.Where(e => !e.IsDeleted).Min(e => e.Price) : 0,
+            TotalStockQuantity = item.TblBookEditions.Where(e => !e.IsDeleted).Sum(e => e.StockQuantity),
+            Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel
+            {
+                BookEditionId = e.BookEditionId,
+                BookId = e.BookId,
+                EditionId = e.EditionId,
+                EditionName = e.Edition?.EditionName ?? "Unknown Edition",
+                Isbn = e.Isbn,
+                Price = e.Price,
+                StockQuantity = e.StockQuantity,
+                EditionNote = e.EditionNote,
+                PublishDate = e.PublishDate,
+                PageCount = e.PageCount,
+                ReorderLevel = e.ReorderLevel,
+                CoverImageUrl = e.CoverImageUrl,
+                Publisher = e.Publisher,
+                IsDeleted = e.IsDeleted
+            }).ToList()
+        };
     }
 }

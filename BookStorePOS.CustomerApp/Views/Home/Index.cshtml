@@ -1,14 +1,9 @@
-@model BookListResponseModel
+@model HomeViewModel
 @{
     ViewData["Title"] = "Home";
 
-    var allBooks = Model?.Data ?? new List<BookModel>();
-    var trendingBooks = allBooks.Take(3).ToList();
-    var bestsellerBooks = allBooks.Skip(3).Take(4).ToList();
-    if (!bestsellerBooks.Any() && allBooks.Any())
-    {
-        bestsellerBooks = allBooks.Take(4).ToList();
-    }
+    var trendingBooks = Model?.TrendingBooks ?? new List<BookModel>();
+    var bestsellerBooks = Model?.BestsellerBooks ?? new List<BookModel>();
 }
 
 <!-- 1. Hero Section: Editorial Literary Spread & Botanical Open Book with Quote -->

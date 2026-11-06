@@ -11,6 +11,8 @@ public interface IBookService
     Task<Result<BookModel>> GetBookAsync(BookByIdRequestModel requestModel);
     Task<BookListResponseModel> GetBooksAsync(BookListRequestModel requestModel);
     Task<BookCursorResponseModel> GetBooksCursorAsync(BookCursorRequestModel requestModel);
+    Task<Result<List<BookModel>>> GetTrendingBooksAsync(int days = 7, int limit = 6);
+    Task<Result<List<BookModel>>> GetBestsellerBooksAsync(int days = 30, int limit = 8);
     Task<BookListResponseModel> GetLowStockBooksAsync();
     Task<Result<BookModel>> UpdateBookAsync(BookPatchRequestModel requestModel);
     Task<Result<BookEditionModel>> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel);

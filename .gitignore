@@ -11,3 +11,7 @@ Thumbs.db
 appsettings.Development.json
 **/appsettings.Development.json
 secrets.json
+
+# Ignore runtime user uploads
+**/wwwroot/uploads/**
+**/uploads/**

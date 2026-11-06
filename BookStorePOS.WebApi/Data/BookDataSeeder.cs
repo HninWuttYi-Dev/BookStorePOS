@@ -1955,6 +1955,13 @@ public static class BookDataSeeder
 
             logger.LogInformation("BookDataSeeder => Seeding complete 112 inventory book editions...");
 
+            // 0. Cache existing custom/uploaded cover images before soft-deleting
+            var existingCovers = await db.TblBookEditions
+                .Include(e => e.Book)
+                .Where(e => !string.IsNullOrEmpty(e.CoverImageUrl))
+                .GroupBy(e => e.Book.Title)
+                .ToDictionaryAsync(g => g.Key, g => g.OrderByDescending(e => e.BookEditionId).First().CoverImageUrl);
+
             // 1. Soft-delete all existing books and book editions
             var existingBooks = await db.TblBooks.Where(b => !b.IsDeleted).ToListAsync();
             foreach (var b in existingBooks)
@@ -2055,6 +2062,16 @@ public static class BookDataSeeder
                     await db.SaveChangesAsync();
                 }
 
+                // Preserve custom/uploaded cover if available
+                string coverUrl = item.CoverImageUrl;
+                if (existingCovers.TryGetValue(item.Title, out var preservedCover) && !string.IsNullOrWhiteSpace(preservedCover))
+                {
+                    if (string.IsNullOrWhiteSpace(coverUrl) || preservedCover.StartsWith("/uploads/") || preservedCover.Contains("/uploads/"))
+                    {
+                        coverUrl = preservedCover;
+                    }
+                }
+
                 // 4. Create Book Edition
                 var bookEdition = new TblBookEdition
                 {
@@ -2068,7 +2085,7 @@ public static class BookDataSeeder
                     PageCount = item.PageCount,
                     Publisher = item.Publisher,
                     EditionNote = item.EditionNotes,
-                    CoverImageUrl = item.CoverImageUrl,
+                    CoverImageUrl = coverUrl,
                     IsDeleted = false,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
