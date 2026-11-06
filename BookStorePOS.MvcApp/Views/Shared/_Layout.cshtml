@@ -90,16 +90,99 @@
             transform: scale(1.12);
         }
         /* Flatpickr Pastel Purple Theme Overrides */
+        .flatpickr-calendar {
+            border-radius: 1rem !important;
+            border: 1px solid #F3E2F6 !important;
+            box-shadow: 0 10px 25px -5px rgba(159, 84, 166, 0.15), 0 8px 10px -6px rgba(159, 84, 166, 0.1) !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            padding: 0.5rem !important;
+            background: #ffffff !important;
+        }
+        .flatpickr-calendar.arrowTop:before, .flatpickr-calendar.arrowTop:after {
+            border-bottom-color: #ffffff !important;
+        }
+        .flatpickr-calendar.arrowBottom:before, .flatpickr-calendar.arrowBottom:after {
+            border-top-color: #ffffff !important;
+        }
+        .flatpickr-months {
+            padding: 4px 0 !important;
+        }
+        .flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month {
+            color: #9F54A6 !important;
+            fill: #9F54A6 !important;
+            padding: 4px 8px !important;
+            border-radius: 8px !important;
+        }
+        .flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover {
+            background: #FAF0FA !important;
+            color: #8E4495 !important;
+            fill: #8E4495 !important;
+        }
+        .flatpickr-current-month {
+            color: #18181B !important;
+            font-weight: 700 !important;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months {
+            font-weight: 700 !important;
+            color: #18181B !important;
+            background: transparent !important;
+        }
+        .flatpickr-current-month input.cur-year {
+            font-weight: 700 !important;
+            color: #18181B !important;
+        }
+        span.flatpickr-weekday {
+            color: #9F54A6 !important;
+            font-weight: 600 !important;
+            font-size: 0.75rem !important;
+        }
+        .flatpickr-day {
+            border-radius: 8px !important;
+            color: #334155 !important;
+            font-weight: 500 !important;
+            border: 1px solid transparent !important;
+        }
+        .flatpickr-day:hover {
+            background: #FAF0FA !important;
+            border-color: #F3E2F6 !important;
+            color: #9F54A6 !important;
+        }
         .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected:focus, .flatpickr-day.selected:hover {
             background: #9F54A6 !important;
             border-color: #9F54A6 !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
         }
         .flatpickr-day.today {
             border-color: #9F54A6 !important;
+            color: #9F54A6 !important;
+            font-weight: 700 !important;
+        }
+        .flatpickr-day.today:hover {
+            background: #FAF0FA !important;
+            color: #9F54A6 !important;
         }
         .flatpickr-day.flatpickr-disabled, .flatpickr-day.flatpickr-disabled:hover {
             color: rgba(57,57,57,0.25) !important;
             cursor: not-allowed !important;
+            background: transparent !important;
+            border-color: transparent !important;
+            pointer-events: none !important;
+            opacity: 0.35 !important;
+        }
+
+        /* Native input[type="date"] calendar picker indicator purple tint for all date inputs */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.75;
+            filter: invert(41%) sepia(35%) saturate(1212%) hue-rotate(256deg) brightness(92%) contrast(88%);
+            transition: opacity 0.2s;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+        input[type="date"] {
+            accent-color: #9F54A6 !important;
         }
         /* Ensure number input spin buttons (up/down stepper arrows) are always visible without focus or hover */
         input[type="number"]::-webkit-inner-spin-button,
@@ -187,6 +270,14 @@
                 <a href="/Edition" data-permission="Edition.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Edition")">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     Editions
+                </a>
+            </div>
+
+            <div class="nav-section-insights">
+                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">INSIGHTS</div>
+                <a href="/SalesReports" data-permission="Order.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("SalesReports")">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Sales Reports
                 </a>
             </div>
 
@@ -699,6 +790,47 @@
     <!-- SignalR Realtime Client & Notification Hub -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script src="~/js/notification-hub.js" asp-append-version="true"></script>
+
+    <!-- Global Flatpickr Date Picker Initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof flatpickr === 'function') {
+                const commonConfig = {
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "d/m/Y",
+                    maxDate: "today",
+                    disableMobile: true
+                };
+
+                const endPicker = flatpickr('#endDate.datepicker-input', {
+                    ...commonConfig,
+                    altInputClass: "w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9F54A6]/30 focus:border-[#9F54A6] transition-all bg-white cursor-pointer"
+                });
+
+                const startPicker = flatpickr('#startDate.datepicker-input', {
+                    ...commonConfig,
+                    altInputClass: "w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9F54A6]/30 focus:border-[#9F54A6] transition-all bg-white cursor-pointer",
+                    onChange: function(selectedDates, dateStr) {
+                        if (endPicker && dateStr) {
+                            endPicker.set('minDate', dateStr);
+                        }
+                    }
+                });
+
+                const initialStartVal = document.getElementById('startDate')?.value;
+                if (initialStartVal && endPicker) {
+                    endPicker.set('minDate', initialStartVal);
+                }
+
+                // Generic datepicker inputs without specific ID
+                flatpickr('.datepicker-input:not(#startDate):not(#endDate)', {
+                    ...commonConfig,
+                    altInputClass: "w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9F54A6]/30 focus:border-[#9F54A6] transition-all bg-white cursor-pointer"
+                });
+            }
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

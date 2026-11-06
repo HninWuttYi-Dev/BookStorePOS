@@ -34,6 +34,7 @@ namespace BookStorePOS.MvcApp.Controllers
                 var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}";
                 if (requestModel.StartDate.HasValue) qs += $"&StartDate={requestModel.StartDate.Value:yyyy-MM-dd}";
                 if (requestModel.EndDate.HasValue) qs += $"&EndDate={requestModel.EndDate.Value:yyyy-MM-dd}";
+                if (!string.IsNullOrWhiteSpace(requestModel.OrderSource)) qs += $"&OrderSource={Uri.EscapeDataString(requestModel.OrderSource)}";
 
                 var httpResponse = await client.GetAsync($"api/order/history{qs}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
@@ -47,6 +48,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     ViewData["CurrentPage"] = response.Data.Page;
                     ViewData["StartDate"] = requestModel.StartDate?.ToString("yyyy-MM-dd");
                     ViewData["EndDate"] = requestModel.EndDate?.ToString("yyyy-MM-dd");
+                    ViewData["SelectedSource"] = string.IsNullOrWhiteSpace(requestModel.OrderSource) ? "All" : requestModel.OrderSource;
                     _logger.LogInformation("Orders Async => Order history fetched successfully");
                 }
                 else

@@ -37,6 +37,15 @@ public class OrderService : IOrderService
             {
                 sourceQuery = sourceQuery.Where(o => o.CustomerId == requestModel.CustomerId.Value);
             }
+            if (requestModel.StartDate.HasValue)
+            {
+                sourceQuery = sourceQuery.Where(o => o.OrderDate >= requestModel.StartDate.Value.Date);
+            }
+            if (requestModel.EndDate.HasValue)
+            {
+                var endDay = requestModel.EndDate.Value.Date.AddDays(1);
+                sourceQuery = sourceQuery.Where(o => o.OrderDate < endDay);
+            }
 
             // Summary metrics calculated directly from database
             var pendingCount = await sourceQuery.CountAsync(o => o.OrderStatus == (byte)OrderStatus.Pending);
@@ -751,6 +760,21 @@ public class OrderService : IOrderService
             {
                 var endDay = requestModel.EndDate.Value.AddDays(1);
                 query = query.Where(o => o.OrderDate < endDay);
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.OrderSource) && !string.Equals(requestModel.OrderSource, "All", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.Equals(requestModel.OrderSource, "POS", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(o => o.OrderSource == "POS" || string.IsNullOrEmpty(o.OrderSource));
+                }
+                else if (string.Equals(requestModel.OrderSource, "Online", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = query.Where(o => o.OrderSource == "Online");
+                }
+                else
+                {
+                    query = query.Where(o => o.OrderSource == requestModel.OrderSource);
+                }
             }
             var totalOrders = await query.CountAsync();
             var completedCount = await query.CountAsync(o => o.OrderStatus == (byte)OrderStatus.Completed);

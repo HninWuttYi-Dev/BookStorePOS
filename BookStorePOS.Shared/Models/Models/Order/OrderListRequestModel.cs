@@ -12,6 +12,8 @@ public class OrderListRequestModel
     public PaymentStatus? PaymentStatus { get; set; }
     public string? Search { get; set; }
     public int? CustomerId { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
     public int? Page { get; set; }
     public int? Limit { get; set; }
 }

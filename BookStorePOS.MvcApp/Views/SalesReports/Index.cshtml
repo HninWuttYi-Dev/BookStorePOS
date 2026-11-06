@@ -1,0 +1,284 @@
+@using BookStorePOS.Shared.Models.Order
+@{
+    ViewData["Title"] = "Sales Reports";
+
+    var orders = ViewData["Orders"] as List<OrderModel> ?? new List<OrderModel>();
+    var totalCount = (int)(ViewData["TotalCount"] ?? 0);
+    var totalRevenue = (decimal)(ViewData["TotalRevenue"] ?? 0m);
+    var avgOrderValue = (decimal)(ViewData["AverageOrderValue"] ?? 0m);
+    var currentPage = (int)(ViewData["CurrentPage"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var selectedSource = (string)(ViewData["SelectedSource"] ?? "All");
+    var startDate = (string)(ViewData["StartDate"] ?? "");
+    var endDate = (string)(ViewData["EndDate"] ?? "");
+    var maxDate = DateTime.Now.ToString("yyyy-MM-dd");
+
+    int rowNo = (currentPage - 1) * 10;
+
+    string FormatOrderNo(int id, DateTime? date)
+    {
+        var d = date ?? DateTime.Now;
+        return $"C{d.ToString("yyMMdd")}{id.ToString("0000")}";
+    }
+
+    string FormatOrderDateOnly(DateTime? date)
+    {
+        if (!date.HasValue) return "-";
+        var d = date.Value;
+        if (d.Date == DateTime.Today) return "Today";
+        if (d.Date == DateTime.Today.AddDays(-1)) return "Yesterday";
+        return d.ToString("d/M/yyyy");
+    }
+
+    string FormatOrderTimeOnly(DateTime? date)
+    {
+        if (!date.HasValue) return "-";
+        return date.Value.ToString("hh:mm tt");
+    }
+
+    string FormatDateTime(DateTime? date)
+    {
+        if (!date.HasValue) return "-";
+        return $"{FormatOrderDateOnly(date)}, {FormatOrderTimeOnly(date)}";
+    }
+}
+
+<style>
+    /* Align native calendar picker indicator with primary #9F54A6 purple theme */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.7;
+        filter: invert(41%) sepia(35%) saturate(1212%) hue-rotate(256deg) brightness(92%) contrast(88%);
+        transition: opacity 0.2s;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
+</style>
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Sales Reports</h1>
+    <p class="text-slate-500 mt-2 text-sm font-medium">View and audit all completed sales transactions across POS and Online store</p>
+</div>
+
+<!-- Summary KPI Cards (Exact match with Orders layout) -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
+        <span class="text-sm font-semibold text-slate-500 mb-2">Completed Orders</span>
+        <span class="text-3xl font-bold text-slate-900">@totalCount.ToString("#,##0")</span>
+    </div>
+    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
+        <span class="text-sm font-semibold text-slate-500 mb-2">Total Revenue</span>
+        <span class="text-3xl font-bold text-teal-700">@totalRevenue.ToString("#,##0") <span class="text-sm font-bold ml-1 text-teal-600">MMK</span></span>
+    </div>
+    <div class="bg-white rounded-2xl p-6 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] flex flex-col transition-all hover:-translate-y-1 hover:shadow-lg">
+        <span class="text-sm font-semibold text-slate-500 mb-2">Average Order Value</span>
+        <span class="text-3xl font-bold text-slate-900">@avgOrderValue.ToString("#,##0") <span class="text-sm font-bold ml-1 text-slate-500">MMK</span></span>
+    </div>
+</div>
+
+<!-- Filter Bar Card -->
+<form method="get" action="/SalesReports" class="mb-6 w-full flex flex-col lg:flex-row lg:items-end justify-between gap-4 bg-white p-5 rounded-2xl border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]">
+    
+    <!-- Channel Filter Pills -->
+    <div class="flex flex-col">
+        <label class="text-xs font-semibold text-slate-500 mb-1.5 ml-1">Channel</label>
+        <div class="inline-flex p-1 bg-slate-100/80 rounded-xl border border-slate-200/60">
+            <a href="/SalesReports?source=All&startDate=@startDate&endDate=@endDate" 
+               class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all @(selectedSource == "All" ? "bg-[#9F54A6] text-white shadow-xs" : "text-slate-600 hover:text-[#9F54A6]")">
+                All Channels
+            </a>
+            <a href="/SalesReports?source=POS&startDate=@startDate&endDate=@endDate" 
+               class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all @(selectedSource == "POS" ? "bg-[#9F54A6] text-white shadow-xs" : "text-slate-600 hover:text-[#9F54A6]")">
+                POS Store
+            </a>
+            <a href="/SalesReports?source=Online&startDate=@startDate&endDate=@endDate" 
+               class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all @(selectedSource == "Online" ? "bg-[#9F54A6] text-white shadow-xs" : "text-slate-600 hover:text-[#9F54A6]")">
+                Online Orders
+            </a>
+        </div>
+        <input type="hidden" name="source" value="@selectedSource" />
+    </div>
+
+    <!-- Date Range Picker (Styled with UI Primary Color) -->
+    <div class="flex flex-col sm:flex-row items-end gap-3 flex-1 lg:max-w-2xl">
+        <div class="flex flex-col flex-1 w-full">
+            <label for="startDate" class="text-xs font-semibold text-slate-500 mb-1.5 ml-1">Start Date</label>
+            <div class="relative w-full">
+                <input type="text" id="startDate" name="startDate" value="@startDate" max="@maxDate" placeholder="dd/mm/yyyy" class="datepicker-input px-4 py-2 pr-10 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9F54A6]/30 focus:border-[#9F54A6] transition-all w-full bg-white cursor-pointer" autocomplete="off" />
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[#9F54A6]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col flex-1 w-full">
+            <label for="endDate" class="text-xs font-semibold text-slate-500 mb-1.5 ml-1">End Date</label>
+            <div class="relative w-full">
+                <input type="text" id="endDate" name="endDate" value="@endDate" max="@maxDate" placeholder="dd/mm/yyyy" class="datepicker-input px-4 py-2 pr-10 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9F54A6]/30 focus:border-[#9F54A6] transition-all w-full bg-white cursor-pointer" autocomplete="off" />
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[#9F54A6]">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+            <button type="submit" class="flex-1 sm:flex-none px-6 py-2 bg-[#9F54A6] hover:bg-[#8E4495] text-white rounded-xl text-sm font-semibold transition-colors shadow-sm cursor-pointer">
+                Filter
+            </button>
+            <a href="/SalesReports" class="flex-1 sm:flex-none px-6 py-2 bg-[#9F54A6] hover:bg-[#8E4495] text-white rounded-xl text-sm font-semibold transition-colors shadow-sm text-center">
+                Clear
+            </a>
+        </div>
+    </div>
+</form>
+
+<!-- Data Table Card (All columns LEFT-ALIGNED, matching Orders font typography) -->
+<div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] overflow-hidden flex flex-col">
+    <div class="overflow-x-auto p-2">
+        <table class="w-full text-left text-sm">
+            <thead class="text-slate-500 bg-slate-50/50 rounded-lg">
+                <tr>
+                    <th class="px-4 py-3 font-semibold w-16 text-left">No.</th>
+                    <th class="px-4 py-3 font-semibold text-left">Order ID</th>
+                    <th class="px-4 py-3 font-semibold text-left">Amount</th>
+                    <th class="px-4 py-3 font-semibold text-left">Transaction Time</th>
+                    <th class="px-4 py-3 font-semibold text-left">Channel</th>
+                    <th class="px-4 py-3 font-semibold text-left w-28">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="text-slate-700">
+                @if (orders == null || !orders.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="px-4 py-12 text-center text-slate-500 font-medium">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <div class="w-12 h-12 rounded-full bg-[#FAF0FA] text-[#9F54A6] flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <span class="text-sm font-semibold text-slate-700">No completed orders found</span>
+                                <span class="text-xs text-slate-400">Try adjusting your date filters or channel selection</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var order in orders)
+                    {
+                        var orderCode = FormatOrderNo(order.OrderId, order.OrderDate);
+                        var isOnline = order.OrderSource == "Online";
+
+                        <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0">
+                            <!-- No. (Left-aligned) -->
+                            <td class="px-4 py-4 font-medium text-slate-500 text-left">
+                                @(++rowNo)
+                            </td>
+
+                            <!-- Order ID (Left-aligned, standard font matching Orders, not font-mono) -->
+                            <td class="px-4 py-4 font-semibold text-teal-700 group-hover:text-teal-800 text-left">
+                                <a href="/Orders/OrderDetail/@order.OrderId" class="hover:underline">
+                                    @orderCode
+                                </a>
+                            </td>
+
+                            <!-- Amount (Left-aligned, standard font-semibold matching Orders) -->
+                            <td class="px-4 py-4 font-semibold text-slate-900 text-left">
+                                @order.TotalPrice.ToString("#,##0") <span class="text-xs font-medium text-slate-500">MMK</span>
+                            </td>
+
+                            <!-- Transaction Time (Left-aligned) -->
+                            <td class="px-4 py-4 text-slate-600 font-medium text-left">
+                                @FormatDateTime(order.OrderDate)
+                            </td>
+
+                            <!-- Channel (Left-aligned) -->
+                            <td class="px-4 py-4 text-left">
+                                @if (isOnline)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-1.5"></span>
+                                        Online
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-[#9F54A6] border border-[#F3E2F6]">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-[#9F54A6] mr-1.5"></span>
+                                        POS Store
+                                    </span>
+                                }
+                            </td>
+
+                            <!-- Actions (Left-aligned, eye icon) -->
+                            <td class="px-4 py-4 text-left">
+                                <a href="/Orders/OrderDetail/@order.OrderId" 
+                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#FAF0FA] text-slate-600 hover:text-[#9F54A6] border border-[#F3E2F6] hover:border-[#9F54A6]/40 text-xs font-semibold transition-all shadow-2xs group/btn" 
+                                   title="View Order Details">
+                                    <!-- Eye Icon -->
+                                    <svg class="w-4 h-4 text-slate-500 group-hover/btn:text-[#9F54A6] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <span>View</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination (Exact Match with Second Photo / Orders Page) -->
+    @if (totalPages > 1)
+    {
+        <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-center bg-slate-50/30">
+            <div class="inline-flex items-center gap-1 bg-white rounded-full p-1.5 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6]">
+                @if (currentPage > 1)
+                {
+                    <a href="/SalesReports?page=@(currentPage - 1)&source=@selectedSource&startDate=@startDate&endDate=@endDate" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors mr-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </a>
+                }
+                else
+                {
+                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-300 mr-1 cursor-not-allowed">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </span>
+                }
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    if (i == currentPage)
+                    {
+                        <span class="w-8 h-8 flex items-center justify-center rounded-full bg-teal-600 text-white text-sm font-semibold shadow-sm">@i</span>
+                    }
+                    else if (i == 1 || i == totalPages || Math.Abs(i - currentPage) <= 1)
+                    {
+                        <a href="/SalesReports?page=@i&source=@selectedSource&startDate=@startDate&endDate=@endDate" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 text-sm hover:bg-slate-100 font-medium transition-colors">@i</a>
+                    }
+                    else if (Math.Abs(i - currentPage) == 2)
+                    {
+                        <span class="w-8 h-8 flex items-center justify-center text-slate-400 tracking-widest">...</span>
+                    }
+                }
+
+                @if (currentPage < totalPages)
+                {
+                    <a href="/SalesReports?page=@(currentPage + 1)&source=@selectedSource&startDate=@startDate&endDate=@endDate" class="w-8 h-8 flex items-center justify-center rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors ml-1 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                }
+                else
+                {
+                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-teal-600/50 text-white/70 ml-1 cursor-not-allowed shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </span>
+                }
+            </div>
+        </div>
+    }
+</div>
