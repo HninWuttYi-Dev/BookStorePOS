@@ -216,26 +216,24 @@
                     : "";
                 string displayRole = !string.IsNullOrWhiteSpace(cookieRole) ? cookieRole : "Staff";
                 bool isAdmin = string.Equals(displayRole, "Admin", StringComparison.OrdinalIgnoreCase);
-                bool isCashier = string.Equals(displayRole, "Cashier", StringComparison.OrdinalIgnoreCase);
 
                 var userPerms = cookiePerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 bool HasPermission(string permission)
                 {
                     if (isAdmin) return true;
-                    if (isCashier && permission.Equals("Order.Create", StringComparison.OrdinalIgnoreCase)) return true;
                     return userPerms.Contains(permission, StringComparer.OrdinalIgnoreCase);
                 }
 
-                bool canViewDashboard = !isCashier && HasPermission("Dashboard.View");
+                bool canViewDashboard = HasPermission("Dashboard.View");
                 bool canCreateOrder = HasPermission("Order.Create");
-                bool canViewOrders = !isCashier && HasPermission("Order.View");
-                bool canViewOnlineOrders = !isCashier && (HasPermission("Order.View") || HasPermission("OnlineOrder.View"));
+                bool canViewOrders = HasPermission("Order.View");
+                bool canViewOnlineOrders = HasPermission("Order.View") || HasPermission("OnlineOrder.View");
                 bool showSalesSection = canCreateOrder || canViewOrders || canViewOnlineOrders;
 
-                bool canViewBooks = !isCashier && HasPermission("Book.View");
-                bool canViewAuthors = !isCashier && HasPermission("Author.View");
-                bool canViewGenres = !isCashier && HasPermission("Genre.View");
-                bool canViewEditions = !isCashier && HasPermission("Edition.View");
+                bool canViewBooks = HasPermission("Book.View");
+                bool canViewAuthors = HasPermission("Author.View");
+                bool canViewGenres = HasPermission("Genre.View");
+                bool canViewEditions = HasPermission("Edition.View");
                 bool showInventorySection = canViewBooks || canViewAuthors || canViewGenres || canViewEditions;
 
                 bool canViewSalesReports = isAdmin;
@@ -368,14 +366,6 @@
             }
 
             <div class="pt-2">
-                @if (!isAdmin && !isCashier)
-                {
-                    <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">SETTINGS</div>
-                    <a href="/Announcement" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Announcement")">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
-                        Broadcast Alerts
-                    </a>
-                }
                 <button type="button" onclick="window.openLogoutConfirmModal()" class="nav-item flex items-center w-full px-4 py-3 rounded-2xl transition-colors text-[#71717A] hover:bg-[#FAF0FA] hover:text-[#9F54A6] font-medium cursor-pointer">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -406,7 +396,7 @@
                 <span class="text-xl font-bold tracking-tight text-[#18181B]">POS <span class="text-[#9F54A6]">System</span></span>
             </div>
             <div class="flex items-center gap-2">
-                @if (!isCashier && currentController == "Dashboard")
+                @if (canViewDashboard && currentController == "Dashboard")
                 {
                     <!-- Mobile Notification Bell (Only on Dashboard) -->
                     <button type="button" onclick="window.openNotificationDrawer()" title="Notifications" class="pos-notif-bell relative p-2 rounded-xl text-[#71717A] hover:text-[#9F54A6] hover:bg-[#FAF0FA] transition-colors cursor-pointer">
@@ -891,7 +881,6 @@
             // Client-side DOM permission guard based on stored permissions
             try {
                 const role = (localStorage.getItem('pos_role') || '').toLowerCase();
-                const isCashier = role === 'cashier';
                 if (role !== 'admin') {
                     let perms = [];
                     const raw = localStorage.getItem('pos_permissions');
@@ -907,32 +896,27 @@
 
                     document.querySelectorAll('a[data-permission]').forEach(function(el) {
                         const req = (el.getAttribute('data-permission') || '').toLowerCase();
-                        if (isCashier) {
-                            if (req !== 'order.create') {
-                                el.style.display = 'none';
-                            }
-                        } else if (req && !permsLower.includes(req)) {
+                        if (req && !permsLower.includes(req)) {
                             el.style.display = 'none';
                         }
                     });
 
-                    if (role !== 'admin') {
-                        const srLink = document.querySelector('a[href="/SalesReports"]');
-                        if (srLink) srLink.style.display = 'none';
-                        const insSec = document.querySelector('.nav-section-insights');
-                        if (insSec) insSec.style.display = 'none';
-                    }
+                    const srLink = document.querySelector('a[href="/SalesReports"]');
+                    if (srLink) srLink.style.display = 'none';
+                    const insSec = document.querySelector('.nav-section-insights');
+                    if (insSec) insSec.style.display = 'none';
 
-                    if (isCashier) {
+                    if (!permsLower.includes('dashboard.view')) {
                         const dLink = document.querySelector('a[href="/Dashboard"]');
                         if (dLink) dLink.style.display = 'none';
-                        const bAlert = document.querySelector('a[href="/Announcement"]');
-                        if (bAlert) {
-                            bAlert.style.display = 'none';
-                            const setH = bAlert.previousElementSibling;
-                            if (setH && setH.textContent && setH.textContent.trim().toUpperCase() === 'SETTINGS') {
-                                setH.style.display = 'none';
-                            }
+                    }
+
+                    const bAlert = document.querySelector('a[href="/Announcement"]');
+                    if (bAlert) {
+                        bAlert.style.display = 'none';
+                        const setH = bAlert.previousElementSibling;
+                        if (setH && setH.textContent && setH.textContent.trim().toUpperCase() === 'SETTINGS') {
+                            setH.style.display = 'none';
                         }
                     }
 

@@ -22,7 +22,7 @@ public class AuthorController : BaseController
     }
 
     [HttpGet]
-    [AllowAnonymous]
+    [Permission("Author.View")]
     public async Task<IActionResult> GetAuthorsAsync([FromQuery] AuthorListRequestModel requestModel)
     {
         try
@@ -39,7 +39,7 @@ public class AuthorController : BaseController
     }
 
     [HttpGet("cursor")]
-    [AllowAnonymous]
+    [Permission("Author.View")]
     public async Task<IActionResult> GetAuthorsCursorAsync([FromQuery] AuthorCursorRequestModel requestModel)
     {
         try
@@ -56,7 +56,7 @@ public class AuthorController : BaseController
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
+    [Permission("Author.View")]
     public async Task<IActionResult> GetAuthorByIdAsync(int id)
     {
         try

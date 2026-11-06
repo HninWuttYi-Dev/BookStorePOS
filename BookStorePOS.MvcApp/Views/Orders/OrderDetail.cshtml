@@ -92,9 +92,12 @@
     <div class="flex items-center gap-3">
         @{
             var userRole = Context.Request.Cookies["pos_role"] ?? "";
-            bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
-            string backUrl = isCashier ? "/Checkout" : "/Orders";
-            string backText = isCashier ? "Back to Checkout" : "Back to Orders";
+            var userPerms = Context.Request.Cookies["pos_permissions"] ?? "";
+            bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+            var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            bool canViewOrders = isAdmin || permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase);
+            string backUrl = canViewOrders ? "/Orders" : "/Checkout";
+            string backText = canViewOrders ? "Back to Orders" : "Back to Checkout";
         }
         <a href="@backUrl" class="text-neutral-500 hover:text-black transition-colors p-1.5 rounded-lg hover:bg-neutral-100">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

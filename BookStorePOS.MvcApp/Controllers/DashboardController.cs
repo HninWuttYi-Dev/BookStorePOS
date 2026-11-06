@@ -40,14 +40,13 @@ namespace BookStorePOS.MvcApp.Controllers
                 var userRole = Request.Cookies["pos_role"] ?? "";
                 var userPerms = Request.Cookies["pos_permissions"] ?? "";
                 bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
-                bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
 
                 if (!isAdmin)
                 {
                     var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                    if (isCashier || !permList.Contains("Dashboard.View", StringComparer.OrdinalIgnoreCase))
+                    if (!permList.Contains("Dashboard.View", StringComparer.OrdinalIgnoreCase))
                     {
-                        if (isCashier || permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+                        if (permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
                         {
                             _logger.LogInformation("DashboardIndexAsync => User without Dashboard.View routed to Checkout");
                             return RedirectToAction("Index", "Checkout");
@@ -59,6 +58,10 @@ namespace BookStorePOS.MvcApp.Controllers
                         else if (permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase))
                         {
                             return RedirectToAction("Index", "Orders");
+                        }
+                        else if (permList.Contains("OnlineOrder.View", StringComparer.OrdinalIgnoreCase))
+                        {
+                            return RedirectToAction("Index", "OnlineOrders");
                         }
                         else
                         {

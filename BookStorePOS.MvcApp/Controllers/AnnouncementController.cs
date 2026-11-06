@@ -27,6 +27,39 @@ public class AnnouncementController : Controller
         var hasRefresh = !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]);
         if (!hasToken && !hasRefresh)
         {
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Announcement" });
+        }
+
+        var userRole = Request.Cookies["pos_role"] ?? "";
+        var userPerms = Request.Cookies["pos_permissions"] ?? "";
+        bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+
+        // Dynamic RBAC: Broadcast Alerts is an Admin feature under SETTINGS.
+        // If not Admin, dynamically route user to the first module they have permission for.
+        if (!isAdmin)
+        {
+            var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (permList.Contains("Dashboard.View", StringComparer.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+            if (permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Checkout");
+            }
+            if (permList.Contains("Book.View", StringComparer.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Book");
+            }
+            if (permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Orders");
+            }
+            if (permList.Contains("OnlineOrder.View", StringComparer.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "OnlineOrders");
+            }
+
             return RedirectToAction("Login", "Auth");
         }
 
@@ -38,6 +71,35 @@ public class AnnouncementController : Controller
     public async Task<IActionResult> Send(AnnouncementRequestModel requestModel)
     {
         bool isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+        var hasToken = !string.IsNullOrEmpty(Request.Cookies["pos_token"]);
+        var hasRefresh = !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]);
+        if (!hasToken && !hasRefresh)
+        {
+            if (isAjax) return StatusCode(401, new { success = false, message = "Session expired. Please log in again." });
+            return RedirectToAction("Login", "Auth", new { returnUrl = "/Announcement" });
+        }
+
+        var userRole = Request.Cookies["pos_role"] ?? "";
+        var userPerms = Request.Cookies["pos_permissions"] ?? "";
+        bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+
+        // Dynamic RBAC: Only Admin can send store-wide broadcast announcements
+        if (!isAdmin)
+        {
+            if (isAjax) return StatusCode(403, new { success = false, message = "Access Denied: Only administrators can broadcast announcements." });
+
+            var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Checkout");
+            }
+            if (permList.Contains("Dashboard.View", StringComparer.OrdinalIgnoreCase))
+            {
+                return RedirectToAction("Index", "Dashboard");
+            }
+            return RedirectToAction("Login", "Auth");
+        }
 
         try
         {
@@ -51,6 +113,12 @@ public class AnnouncementController : Controller
 
             var client = _httpClientFactory.CreateClient("WebAPI");
             var response = await client.PostAsJsonAsync("api/announcement", requestModel);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized || HttpContext.Items.ContainsKey("Auth_Expired"))
+            {
+                if (isAjax) return StatusCode(401, new { success = false, message = "Session expired. Please log in again." });
+                return RedirectToAction("Login", "Auth", new { returnUrl = "/Announcement" });
+            }
 
             if (response.IsSuccessStatusCode)
             {

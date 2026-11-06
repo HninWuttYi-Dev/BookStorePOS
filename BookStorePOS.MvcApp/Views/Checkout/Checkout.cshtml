@@ -36,23 +36,27 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="productsGrid">
                         @foreach (var book in books)
                         {
+                            var firstEdition = book.Editions?.FirstOrDefault();
+                            var defaultCover = book.Editions?.FirstOrDefault(e => !string.IsNullOrEmpty(e.CoverImageUrl))?.CoverImageUrl ?? "";
+                            var initialCover = !string.IsNullOrEmpty(firstEdition?.CoverImageUrl) ? firstEdition?.CoverImageUrl : defaultCover;
+                            var initialStock = firstEdition?.StockQuantity ?? 0;
+
                             <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col hover:border-teal-300 hover:shadow-md transition-all product-card">
                                 
                                 <div class="aspect-[3/4] w-full bg-slate-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden relative">
-                                    @if (!string.IsNullOrEmpty(book.Editions?.FirstOrDefault()?.CoverImageUrl))
-                                    {
-                                        <img src="@(book.Editions?.FirstOrDefault()?.CoverImageUrl)" alt="@book.Title" class="w-full h-full object-cover">
-                                    }
-                                    else
-                                    {
-                                        <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                                    }
-                                    @if (book.TotalStockQuantity <= 0)
-                                    {
-                                        <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
-                                            <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Out of Stock</span>
-                                        </div>
-                                    }
+                                    <img src="@(initialCover)" 
+                                         alt="@book.Title" 
+                                         id="bookCoverImg_@book.BookId" 
+                                         class="w-full h-full object-cover @(string.IsNullOrEmpty(initialCover) ? "hidden" : "")"
+                                         onerror="this.onerror=null; this.classList.add('hidden'); document.getElementById('bookCoverSvg_@book.BookId')?.classList.remove('hidden');">
+
+                                    <svg id="bookCoverSvg_@book.BookId" class="w-12 h-12 text-slate-300 @(!string.IsNullOrEmpty(initialCover) ? "hidden" : "")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+
+                                    <div id="bookStockOverlay_@book.BookId" class="absolute inset-0 bg-white/70 flex items-center justify-center @(initialStock <= 0 ? "" : "hidden")">
+                                        <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">Out of Stock</span>
+                                    </div>
                                 </div>
                                 <h3 class="font-semibold text-slate-900 text-sm line-clamp-2 leading-tight mb-2 product-title" title="@book.Title">@book.Title</h3>
                                 <div class="mt-auto flex flex-col gap-2">
@@ -67,10 +71,10 @@
                                     }
                                     else if (book.Editions != null && book.Editions.Count > 1)
                                     {
-                                        <select class="w-full text-sm border-slate-200 rounded-lg p-1.5 focus:ring-teal-500 outline-none border mb-1" id="editionSelect_@book.BookId">
+                                        <select class="w-full text-sm border-slate-200 rounded-lg p-1.5 focus:ring-teal-500 outline-none border mb-1" id="editionSelect_@book.BookId" onchange="onEditionChange(@book.BookId, this, '@Html.Raw(defaultCover.Replace("'", "\\'"))')">
                                             @foreach (var edition in book.Editions)
                                             {
-                                                <option value="@edition.BookEditionId" data-price="@edition.Price" data-stock="@edition.StockQuantity" data-name="@edition.EditionName">
+                                                <option value="@edition.BookEditionId" data-price="@edition.Price" data-stock="@edition.StockQuantity" data-name="@edition.EditionName" data-image="@(edition.CoverImageUrl ?? "")">
                                                     @edition.EditionName - @edition.Price.ToString("#,##0") MMK (@edition.StockQuantity left)
                                                 </option>
                                             }
@@ -301,6 +305,42 @@
             
             saveCart();
             renderCart();
+        }
+
+        function onEditionChange(bookId, selectEl, defaultCover) {
+            if (!selectEl) return;
+            const selectedOption = selectEl.options[selectEl.selectedIndex];
+            if (!selectedOption) return;
+
+            let imgUrl = (selectedOption.dataset.image || '').trim();
+            if (!imgUrl && defaultCover) {
+                imgUrl = defaultCover.trim();
+            }
+
+            const stock = parseInt(selectedOption.dataset.stock || '0', 10);
+            const imgEl = document.getElementById(`bookCoverImg_${bookId}`);
+            const svgEl = document.getElementById(`bookCoverSvg_${bookId}`);
+            const overlayEl = document.getElementById(`bookStockOverlay_${bookId}`);
+
+            if (imgEl && svgEl) {
+                if (imgUrl) {
+                    imgEl.src = imgUrl;
+                    imgEl.classList.remove('hidden');
+                    svgEl.classList.add('hidden');
+                } else {
+                    imgEl.src = '';
+                    imgEl.classList.add('hidden');
+                    svgEl.classList.remove('hidden');
+                }
+            }
+
+            if (overlayEl) {
+                if (stock <= 0) {
+                    overlayEl.classList.remove('hidden');
+                } else {
+                    overlayEl.classList.add('hidden');
+                }
+            }
         }
 
         function addSelectedEditionToCart(bookId, title) {

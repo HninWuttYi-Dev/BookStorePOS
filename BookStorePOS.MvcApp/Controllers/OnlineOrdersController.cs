@@ -51,8 +51,7 @@ namespace BookStorePOS.MvcApp.Controllers
                         _logger.LogWarning("OnlineOrderListAsync => Access denied for user '{User}' without OnlineOrder.View", Request.Cookies["pos_user"]);
                         TempData["Message"] = "Access Denied: You do not have permission to view Online Orders.";
                         TempData["isSuccess"] = false;
-                        bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
-                        if (isCashier || permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+                        if (permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
                         {
                             return RedirectToAction("Index", "Checkout");
                         }

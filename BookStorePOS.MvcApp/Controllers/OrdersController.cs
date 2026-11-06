@@ -36,16 +36,19 @@ namespace BookStorePOS.MvcApp.Controllers
             var userRole = Request.Cookies["pos_role"] ?? "";
             var userPerms = Request.Cookies["pos_permissions"] ?? "";
             bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
-            bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
-            if (isCashier)
-            {
-                return RedirectToAction("Index", "Checkout");
-            }
             if (!isAdmin)
             {
                 var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 if (!permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase))
                 {
+                    if (permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Checkout");
+                    }
+                    if (permList.Contains("Dashboard.View", StringComparer.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Dashboard");
+                    }
                     return RedirectToAction("Index", "Checkout");
                 }
             }

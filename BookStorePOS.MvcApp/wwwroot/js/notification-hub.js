@@ -14,8 +14,20 @@
         return role.trim();
     }
 
-    // Option A: If user is Cashier, completely disable notifications and audio chimes for a distraction-free counter
-    if (getRole().toLowerCase() === 'cashier') {
+    function getPermissions() {
+        const raw = localStorage.getItem('pos_permissions') || '';
+        try {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) return arr.map(p => (p || '').toLowerCase());
+        } catch(e) {}
+        return raw.split(',').map(p => p.trim().toLowerCase());
+    }
+
+    // Dynamic RBAC: If user only has counter checkout permission (Order.Create) without online orders or dashboard, suppress chimes
+    const perms = getPermissions();
+    const role = getRole().toLowerCase();
+    const isPureCounterPOS = role !== 'admin' && perms.includes('order.create') && !perms.includes('onlineorder.view') && !perms.includes('order.view') && !perms.includes('dashboard.view');
+    if (isPureCounterPOS) {
         const cleanCashierUI = function () {
             const bells = document.querySelectorAll('#desktopNotifBellContainer, .pos-notif-bell, #notificationDrawer, #notificationDrawerOverlay');
             bells.forEach(el => el.remove());

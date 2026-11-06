@@ -13,6 +13,7 @@ namespace BookStorePOS.WebApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class AnnouncementController : BaseController
 {
     private readonly IHubContext<NotificationHub> _hubContext;

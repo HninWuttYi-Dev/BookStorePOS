@@ -23,7 +23,6 @@
     string greetingRole = !string.IsNullOrWhiteSpace(cookieRole) 
         ? char.ToUpper(cookieRole[0]) + cookieRole.Substring(1) 
         : "Staff";
-    bool isCashier = string.Equals(cookieRole, "Cashier", StringComparison.OrdinalIgnoreCase);
 
     string initials = "S";
     if (!string.IsNullOrWhiteSpace(displayUser))
@@ -113,16 +112,13 @@ else
             <p class="text-[#9F54A6] font-medium mt-1 text-sm">Let's finish your task today!</p>
         </div>
         <div class="flex items-center gap-3">
-            @if (!isCashier)
-            {
-                <!-- Notification Bell (Only on Dashboard) -->
-                <button type="button" onclick="window.openNotificationDrawer()" title="Notifications" class="pos-notif-bell relative group bg-white hover:bg-[#FAF0FA] border border-[#F3E2F6] hover:border-[#CE8FD4] shadow-xs hover:shadow-md w-11 h-11 rounded-2xl transition-all cursor-pointer flex items-center justify-center">
-                    <svg class="w-5 h-5 text-[#71717A] group-hover:text-[#9F54A6] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
-                    <span class="pos-notif-badge hidden absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[10px] font-bold text-white bg-rose-500 rounded-full min-w-[18px] text-center shadow-xs">0</span>
-                </button>
-            }
+            <!-- Notification Bell (Only on Dashboard) -->
+            <button type="button" onclick="window.openNotificationDrawer()" title="Notifications" class="pos-notif-bell relative group bg-white hover:bg-[#FAF0FA] border border-[#F3E2F6] hover:border-[#CE8FD4] shadow-xs hover:shadow-md w-11 h-11 rounded-2xl transition-all cursor-pointer flex items-center justify-center">
+                <svg class="w-5 h-5 text-[#71717A] group-hover:text-[#9F54A6] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span class="pos-notif-badge hidden absolute -top-1.5 -right-1.5 px-1.5 py-0.5 text-[10px] font-bold text-white bg-rose-500 rounded-full min-w-[18px] text-center shadow-xs">0</span>
+            </button>
 
             <!-- Profile Avatar with Dropdown -->
             <div class="relative z-40" id="topProfileDropdownContainer">
