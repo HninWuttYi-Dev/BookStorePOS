@@ -1,0 +1,599 @@
+@using BookStorePOS.Shared.Models.Genre
+@{
+    ViewData["Title"] = "Genres & Categories";
+    var rawGenres = ViewData["Genres"] as List<GenreModel> ?? new List<GenreModel>();
+    var search = ViewData["Search"] as string ?? "";
+    var nextCursor = ViewData["NextCursor"] as int?;
+    var hasNextPage = (bool)(ViewData["HasNextPage"] ?? false);
+    var totalCount = (int)(ViewData["TotalCount"] ?? rawGenres.Count);
+}
+
+<style>
+    /* Consistent Horizontal Shelf Track */
+    .shelf-carousel-track {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding-top: 0.5rem;
+        padding-bottom: 1rem;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .shelf-carousel-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Fixed Book Slot: Exact Same Width & Height for Every Book (1, 2, or many) */
+    .shelf-book-slot {
+        flex: 0 0 160px;
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* 3D Standing Book Presentation (Consistent with Browse Page) */
+    .book-3d-stage-wrapper {
+        position: relative;
+        width: 100%;
+        height: 195px;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: visible;
+    }
+
+    .book-3d-stage {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 900px;
+    }
+
+    /* Standing 3D Book in 3/4 Angle */
+    .book-3d-stand {
+        position: relative;
+        width: 110px;
+        height: 160px;
+        transform-style: preserve-3d;
+        transform: rotateY(-18deg) rotateX(2deg);
+        filter: drop-shadow(2px 3px 5px rgba(0,0,0,0.12));
+        transition: transform 0.35s cubic-bezier(0.2, 1, 0.3, 1), filter 0.35s ease;
+    }
+    .shelf-book-slot:hover .book-3d-stand {
+        transform: translateY(-7px) rotateY(-22deg) rotateX(3deg) scale(1.03);
+        filter: drop-shadow(4px 10px 14px rgba(0,0,0,0.18));
+    }
+
+    /* Front Book Cover */
+    .book-3d-front {
+        position: absolute;
+        inset: 0;
+        border-radius: 0 3px 3px 0;
+        overflow: hidden;
+        background: #2C2621;
+        box-shadow: inset 1.5px 0 2px rgba(255,255,255,0.35), inset -1px 0 2px rgba(0,0,0,0.18);
+        z-index: 10;
+    }
+
+    /* Spine Crease Highlight */
+    .book-3d-spine-fold {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 13px;
+        background: linear-gradient(to right, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.06) 18%, rgba(0,0,0,0.2) 24%, transparent 100%);
+        pointer-events-none;
+        z-index: 20;
+    }
+
+    /* Right Paper Pages Thickness */
+    .book-3d-side-pages {
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        right: -12px;
+        width: 13px;
+        background: repeating-linear-gradient(to right, #FAF8F5, #FAF8F5 1.5px, #D6D0C5 1.5px, #D6D0C5 2.5px);
+        -webkit-clip-path: polygon(0% 0px, 100% 4px, 100% calc(100% - 6.5px), 0% 100%);
+        clip-path: polygon(0% 0px, 100% 4px, 100% calc(100% - 6.5px), 0% 100%);
+        box-shadow: inset 1px 0 3px rgba(0,0,0,0.22), inset -1px 0 2px rgba(0,0,0,0.10);
+        z-index: 5;
+    }
+
+    /* Floor Ambient Ground Shadow */
+    .book-3d-floor-shadow {
+        position: absolute;
+        bottom: -11px;
+        left: 50%;
+        transform: translateX(-48%) skewX(-24deg) scaleY(0.65);
+        width: 135px;
+        height: 16px;
+        background: radial-gradient(ellipse at center, rgba(30, 25, 20, 0.42) 0%, rgba(30, 25, 20, 0.14) 45%, transparent 75%);
+        filter: blur(5px);
+        pointer-events-none;
+        transition: transform 0.35s ease, opacity 0.35s ease;
+        z-index: 1;
+    }
+    .shelf-book-slot:hover .book-3d-floor-shadow {
+        transform: translateX(-48%) translateY(5px) skewX(-27deg) scale(1.08) scaleY(0.6);
+        opacity: 0.75;
+    }
+</style>
+
+<!-- Compact Header (Sleek, Clean, No Bloat) -->
+<section class="bg-brand-surface border-b border-brand-border/60 py-5 sm:py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center gap-2 mb-1">
+                <span class="w-2 h-2 rounded-full bg-brand-accent inline-block"></span>
+                <span class="text-[11px] font-semibold uppercase tracking-widest text-brand-accent font-body">Store Taxonomy</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-heading font-bold text-brand-ink tracking-tight">
+                Genres &amp; Categories
+            </h1>
+        </div>
+
+        <!-- Filter Pills & Compact Quick Search in One Single Row -->
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-1.5 text-xs font-body">
+                <button type="button" onclick="filterGenreCategory('all')" class="genre-filter-btn px-3.5 py-1.5 rounded-full bg-brand-ink text-white font-medium transition-colors" data-filter="all">All</button>
+                <button type="button" onclick="filterGenreCategory('en')" class="genre-filter-btn px-3.5 py-1.5 rounded-full bg-white hover:bg-brand-border/60 border border-brand-border text-brand-ink font-medium transition-colors" data-filter="en">English</button>
+                <button type="button" onclick="filterGenreCategory('mm')" class="genre-filter-btn px-3.5 py-1.5 rounded-full bg-white hover:bg-brand-border/60 border border-brand-border text-brand-ink font-medium transition-colors" data-filter="mm">မြန်မာစာပေ</button>
+            </div>
+
+            <!-- Compact Search Bar -->
+            <div class="relative w-full sm:w-64">
+                <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-brand-inkLight/70 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" 
+                       id="genreSearchInput"
+                       oninput="quickFilterShelves(this.value)"
+                       placeholder="Find a category..." 
+                       class="w-full pl-9 pr-8 py-2 bg-white rounded-full text-xs font-body border border-brand-border focus:outline-none focus:ring-1 focus:ring-brand-accent text-brand-ink placeholder:text-brand-inkLight/60 shadow-2xs">
+                <button type="button" 
+                        onclick="clearSearch()" 
+                        id="clearSearchBtn"
+                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-inkLight hover:text-brand-accent hidden text-xs font-bold" 
+                        title="Clear">
+                    &times;
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Unified Storefront Shelves with 3D Standing Books -->
+<section class="bg-brand-bg py-8 sm:py-10 min-h-[500px]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        @if (!rawGenres.Any())
+        {
+            <div class="text-center py-20 bg-brand-surface/60 rounded-2xl border border-brand-border p-8 max-w-md mx-auto">
+                <svg class="w-12 h-12 text-brand-inkLight mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <h3 class="text-lg font-heading font-bold text-brand-ink mb-1">No genres found</h3>
+                <p class="text-xs text-brand-inkLight font-body mb-4">No active categories match your criteria.</p>
+                <a href="/Genres" class="px-5 py-2 rounded-full bg-brand-ink text-white text-xs font-semibold font-body hover:bg-brand-accent transition-colors">
+                    Reset
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-8" id="shelvesContainer">
+                @for (int i = 0; i < rawGenres.Count; i++)
+                {
+                    var genre = rawGenres[i];
+                    var trackId = $"shelfTrack_{i}";
+                    bool isBurmese = genre.GenreName != null && System.Text.RegularExpressions.Regex.IsMatch(genre.GenreName, @"[\u1000-\u109F]");
+                    var langClass = isBurmese ? "genre-shelf-mm" : "genre-shelf-en";
+
+                    <div class="genre-shelf @langClass bg-white rounded-2xl p-5 sm:p-6 border border-brand-border/70 shadow-2xs relative" data-title="@((genre.GenreName ?? "").ToLower())">
+                        
+                        <!-- Shelf Header (Clean Category Title, Count Badge, Browse All - Arrows Moved to Shelf Middle) -->
+                        <div class="flex items-center justify-between pb-3.5 mb-3 border-b border-brand-border/40">
+                            <div class="flex items-center gap-2.5">
+                                <h2 class="font-heading font-bold text-lg sm:text-xl text-brand-ink">
+                                    @genre.GenreName
+                                </h2>
+                                
+                                <span class="px-2.5 py-0.5 rounded-full bg-brand-surface border border-brand-border/60 text-[11px] font-semibold text-brand-accent font-body">
+                                    @genre.BookCount @(genre.BookCount == 1 ? "Book" : "Books")
+                                </span>
+                            </div>
+
+                            <!-- Right Controls: View All Link -->
+                            <a href="/Books?genre=@Uri.EscapeDataString(genre.GenreName ?? "")" class="inline-flex items-center gap-1 text-xs font-semibold font-body text-brand-ink hover:text-brand-accent transition-colors">
+                                <span>Browse All (@genre.BookCount)</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+
+                        <!-- Carousel Area: Middle Left & Right Arrow Buttons with Track in Center -->
+                        <div class="relative flex items-center group/shelf">
+                            
+                            @if (genre.BookCount > 1)
+                            {
+                            <!-- Left Navigation Arrow (Vertically centered in middle of books) -->
+                            <button type="button" 
+                                    onclick="scrollShelfTrack('@trackId', -340)" 
+                                    class="shelf-arrow hidden absolute -left-3 sm:-left-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" 
+                                    aria-label="Scroll left">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                            </button>
+                            }
+
+                            <!-- Horizontal Carousel Track -->
+                            <div class="shelf-carousel-track flex-1 px-1 sm:px-2" id="@trackId">
+                            @foreach (var bk in genre.SampleBooks)
+                            {
+                                <div class="shelf-book-slot group">
+                                    <!-- 3D Standing Book Stage -->
+                                    <a href="/Books/Detail/@bk.BookId" class="book-3d-stage-wrapper cursor-pointer block" aria-label="Book: @bk.Title">
+                                        <div class="book-3d-stage">
+                                            <!-- Floor Shadow -->
+                                            <div class="book-3d-floor-shadow"></div>
+
+                                            <!-- 3D Stand -->
+                                            <div class="book-3d-stand">
+                                                <!-- Right Pages Thickness -->
+                                                <div class="book-3d-side-pages"></div>
+
+                                                <!-- Front Cover -->
+                                                <div class="book-3d-front">
+                                                    <!-- Spine Fold Crease -->
+                                                    <div class="book-3d-spine-fold"></div>
+
+                                                    @if (!string.IsNullOrEmpty(bk.CoverImageUrl))
+                                                    {
+                                                        <img src="@bk.CoverImageUrl" alt="@bk.Title" 
+                                                             class="w-full h-full object-cover select-none" loading="lazy" 
+                                                             onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                                        <div class="hidden w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] flex flex-col justify-between p-2.5 rounded-r-xs border-l-2 border-[#8C6F45]/50 shadow-inner text-center select-none">
+                                                            <div class="w-full flex justify-end">
+                                                                <span class="text-[7px] uppercase tracking-widest text-[#C8A265]/70 font-semibold font-body">BABYLON</span>
+                                                            </div>
+                                                            <div class="my-auto px-1">
+                                                                <p class="font-heading font-bold text-[#F4F1EA] text-[11px] leading-tight line-clamp-3">@bk.Title</p>
+                                                            </div>
+                                                            <div class="w-full flex justify-center">
+                                                                <span class="w-4 h-[1px] bg-[#C8A265]/40"></span>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] flex flex-col justify-between p-2.5 rounded-r-xs border-l-2 border-[#8C6F45]/50 shadow-inner text-center select-none">
+                                                            <div class="w-full flex justify-end">
+                                                                <span class="text-[7px] uppercase tracking-widest text-[#C8A265]/70 font-semibold font-body">BABYLON</span>
+                                                            </div>
+                                                            <div class="my-auto px-1">
+                                                                <p class="font-heading font-bold text-[#F4F1EA] text-[11px] leading-tight line-clamp-3">@bk.Title</p>
+                                                            </div>
+                                                            <div class="w-full flex justify-center">
+                                                                <span class="w-4 h-[1px] bg-[#C8A265]/40"></span>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    <!-- Consistent Book Meta (Title, Stars, Author, Price) -->
+                                    <div class="text-center mt-2.5 w-full px-1">
+                                        <div class="text-amber-500 text-[10px] tracking-wider mb-0.5 font-body">★★★★★</div>
+                                        <a href="/Books/Detail/@bk.BookId" class="block max-w-full">
+                                            <h3 class="font-heading font-semibold text-brand-ink text-xs leading-snug truncate group-hover:text-brand-accent transition-colors" title="@bk.Title">
+                                                @bk.Title
+                                            </h3>
+                                        </a>
+                                        @if (!string.IsNullOrEmpty(bk.Author))
+                                        {
+                                            <p class="text-[11px] text-brand-inkLight font-heading italic mt-0.5 truncate max-w-full" title="@bk.Author">
+                                                @bk.Author
+                                            </p>
+                                        }
+                                        <p class="text-xs font-bold text-brand-accent font-body mt-1">
+                                            @(bk.Price > 0 ? bk.Price.ToString("N0") + " MMK" : "In Stock")
+                                        </p>
+                                    </div>
+                                </div>
+                            }
+                            </div>
+
+                            @if (genre.BookCount > 1)
+                            {
+                            <!-- Right Navigation Arrow (Vertically centered in middle of books) -->
+                            <button type="button" 
+                                    onclick="scrollShelfTrack('@trackId', 340)" 
+                                    class="shelf-arrow hidden absolute -right-3 sm:-right-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" 
+                                    aria-label="Scroll right">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                            </button>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+            </div>
+
+            <!-- Cursor Pagination & Infinite Scroll Trigger Section -->
+            <div id="loadMoreSection" class="text-center pt-10 pb-8 @(hasNextPage ? "" : "hidden")">
+                <button type="button" 
+                        id="loadMoreBtn" 
+                        onclick="loadMoreGenres()" 
+                        class="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-brand-surface hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink text-xs font-semibold uppercase tracking-wider font-body transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+                    <span id="loadMoreText">Load More Categories</span>
+                    <svg id="loadMoreArrow" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <span id="loadMoreSpinner" class="hidden w-4 h-4 border-2 border-brand-accent border-t-transparent rounded-full animate-spin"></span>
+                </button>
+                <div id="scrollTrigger" class="h-8 w-full pointer-events-none mt-4"></div>
+            </div>
+
+            <div id="endOfCollection" class="text-center py-10 @(hasNextPage ? "hidden" : "")">
+                <div class="inline-flex items-center gap-3 text-xs text-brand-inkLight font-body">
+                    <span class="w-10 h-[1px] bg-brand-border/80"></span>
+                    <span>You have explored all available categories</span>
+                    <span class="w-10 h-[1px] bg-brand-border/80"></span>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Filter, Carousel & Cursor-Based Infinite Scroll Script -->
+<script>
+    let currentCursor = @(nextCursor.HasValue ? nextCursor.Value.ToString() : "null");
+    let hasNextPage = @(hasNextPage ? "true" : "false");
+    let isLoading = false;
+    let shelfIndexCounter = @(rawGenres.Count);
+    let activeLanguageFilter = 'all';
+
+    function scrollShelfTrack(trackId, offset) {
+        const track = document.getElementById(trackId);
+        if (track) {
+            track.scrollBy({ left: offset, behavior: 'smooth' });
+        }
+    }
+
+    function filterGenreCategory(filter) {
+        activeLanguageFilter = filter;
+        const buttons = document.querySelectorAll('.genre-filter-btn');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('data-filter') === filter) {
+                btn.classList.remove('bg-white', 'text-brand-ink', 'border');
+                btn.classList.add('bg-brand-ink', 'text-white');
+            } else {
+                btn.classList.remove('bg-brand-ink', 'text-white');
+                btn.classList.add('bg-white', 'text-brand-ink', 'border');
+            }
+        });
+
+        applyVisibilityFilters();
+    }
+
+    function quickFilterShelves(query) {
+        const cleanQuery = query.toLowerCase().trim();
+        const clearBtn = document.getElementById('clearSearchBtn');
+        if (clearBtn) {
+            clearBtn.classList.toggle('hidden', cleanQuery.length === 0);
+        }
+
+        applyVisibilityFilters();
+    }
+
+    function clearSearch() {
+        const input = document.getElementById('genreSearchInput');
+        if (input) {
+            input.value = '';
+            quickFilterShelves('');
+        }
+    }
+
+    function applyVisibilityFilters() {
+        const searchInput = document.getElementById('genreSearchInput');
+        const cleanQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        const shelves = document.querySelectorAll('.genre-shelf');
+        shelves.forEach(shelf => {
+            const title = shelf.getAttribute('data-title') || '';
+            const matchesSearch = cleanQuery === '' || title.includes(cleanQuery);
+
+            let matchesLanguage = true;
+            if (activeLanguageFilter === 'en') {
+                matchesLanguage = shelf.classList.contains('genre-shelf-en');
+            } else if (activeLanguageFilter === 'mm') {
+                matchesLanguage = shelf.classList.contains('genre-shelf-mm');
+            }
+
+            if (matchesSearch && matchesLanguage) {
+                shelf.style.display = 'block';
+            } else {
+                shelf.style.display = 'none';
+            }
+        });
+    }
+
+    // Cursor-Based Dynamic Shelf Loading (Vertical Pagination)
+    async function loadMoreGenres() {
+        if (isLoading || !hasNextPage || currentCursor === null) return;
+
+        isLoading = true;
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadMoreText = document.getElementById('loadMoreText');
+        const loadMoreArrow = document.getElementById('loadMoreArrow');
+        const loadMoreSpinner = document.getElementById('loadMoreSpinner');
+
+        if (loadMoreText) loadMoreText.textContent = "Loading Shelves...";
+        if (loadMoreArrow) loadMoreArrow.classList.add('hidden');
+        if (loadMoreSpinner) loadMoreSpinner.classList.remove('hidden');
+
+        try {
+            const searchInput = document.getElementById('genreSearchInput');
+            const searchVal = searchInput ? encodeURIComponent(searchInput.value.trim()) : '';
+
+            const response = await fetch(`/Genres/LoadMore?cursor=${currentCursor}&search=${searchVal}&limit=6`);
+            const result = await response.json();
+
+            if (result.isSuccess && result.data && result.data.length > 0) {
+                const container = document.getElementById('shelvesContainer');
+
+                result.data.forEach(genre => {
+                    shelfIndexCounter++;
+                    const shelfHtml = buildGenreShelfHtml(genre, shelfIndexCounter);
+                    container.insertAdjacentHTML('beforeend', shelfHtml);
+                });
+                updateShelfArrows();
+
+                currentCursor = result.nextCursor;
+                hasNextPage = result.hasNextPage;
+
+                applyVisibilityFilters();
+            } else {
+                hasNextPage = false;
+            }
+
+            if (!hasNextPage || currentCursor === null) {
+                const loadMoreSec = document.getElementById('loadMoreSection');
+                const endOfCol = document.getElementById('endOfCollection');
+                if (loadMoreSec) loadMoreSec.classList.add('hidden');
+                if (endOfCol) endOfCol.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error("Failed to load more genre shelves via cursor:", error);
+        } finally {
+            isLoading = false;
+            if (loadMoreText) loadMoreText.textContent = "Load More Categories";
+            if (loadMoreArrow) loadMoreArrow.classList.remove('hidden');
+            if (loadMoreSpinner) loadMoreSpinner.classList.add('hidden');
+        }
+    }
+
+    function buildGenreShelfHtml(genre, idx) {
+        const trackId = `shelfTrack_${idx}`;
+        const isBurmese = /[\u1000-\u109F]/.test(genre.genreName || '');
+        const langClass = isBurmese ? 'genre-shelf-mm' : 'genre-shelf-en';
+        const safeGenreName = escapeHtml(genre.genreName || 'Category');
+        const encodedGenreName = encodeURIComponent(genre.genreName || '');
+        const bookCountText = `${genre.bookCount} ${genre.bookCount === 1 ? 'Book' : 'Books'}`;
+
+        let booksHtml = '';
+        if (genre.sampleBooks && genre.sampleBooks.length > 0) {
+            genre.sampleBooks.forEach(bk => {
+                const safeTitle = escapeHtml(bk.title || 'Untitled');
+                const safeAuthor = bk.author ? escapeHtml(bk.author) : '';
+                const displayPrice = bk.price > 0 ? Number(bk.price).toLocaleString() + ' MMK' : 'In Stock';
+
+                const coverHtml = bk.coverImageUrl 
+                    ? `<img src="${bk.coverImageUrl}" alt="${safeTitle}" class="w-full h-full object-cover select-none" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                       <div class="hidden w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] flex flex-col justify-between p-2.5 rounded-r-xs border-l-2 border-[#8C6F45]/50 shadow-inner text-center select-none">
+                           <div class="w-full flex justify-end"><span class="text-[7px] uppercase tracking-widest text-[#C8A265]/70 font-semibold font-body">BABYLON</span></div>
+                           <div class="my-auto px-1"><p class="font-heading font-bold text-[#F4F1EA] text-[11px] leading-tight line-clamp-3">${safeTitle}</p></div>
+                           <div class="w-full flex justify-center"><span class="w-4 h-[1px] bg-[#C8A265]/40"></span></div>
+                       </div>`
+                    : `<div class="w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] flex flex-col justify-between p-2.5 rounded-r-xs border-l-2 border-[#8C6F45]/50 shadow-inner text-center select-none">
+                           <div class="w-full flex justify-end"><span class="text-[7px] uppercase tracking-widest text-[#C8A265]/70 font-semibold font-body">BABYLON</span></div>
+                           <div class="my-auto px-1"><p class="font-heading font-bold text-[#F4F1EA] text-[11px] leading-tight line-clamp-3">${safeTitle}</p></div>
+                           <div class="w-full flex justify-center"><span class="w-4 h-[1px] bg-[#C8A265]/40"></span></div>
+                       </div>`;
+
+                const authorHtml = safeAuthor ? `<p class="text-[11px] text-brand-inkLight font-heading italic mt-0.5 truncate max-w-full" title="${safeAuthor}">${safeAuthor}</p>` : '';
+
+                booksHtml += `
+                    <div class="shelf-book-slot group">
+                        <a href="/Books/Detail/${bk.bookId}" class="book-3d-stage-wrapper cursor-pointer block" aria-label="Book: ${safeTitle}">
+                            <div class="book-3d-stage">
+                                <div class="book-3d-floor-shadow"></div>
+                                <div class="book-3d-stand">
+                                    <div class="book-3d-side-pages"></div>
+                                    <div class="book-3d-front">
+                                        <div class="book-3d-spine-fold"></div>
+                                        ${coverHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="text-center mt-2.5 w-full px-1">
+                            <div class="text-amber-500 text-[10px] tracking-wider mb-0.5 font-body">★★★★★</div>
+                            <a href="/Books/Detail/${bk.bookId}" class="block max-w-full">
+                                <h3 class="font-heading font-semibold text-brand-ink text-xs leading-snug truncate group-hover:text-brand-accent transition-colors" title="${safeTitle}">${safeTitle}</h3>
+                            </a>
+                            ${authorHtml}
+                            <p class="text-xs font-bold text-brand-accent font-body mt-1">${displayPrice}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        return `
+            <div class="genre-shelf ${langClass} bg-white rounded-2xl p-5 sm:p-6 border border-brand-border/70 shadow-2xs relative" data-title="${safeGenreName.toLowerCase()}">
+                <div class="flex items-center justify-between pb-3.5 mb-3 border-b border-brand-border/40">
+                    <div class="flex items-center gap-2.5">
+                        <h2 class="font-heading font-bold text-lg sm:text-xl text-brand-ink">${safeGenreName}</h2>
+                        <span class="px-2.5 py-0.5 rounded-full bg-brand-surface border border-brand-border/60 text-[11px] font-semibold text-brand-accent font-body">${bookCountText}</span>
+                    </div>
+                    <a href="/Books?genre=${encodedGenreName}" class="inline-flex items-center gap-1 text-xs font-semibold font-body text-brand-ink hover:text-brand-accent transition-colors">
+                        <span>Browse All (${genre.bookCount})</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </div>
+                <div class="relative flex items-center group/shelf">
+                    ${genre.bookCount > 1 ? `<button type="button" onclick="scrollShelfTrack('${trackId}', -340)" class="shelf-arrow hidden absolute -left-3 sm:-left-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" aria-label="Scroll left"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg></button>` : ''}
+                    <div class="shelf-carousel-track flex-1 px-1 sm:px-2" id="${trackId}">${booksHtml}</div>
+                    ${genre.bookCount > 1 ? `<button type="button" onclick="scrollShelfTrack('${trackId}', 340)" class="shelf-arrow hidden absolute -right-3 sm:-right-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" aria-label="Scroll right"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></button>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/[&<>"']/g, function(m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[m];
+        });
+    }
+
+    // ── Responsive arrow visibility: show only when carousel overflows ──
+    function updateShelfArrows() {
+        document.querySelectorAll('.shelf-carousel-track').forEach(function(track) {
+            var wrapper = track.parentElement;
+            if (!wrapper) return;
+            var overflows = track.scrollWidth > track.clientWidth + 2;
+            wrapper.querySelectorAll('.shelf-arrow').forEach(function(btn) {
+                btn.classList.toggle('hidden', !overflows);
+            });
+        });
+    }
+
+    // Automatic IntersectionObserver Infinite Scroll
+    document.addEventListener('DOMContentLoaded', function() {
+        updateShelfArrows();
+        window.addEventListener('resize', updateShelfArrows);
+
+        const trigger = document.getElementById('scrollTrigger');
+        if (trigger && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !isLoading) {
+                    loadMoreGenres();
+                }
+            }, { rootMargin: '300px' });
+            observer.observe(trigger);
+        }
+    });
+</script>

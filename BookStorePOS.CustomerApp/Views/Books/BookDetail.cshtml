@@ -21,13 +21,76 @@ else
 {
     <div class="max-w-6xl mx-auto px-4 lg:px-8 py-8 md:py-16">
         
-        <!-- Back Link -->
-        <a href="/Books" class="inline-flex items-center gap-2.5 text-brand-inkLight hover:text-brand-accent transition-colors mb-10 group font-body">
+        <!-- Context-Aware Dynamic Back Link -->
+        @{
+            var referer = Context.Request.Headers["Referer"].ToString();
+            var fallbackUrl = "/Books";
+            var backLabel = "Back to Browse";
+
+            if (!string.IsNullOrEmpty(referer))
+            {
+                var refererUri = new Uri(referer, UriKind.RelativeOrAbsolute);
+                var path = refererUri.IsAbsoluteUri ? refererUri.AbsolutePath : referer;
+
+                if (path.StartsWith("/Genres", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallbackUrl = referer;
+                    backLabel = "Back to Genres";
+                }
+                else if (path.StartsWith("/Authors", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallbackUrl = referer;
+                    backLabel = "Back to Authors";
+                }
+                else if (path == "/" || path.StartsWith("/Home", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallbackUrl = referer;
+                    backLabel = "Back to Home";
+                }
+                else if (path.StartsWith("/Books", StringComparison.OrdinalIgnoreCase))
+                {
+                    fallbackUrl = referer;
+                    backLabel = "Back to Browse";
+                }
+            }
+        }
+        <a href="@fallbackUrl" id="bookDetailBackBtn" onclick="handleBookDetailBack(event, '@fallbackUrl')" class="inline-flex items-center gap-2.5 text-brand-inkLight hover:text-brand-accent transition-colors mb-10 group font-body">
             <div class="w-8 h-8 rounded-full bg-brand-surface flex items-center justify-center border border-brand-border group-hover:border-brand-accent transition-colors shadow-2xs">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </div>
-            <span class="font-semibold tracking-wider text-xs uppercase">Back to Browse</span>
+            <span class="font-semibold tracking-wider text-xs uppercase" id="bookDetailBackText">@backLabel</span>
         </a>
+
+        <script>
+            function handleBookDetailBack(e, fallback) {
+                if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+                    e.preventDefault();
+                    window.history.back();
+                } else if (fallback) {
+                    e.preventDefault();
+                    window.location.href = fallback;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const referrer = document.referrer;
+                const textElem = document.getElementById('bookDetailBackText');
+                if (referrer && textElem) {
+                    try {
+                        const url = new URL(referrer, window.location.origin);
+                        if (url.pathname.startsWith('/Genres')) {
+                            textElem.textContent = 'Back to Genres';
+                        } else if (url.pathname.startsWith('/Authors')) {
+                            textElem.textContent = 'Back to Authors';
+                        } else if (url.pathname === '/' || url.pathname.startsWith('/Home')) {
+                            textElem.textContent = 'Back to Home';
+                        } else if (url.pathname.startsWith('/Books')) {
+                            textElem.textContent = 'Back to Browse';
+                        }
+                    } catch (err) {}
+                }
+            });
+        </script>
 
         <div class="flex flex-col lg:flex-row gap-12 lg:gap-16 items-center lg:items-start">
             

@@ -38,6 +38,23 @@ public class AuthorController : BaseController
         }
     }
 
+    [HttpGet("cursor")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAuthorsCursorAsync([FromQuery] AuthorCursorRequestModel requestModel)
+    {
+        try
+        {
+            _logger.LogInformation("Get Authors Cursor Async => Cursor {Cursor}", requestModel.Cursor);
+            var response = await _authorService.GetAuthorsCursorAsync(requestModel);
+            return ExecuteResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetAuthorsCursorAsync => Exception occurred");
+            return ExecuteResult(Result<List<AuthorModel>>.SystemError("Internal Server Error: " + ex.Message));
+        }
+    }
+
     [HttpGet("{id}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetAuthorByIdAsync(int id)

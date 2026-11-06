@@ -28,7 +28,7 @@ public class AuthorService : IAuthorService
         {
             var query = _db.TblAuthors
                     .AsNoTracking()
-                    .Where(a => !a.IsDeleted);
+                    .Where(a => !a.IsDeleted && a.TblBooks.Any(b => !b.IsDeleted));
 
             if (!string.IsNullOrWhiteSpace(requestModel.AuthorName))
             {
@@ -39,7 +39,34 @@ public class AuthorService : IAuthorService
             var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
             if (totalPages == 0) totalPages = 1;
             
-            var lst = await query.OrderBy(a => a.AuthorName)
+            var lst = await query
+                            .Select(a => new
+                            {
+                                a.AuthorId,
+                                a.AuthorName,
+                                a.IsDeleted,
+                                BookCount = a.TblBooks.Count(b => !b.IsDeleted),
+                                SampleBooks = a.TblBooks
+                                    .Where(b => !b.IsDeleted)
+                                    .OrderByDescending(b => b.BookId)
+                                    .Take(10)
+                                    .Select(b => new AuthorBookPreviewModel
+                                    {
+                                        BookId = b.BookId,
+                                        Title = b.Title,
+                                        Author = a.AuthorName,
+                                        CoverImageUrl = b.TblBookEditions
+                                            .Where(e => !e.IsDeleted && !string.IsNullOrEmpty(e.CoverImageUrl))
+                                            .Select(e => e.CoverImageUrl)
+                                            .FirstOrDefault(),
+                                        Price = b.TblBookEditions
+                                            .Where(e => !e.IsDeleted)
+                                            .Select(e => e.Price)
+                                            .FirstOrDefault()
+                                    })
+                                    .ToList()
+                            })
+                            .OrderBy(a => a.AuthorName)
                             .Skip((requestModel.Page - 1) * requestModel.Limit)
                             .Take(requestModel.Limit)
                             .ToListAsync();
@@ -51,7 +78,9 @@ public class AuthorService : IAuthorService
                 {
                     AuthorId = item.AuthorId,
                     AuthorName = item.AuthorName,
-                    IsDeleted = item.IsDeleted
+                    IsDeleted = item.IsDeleted,
+                    BookCount = item.BookCount,
+                    SampleBooks = item.SampleBooks
                 });
             }
             
@@ -76,6 +105,100 @@ public class AuthorService : IAuthorService
                 IsSuccess = false,
                 Type = EnumResType.SystemError,
                 Message = "Failed to fetch authors: " + ex.Message
+            };
+        }
+    }
+
+    public async Task<AuthorCursorResponseModel> GetAuthorsCursorAsync(AuthorCursorRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Authors Cursor Async => Cursor: {Cursor}, Limit: {Limit}", requestModel.Cursor, requestModel.Limit);
+        try
+        {
+            var query = _db.TblAuthors
+                    .AsNoTracking()
+                    .Where(a => !a.IsDeleted && a.TblBooks.Any(b => !b.IsDeleted));
+
+            if (!string.IsNullOrWhiteSpace(requestModel.AuthorName))
+            {
+                query = query.Where(a => a.AuthorName.Contains(requestModel.AuthorName));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            if (requestModel.Cursor.HasValue && requestModel.Cursor.Value > 0)
+            {
+                query = query.Where(a => a.AuthorId > requestModel.Cursor.Value);
+            }
+
+            int takeCount = requestModel.Limit <= 0 ? 6 : requestModel.Limit;
+
+            var rawList = await query
+                .OrderBy(a => a.AuthorId)
+                .Take(takeCount + 1)
+                .Select(a => new
+                {
+                    a.AuthorId,
+                    a.AuthorName,
+                    a.IsDeleted,
+                    BookCount = a.TblBooks.Count(b => !b.IsDeleted),
+                    SampleBooks = a.TblBooks
+                        .Where(b => !b.IsDeleted)
+                        .OrderByDescending(b => b.BookId)
+                        .Take(12)
+                        .Select(b => new AuthorBookPreviewModel
+                        {
+                            BookId = b.BookId,
+                            Title = b.Title,
+                            Author = a.AuthorName,
+                            CoverImageUrl = b.TblBookEditions
+                                .Where(e => !e.IsDeleted && !string.IsNullOrEmpty(e.CoverImageUrl))
+                                .Select(e => e.CoverImageUrl)
+                                .FirstOrDefault(),
+                            Price = b.TblBookEditions
+                                .Where(e => !e.IsDeleted)
+                                .Select(e => e.Price)
+                                .FirstOrDefault()
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            bool hasNextPage = rawList.Count > takeCount;
+            if (hasNextPage)
+            {
+                rawList.RemoveAt(rawList.Count - 1);
+            }
+
+            int? nextCursor = hasNextPage && rawList.Any() ? rawList.Last().AuthorId : null;
+
+            List<AuthorModel> authors = rawList.Select(item => new AuthorModel
+            {
+                AuthorId = item.AuthorId,
+                AuthorName = item.AuthorName,
+                IsDeleted = item.IsDeleted,
+                BookCount = item.BookCount,
+                SampleBooks = item.SampleBooks
+            }).ToList();
+
+            return new AuthorCursorResponseModel
+            {
+                IsSuccess = true,
+                Type = EnumResType.Success,
+                Message = "Authors fetched successfully via cursor",
+                Data = authors,
+                NextCursor = nextCursor,
+                HasNextPage = hasNextPage,
+                TotalCount = totalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetAuthorsCursorAsync => Exception occurred");
+            return new AuthorCursorResponseModel
+            {
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
+                Message = "Failed to fetch authors via cursor: " + ex.Message
             };
         }
     }

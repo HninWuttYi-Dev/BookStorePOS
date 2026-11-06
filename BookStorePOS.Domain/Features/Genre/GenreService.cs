@@ -28,7 +28,7 @@ public class GenreService : IGenreService
         {
             var query = _db.TblGenres
                     .AsNoTracking()
-                    .Where(g => !g.IsDeleted);
+                    .Where(g => !g.IsDeleted && g.TblBooks.Any(b => !b.IsDeleted));
 
             if (!string.IsNullOrWhiteSpace(requestModel.GenreName))
             {
@@ -39,7 +39,34 @@ public class GenreService : IGenreService
             var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
             if (totalPages == 0) totalPages = 1;
             
-            var lst = await query.OrderByDescending(g => g.CreatedAt)
+            var lst = await query
+                            .Select(g => new
+                            {
+                                g.GenreId,
+                                g.GenreName,
+                                g.IsDeleted,
+                                BookCount = g.TblBooks.Count(b => !b.IsDeleted),
+                                SampleBooks = g.TblBooks
+                                    .Where(b => !b.IsDeleted)
+                                    .OrderByDescending(b => b.BookId)
+                                    .Take(10)
+                                    .Select(b => new GenreBookPreviewModel
+                                    {
+                                        BookId = b.BookId,
+                                        Title = b.Title,
+                                        Author = b.Author != null ? b.Author.AuthorName : "",
+                                        CoverImageUrl = b.TblBookEditions
+                                            .Where(e => !e.IsDeleted && !string.IsNullOrEmpty(e.CoverImageUrl))
+                                            .Select(e => e.CoverImageUrl)
+                                            .FirstOrDefault(),
+                                        Price = b.TblBookEditions
+                                            .Where(e => !e.IsDeleted)
+                                            .Select(e => e.Price)
+                                            .FirstOrDefault()
+                                    })
+                                    .ToList()
+                            })
+                            .OrderBy(g => g.GenreName)
                             .Skip((requestModel.Page - 1) * requestModel.Limit)
                             .Take(requestModel.Limit)
                             .ToListAsync();
@@ -51,7 +78,9 @@ public class GenreService : IGenreService
                 {
                     GenreId = item.GenreId,
                     GenreName = item.GenreName,
-                    IsDeleted = item.IsDeleted
+                    IsDeleted = item.IsDeleted,
+                    BookCount = item.BookCount,
+                    SampleBooks = item.SampleBooks
                 });
             }
             
@@ -76,6 +105,100 @@ public class GenreService : IGenreService
                 IsSuccess = false,
                 Type = EnumResType.SystemError,
                 Message = "Failed to fetch genres: " + ex.Message
+            };
+        }
+    }
+
+    public async Task<GenreCursorResponseModel> GetGenresCursorAsync(GenreCursorRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Genres Cursor Async => Cursor: {Cursor}, Limit: {Limit}", requestModel.Cursor, requestModel.Limit);
+        try
+        {
+            var query = _db.TblGenres
+                    .AsNoTracking()
+                    .Where(g => !g.IsDeleted && g.TblBooks.Any(b => !b.IsDeleted));
+
+            if (!string.IsNullOrWhiteSpace(requestModel.GenreName))
+            {
+                query = query.Where(g => g.GenreName.Contains(requestModel.GenreName));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            if (requestModel.Cursor.HasValue && requestModel.Cursor.Value > 0)
+            {
+                query = query.Where(g => g.GenreId > requestModel.Cursor.Value);
+            }
+
+            int takeCount = requestModel.Limit <= 0 ? 6 : requestModel.Limit;
+
+            var rawList = await query
+                .OrderBy(g => g.GenreId)
+                .Take(takeCount + 1)
+                .Select(g => new
+                {
+                    g.GenreId,
+                    g.GenreName,
+                    g.IsDeleted,
+                    BookCount = g.TblBooks.Count(b => !b.IsDeleted),
+                    SampleBooks = g.TblBooks
+                        .Where(b => !b.IsDeleted)
+                        .OrderByDescending(b => b.BookId)
+                        .Take(12)
+                        .Select(b => new GenreBookPreviewModel
+                        {
+                            BookId = b.BookId,
+                            Title = b.Title,
+                            Author = b.Author != null ? b.Author.AuthorName : "",
+                            CoverImageUrl = b.TblBookEditions
+                                .Where(e => !e.IsDeleted && !string.IsNullOrEmpty(e.CoverImageUrl))
+                                .Select(e => e.CoverImageUrl)
+                                .FirstOrDefault(),
+                            Price = b.TblBookEditions
+                                .Where(e => !e.IsDeleted)
+                                .Select(e => e.Price)
+                                .FirstOrDefault()
+                        })
+                        .ToList()
+                })
+                .ToListAsync();
+
+            bool hasNextPage = rawList.Count > takeCount;
+            if (hasNextPage)
+            {
+                rawList.RemoveAt(rawList.Count - 1);
+            }
+
+            int? nextCursor = hasNextPage && rawList.Any() ? rawList.Last().GenreId : null;
+
+            List<GenreModel> genres = rawList.Select(item => new GenreModel
+            {
+                GenreId = item.GenreId,
+                GenreName = item.GenreName,
+                IsDeleted = item.IsDeleted,
+                BookCount = item.BookCount,
+                SampleBooks = item.SampleBooks
+            }).ToList();
+
+            return new GenreCursorResponseModel
+            {
+                IsSuccess = true,
+                Type = EnumResType.Success,
+                Message = "Genres fetched successfully via cursor",
+                Data = genres,
+                NextCursor = nextCursor,
+                HasNextPage = hasNextPage,
+                TotalCount = totalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetGenresCursorAsync => Exception occurred");
+            return new GenreCursorResponseModel
+            {
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
+                Message = "Failed to fetch genres via cursor: " + ex.Message
             };
         }
     }

@@ -136,6 +136,128 @@ public class BookService : IBookService
         }
     }
 
+    public async Task<BookCursorResponseModel> GetBooksCursorAsync(BookCursorRequestModel requestModel)
+    {
+        _logger.LogInformation("Get Books Cursor Async => Cursor: {Cursor}, Limit: {Limit}", requestModel.Cursor, requestModel.Limit);
+        try
+        {
+            var baseQuery = _db.TblBooks
+                .AsNoTracking()
+                .Where(b => !b.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(requestModel.SearchQuery))
+            {
+                var queryTerm = requestModel.SearchQuery.Trim().ToLower();
+                baseQuery = baseQuery.Where(b => b.Title.ToLower().Contains(queryTerm) ||
+                                                 (b.Author != null && b.Author.AuthorName.ToLower().Contains(queryTerm)) ||
+                                                 b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.ToLower().Contains(queryTerm)));
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.Title))
+            {
+                baseQuery = baseQuery.Where(b => b.Title.Contains(requestModel.Title));
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.Author))
+            {
+                baseQuery = baseQuery.Where(b => b.Author != null && b.Author.AuthorName.Contains(requestModel.Author));
+            }
+            if (requestModel.AuthorId.HasValue)
+            {
+                baseQuery = baseQuery.Where(b => b.AuthorId == requestModel.AuthorId);
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.Genre))
+            {
+                baseQuery = baseQuery.Where(b => b.Genre != null && b.Genre.GenreName.Contains(requestModel.Genre));
+            }
+            if (requestModel.GenreId.HasValue)
+            {
+                baseQuery = baseQuery.Where(b => b.GenreId == requestModel.GenreId);
+            }
+            if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
+            {
+                baseQuery = baseQuery.Where(b => b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.Contains(requestModel.Isbn)));
+            }
+
+            var totalCount = await baseQuery.CountAsync();
+
+            // Deterministic Cursor filter (O(1) index seek on primary key)
+            if (requestModel.Cursor.HasValue && requestModel.Cursor.Value > 0)
+            {
+                baseQuery = baseQuery.Where(b => b.BookId < requestModel.Cursor.Value);
+            }
+
+            int takeCount = requestModel.Limit <= 0 ? 12 : requestModel.Limit;
+
+            // Take takeCount + 1 to check if there is a next page without a second count query
+            var rawList = await baseQuery
+                .Include(b => b.Author)
+                .Include(b => b.Genre)
+                .Include(b => b.TblBookEditions)
+                    .ThenInclude(e => e.Edition)
+                .OrderByDescending(b => b.BookId)
+                .Take(takeCount + 1)
+                .ToListAsync();
+
+            bool hasNextPage = rawList.Count > takeCount;
+            if (hasNextPage)
+            {
+                rawList.RemoveAt(rawList.Count - 1);
+            }
+
+            int? nextCursor = hasNextPage && rawList.Any() ? rawList.Last().BookId : null;
+
+            var books = rawList.Select(item => new BookModel
+            {
+                BookId = item.BookId,
+                Title = item.Title,
+                Author = item.Author?.AuthorName,
+                AuthorId = item.AuthorId,
+                Genre = item.Genre?.GenreName,
+                GenreId = item.GenreId,
+                Description = item.Description,
+                IsDeleted = item.IsDeleted,
+                StartingPrice = item.TblBookEditions.Any(e => !e.IsDeleted) ? item.TblBookEditions.Where(e => !e.IsDeleted).Min(e => e.Price) : 0,
+                TotalStockQuantity = item.TblBookEditions.Where(e => !e.IsDeleted).Sum(e => e.StockQuantity),
+                Editions = item.TblBookEditions.Where(e => !e.IsDeleted).Select(e => new BookEditionModel
+                {
+                    BookEditionId = e.BookEditionId,
+                    BookId = e.BookId,
+                    EditionId = e.EditionId,
+                    EditionName = e.Edition?.EditionName ?? "Unknown Edition",
+                    Isbn = e.Isbn,
+                    Price = e.Price,
+                    StockQuantity = e.StockQuantity,
+                    ReorderLevel = e.ReorderLevel,
+                    PublishDate = e.PublishDate,
+                    PageCount = e.PageCount,
+                    Publisher = e.Publisher,
+                    CoverImageUrl = e.CoverImageUrl,
+                    EditionNote = e.EditionNote
+                }).ToList()
+            }).ToList();
+
+            return new BookCursorResponseModel
+            {
+                IsSuccess = true,
+                Type = EnumResType.Success,
+                Message = "Books fetched successfully via cursor",
+                Data = books,
+                NextCursor = nextCursor,
+                HasNextPage = hasNextPage,
+                TotalCount = totalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetBooksCursorAsync => Exception occurred");
+            return new BookCursorResponseModel
+            {
+                IsSuccess = false,
+                Type = EnumResType.SystemError,
+                Message = "Failed to fetch books via cursor: " + ex.Message
+            };
+        }
+    }
+
     public async Task<Result<BookModel>> GetBookAsync(BookByIdRequestModel requestModel)
     {
         _logger.LogInformation("Get Book ById Async => Fetching book by Id");

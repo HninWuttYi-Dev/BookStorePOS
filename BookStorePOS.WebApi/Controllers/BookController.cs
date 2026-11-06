@@ -42,6 +42,23 @@ public class BookController : BaseController
         }
     }
 
+    [HttpGet("cursor")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBooksCursorAsync([FromQuery] BookCursorRequestModel requestModel)
+    {
+        try
+        {
+            _logger.LogInformation("Get Books Cursor Async => Fetching books with cursor {Cursor}", requestModel.Cursor);
+            var response = await _bookService.GetBooksCursorAsync(requestModel);
+            return ExecuteResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetBooksCursorAsync => Exception occurred");
+            return ExecuteResult(Result<List<BookModel>>.SystemError("Internal Server Error: " + ex.Message));
+        }
+    }
+
     [HttpGet("low-stock")]
     [Permission("Book.View")]
     public async Task<IActionResult> GetLowStockBooksAsync()

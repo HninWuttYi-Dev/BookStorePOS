@@ -10,6 +10,7 @@ public interface IBookService
     Task<Result<BookModel>> DeleteBookAsync(BookDeleteRequestModel requestModel);
     Task<Result<BookModel>> GetBookAsync(BookByIdRequestModel requestModel);
     Task<BookListResponseModel> GetBooksAsync(BookListRequestModel requestModel);
+    Task<BookCursorResponseModel> GetBooksCursorAsync(BookCursorRequestModel requestModel);
     Task<BookListResponseModel> GetLowStockBooksAsync();
     Task<Result<BookModel>> UpdateBookAsync(BookPatchRequestModel requestModel);
     Task<Result<BookEditionModel>> CreateBookEditionAsync(BookEditionCreateRequestModel requestModel);

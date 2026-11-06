@@ -25,6 +25,26 @@ public class BookListResponseModel : Result<List<BookModel>>
     public int TotalPages {get; set;}
 }
 
+public class BookCursorRequestModel
+{
+    public int? Cursor { get; set; }
+    public int Limit { get; set; } = 12;
+    public string? SearchQuery { get; set; }
+    public string? Title { get; set; }
+    public string? Author { get; set; }
+    public int? AuthorId { get; set; }
+    public string? Genre { get; set; }
+    public int? GenreId { get; set; }
+    public string? Isbn { get; set; }
+}
+
+public class BookCursorResponseModel : Result<List<BookModel>>
+{
+    public int? NextCursor { get; set; }
+    public bool HasNextPage { get; set; }
+    public int TotalCount { get; set; }
+}
+
 public class BookModel
 {
     public int BookId { get; set; }

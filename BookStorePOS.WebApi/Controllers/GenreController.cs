@@ -38,6 +38,23 @@ public class GenreController : BaseController
         }
     }
 
+    [HttpGet("cursor")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetGenresCursorAsync([FromQuery] GenreCursorRequestModel requestModel)
+    {
+        try
+        {
+            _logger.LogInformation("Get Genres Cursor Async => Cursor {Cursor}", requestModel.Cursor);
+            var response = await _genreService.GetGenresCursorAsync(requestModel);
+            return ExecuteResult(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetGenresCursorAsync => Exception occurred");
+            return ExecuteResult(Result<List<GenreModel>>.SystemError("Internal Server Error: " + ex.Message));
+        }
+    }
+
     [HttpGet("{id}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetGenreByIdAsync(int id)

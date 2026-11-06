@@ -7,6 +7,7 @@ namespace BookStorePOS.Domain.Features.Author;
 public interface IAuthorService
 {
     Task<AuthorListResponseModel> GetAuthorsAsync(AuthorListRequestModel requestModel);
+    Task<AuthorCursorResponseModel> GetAuthorsCursorAsync(AuthorCursorRequestModel requestModel);
     Task<Result<AuthorModel>> GetAuthorByIdAsync(AuthorByIdRequestModel requestModel);
     Task<Result<AuthorModel>> CreateAuthorAsync(AuthorCreateRequestModel requestModel);
     Task<Result<AuthorModel>> UpdateAuthorAsync(AuthorPatchRequestModel requestModel);

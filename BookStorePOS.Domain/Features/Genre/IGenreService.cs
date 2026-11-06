@@ -7,6 +7,7 @@ namespace BookStorePOS.Domain.Features.Genre;
 public interface IGenreService
 {
     Task<GenreListResponseModel> GetGenresAsync(GenreListRequestModel requestModel);
+    Task<GenreCursorResponseModel> GetGenresCursorAsync(GenreCursorRequestModel requestModel);
     Task<Result<GenreModel>> GetGenreByIdAsync(GenreByIdRequestModel requestModel);
     Task<Result<GenreModel>> CreateGenreAsync(GenreCreateRequestModel requestModel);
     Task<Result<GenreModel>> UpdateGenreAsync(GenrePatchRequestModel requestModel);

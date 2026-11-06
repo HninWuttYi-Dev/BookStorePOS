@@ -57,6 +57,25 @@ namespace BookStorePOS.CustomerApp.Controllers
         }
     }
 
+        [HttpGet]
+        [ActionName("LoadMore")]
+        public async Task<IActionResult> LoadMoreBooksAsync([FromQuery] BookCursorRequestModel requestModel)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var qs = $"?Cursor={requestModel.Cursor}&Limit={requestModel.Limit}&SearchQuery={Uri.EscapeDataString(requestModel.SearchQuery ?? "")}&Author={Uri.EscapeDataString(requestModel.Author ?? "")}&Genre={Uri.EscapeDataString(requestModel.Genre ?? "")}";
+                var httpResponse = await client.GetAsync($"api/book/cursor{qs}");
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                return Content(jsonString, "application/json");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "LoadMoreBooksAsync => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = ex.Message });
+            }
+        }
+
         [ActionName("Detail")]
         public async Task<IActionResult> BookDetailAsync(int id)
         {

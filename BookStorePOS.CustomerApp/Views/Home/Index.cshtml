@@ -150,11 +150,23 @@
             </a>
         </div>
         
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            @foreach(var genre in new[] { "Fiction", "History", "Philosophy", "Science", "Biography", "Poetry" })
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            @{
+                var curatedGenres = new[]
+                {
+                    (Name: "Fantasy", Label: "Fantasy", Subtitle: "Magic & Myth"),
+                    (Name: "Classic", Label: "Classics", Subtitle: "Timeless Literature"),
+                    (Name: "Dystopian", Label: "Dystopian", Subtitle: "Future & Society"),
+                    (Name: "သမိုင်း", Label: "သမိုင်းနောက်ခံ", Subtitle: "Historical Masterworks"),
+                    (Name: "ရသဝတ္ထု", Label: "ရသဝတ္ထုရှည်", Subtitle: "Literary Novels"),
+                    (Name: "စုံထောက်", Label: "စုံထောက်နှင့် စွန့်စားခန်း", Subtitle: "Mystery & Adventure")
+                };
+            }
+            @foreach(var item in curatedGenres)
             {
-                <a href="/Books?genre=@genre" class="bg-white/90 hover:bg-white border border-brand-border/70 hover:border-brand-accent rounded-xl p-5 text-center shadow-xs hover:shadow-md transition-all group hover:-translate-y-0.5">
-                    <span class="font-heading font-semibold text-base sm:text-lg text-brand-ink group-hover:text-brand-accent transition-colors">@genre</span>
+                <a href="/Books?genre=@Uri.EscapeDataString(item.Name)" class="bg-white/90 hover:bg-white border border-brand-border/70 hover:border-brand-accent rounded-xl p-4 sm:p-5 text-center shadow-xs hover:shadow-md transition-all group hover:-translate-y-0.5 flex flex-col items-center justify-center min-h-[95px]">
+                    <span class="font-heading font-bold text-sm sm:text-base text-brand-ink group-hover:text-brand-accent transition-colors leading-tight">@item.Label</span>
+                    <span class="text-[10px] text-brand-inkLight/75 font-body uppercase tracking-wider mt-1.5 group-hover:text-brand-ink transition-colors">@item.Subtitle</span>
                 </a>
             }
         </div>
