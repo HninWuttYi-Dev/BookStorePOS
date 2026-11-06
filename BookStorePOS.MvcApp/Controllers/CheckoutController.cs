@@ -19,8 +19,16 @@ namespace BookStorePOS.MvcApp.Controllers
         [ActionName("Index")]
         public async Task<IActionResult> CheckoutAsync(int page = 1, string search = "")
         {
-        try
-        {
+            var hasToken = !string.IsNullOrEmpty(Request.Cookies["pos_token"]);
+            var hasRefresh = !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]);
+            if (!hasToken && !hasRefresh)
+            {
+                _logger.LogInformation("Checkout => No auth cookies found, redirecting to Login");
+                return RedirectToAction("Login", "Auth", new { returnUrl = "/Checkout" });
+            }
+
+            try
+            {
                 _logger.LogInformation("Checkout Index => Fetching books");
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var qs = $"?Page={page}&Limit=12&Title={Uri.EscapeDataString(search ?? "")}";

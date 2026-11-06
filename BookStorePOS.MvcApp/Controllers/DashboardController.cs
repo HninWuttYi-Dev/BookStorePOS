@@ -36,6 +36,37 @@ namespace BookStorePOS.MvcApp.Controllers
                     return RedirectToLogin();
                 }
 
+                // 2. Permission check: if user cannot view dashboard, route to permitted module
+                var userRole = Request.Cookies["pos_role"] ?? "";
+                var userPerms = Request.Cookies["pos_permissions"] ?? "";
+                bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+                bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
+
+                if (!isAdmin)
+                {
+                    var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    if (isCashier || !permList.Contains("Dashboard.View", StringComparer.OrdinalIgnoreCase))
+                    {
+                        if (isCashier || permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+                        {
+                            _logger.LogInformation("DashboardIndexAsync => User without Dashboard.View routed to Checkout");
+                            return RedirectToAction("Index", "Checkout");
+                        }
+                        else if (permList.Contains("Book.View", StringComparer.OrdinalIgnoreCase))
+                        {
+                            return RedirectToAction("Index", "Book");
+                        }
+                        else if (permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase))
+                        {
+                            return RedirectToAction("Index", "Orders");
+                        }
+                        else
+                        {
+                            return RedirectToAction("Index", "Checkout");
+                        }
+                    }
+                }
+
                 _logger.LogInformation("Dashboard Index Async => Fetching dashboard data");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");

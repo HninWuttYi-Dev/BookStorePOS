@@ -209,12 +209,37 @@
                 
                 string cookieUser = Context.Request.Cookies["pos_user"] ?? "";
                 string cookieRole = Context.Request.Cookies["pos_role"] ?? "";
+                string cookiePerms = Context.Request.Cookies["pos_permissions"] ?? "";
+
                 string displayUser = !string.IsNullOrWhiteSpace(cookieUser) 
                     ? Uri.UnescapeDataString(cookieUser).Replace("+", " ") 
                     : "";
                 string displayRole = !string.IsNullOrWhiteSpace(cookieRole) ? cookieRole : "Staff";
                 bool isAdmin = string.Equals(displayRole, "Admin", StringComparison.OrdinalIgnoreCase);
                 bool isCashier = string.Equals(displayRole, "Cashier", StringComparison.OrdinalIgnoreCase);
+
+                var userPerms = cookiePerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                bool HasPermission(string permission)
+                {
+                    if (isAdmin) return true;
+                    if (isCashier && permission.Equals("Order.Create", StringComparison.OrdinalIgnoreCase)) return true;
+                    return userPerms.Contains(permission, StringComparer.OrdinalIgnoreCase);
+                }
+
+                bool canViewDashboard = !isCashier && HasPermission("Dashboard.View");
+                bool canCreateOrder = HasPermission("Order.Create");
+                bool canViewOrders = !isCashier && HasPermission("Order.View");
+                bool canViewOnlineOrders = !isCashier && (HasPermission("Order.View") || HasPermission("OnlineOrder.View"));
+                bool showSalesSection = canCreateOrder || canViewOrders || canViewOnlineOrders;
+
+                bool canViewBooks = !isCashier && HasPermission("Book.View");
+                bool canViewAuthors = !isCashier && HasPermission("Author.View");
+                bool canViewGenres = !isCashier && HasPermission("Genre.View");
+                bool canViewEditions = !isCashier && HasPermission("Edition.View");
+                bool showInventorySection = canViewBooks || canViewAuthors || canViewGenres || canViewEditions;
+
+                bool canViewSalesReports = isAdmin;
+                bool showInsightsSection = isAdmin;
 
                 string initials = "--";
                 if (!string.IsNullOrWhiteSpace(displayUser))
@@ -232,54 +257,87 @@
                 }
             }
             
-            <a href="/Dashboard" data-permission="Dashboard.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Dashboard")">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                Dashboard
-            </a>
+            @if (canViewDashboard)
+            {
+                <a href="/Dashboard" data-permission="Dashboard.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Dashboard")">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+            }
             
-            <div class="nav-section-sales">
-                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">SALES</div>
-                <a href="/Checkout" data-permission="Order.Create" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Checkout")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    POS Checkout
-                </a>
-                <a href="/Orders" data-permission="Order.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Orders")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    Orders
-                </a>
-                <a href="/OnlineOrders" data-permission="Order.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("OnlineOrders")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                    Online Orders
-                </a>
-            </div>
+            @if (showSalesSection)
+            {
+                <div class="nav-section-sales">
+                    <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">SALES</div>
+                    @if (canCreateOrder)
+                    {
+                        <a href="/Checkout" data-permission="Order.Create" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Checkout")">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            POS Checkout
+                        </a>
+                    }
+                    @if (canViewOrders)
+                    {
+                        <a href="/Orders" data-permission="Order.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Orders")">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            Orders
+                        </a>
+                    }
+                    @if (canViewOnlineOrders)
+                    {
+                        <a href="/OnlineOrders" data-permission="Order.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("OnlineOrders")">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            Online Orders
+                        </a>
+                    }
+                </div>
+            }
 
-            <div class="nav-section-inventory">
-                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">INVENTORY</div>
-                <a href="/Book" data-permission="Book.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Book")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    Books
-                </a>
-                <a href="/Author" data-permission="Author.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Author")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    Authors
-                </a>
-                <a href="/Genre" data-permission="Genre.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Genre")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                    Genres
-                </a>
-                <a href="/Edition" data-permission="Edition.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Edition")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                    Editions
-                </a>
-            </div>
+            @if (showInventorySection)
+            {
+                <div class="nav-section-inventory">
+                    <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">INVENTORY</div>
+                    @if (canViewBooks)
+                    {
+                        <a href="/Book" data-permission="Book.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Book")">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            Books
+                        </a>
+                    }
+                    @if (canViewAuthors)
+                    {
+                        <a href="/Author" data-permission="Author.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Author")">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            Authors
+                        </a>
+                    }
+                    @if (canViewGenres)
+                    {
+                        <a href="/Genre" data-permission="Genre.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Genre")">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                            Genres
+                        </a>
+                    }
+                    @if (canViewEditions)
+                    {
+                        <a href="/Edition" data-permission="Edition.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Edition")">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            Editions
+                        </a>
+                    }
+                </div>
+            }
 
-            <div class="nav-section-insights">
-                <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">INSIGHTS</div>
-                <a href="/SalesReports" data-permission="Order.View" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("SalesReports")">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Sales Reports
-                </a>
-            </div>
+            @if (isAdmin)
+            {
+                <div class="nav-section-insights">
+                    <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">INSIGHTS</div>
+                    <a href="/SalesReports" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("SalesReports")">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Sales Reports
+                    </a>
+                </div>
+            }
 
             @if (isAdmin)
             {
@@ -310,7 +368,7 @@
             }
 
             <div class="pt-2">
-                @if (!isAdmin)
+                @if (!isAdmin && !isCashier)
                 {
                     <div class="px-4 mt-6 mb-2 text-xs font-semibold text-[#9C8EA4] uppercase tracking-wider">SETTINGS</div>
                     <a href="/Announcement" class="nav-item flex items-center px-4 py-3 rounded-2xl transition-colors @GetActiveClass("Announcement")">
@@ -828,6 +886,70 @@
                     ...commonConfig,
                     altInputClass: "w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#9F54A6]/30 focus:border-[#9F54A6] transition-all bg-white cursor-pointer"
                 });
+            }
+
+            // Client-side DOM permission guard based on stored permissions
+            try {
+                const role = (localStorage.getItem('pos_role') || '').toLowerCase();
+                const isCashier = role === 'cashier';
+                if (role !== 'admin') {
+                    let perms = [];
+                    const raw = localStorage.getItem('pos_permissions');
+                    try {
+                        perms = JSON.parse(raw || '[]');
+                        if (!Array.isArray(perms)) {
+                            perms = (raw || '').split(',').map(s => s.trim());
+                        }
+                    } catch(e) {
+                        perms = (raw || '').split(',').map(s => s.trim());
+                    }
+                    const permsLower = perms.map(p => (p || '').toLowerCase());
+
+                    document.querySelectorAll('a[data-permission]').forEach(function(el) {
+                        const req = (el.getAttribute('data-permission') || '').toLowerCase();
+                        if (isCashier) {
+                            if (req !== 'order.create') {
+                                el.style.display = 'none';
+                            }
+                        } else if (req && !permsLower.includes(req)) {
+                            el.style.display = 'none';
+                        }
+                    });
+
+                    if (role !== 'admin') {
+                        const srLink = document.querySelector('a[href="/SalesReports"]');
+                        if (srLink) srLink.style.display = 'none';
+                        const insSec = document.querySelector('.nav-section-insights');
+                        if (insSec) insSec.style.display = 'none';
+                    }
+
+                    if (isCashier) {
+                        const dLink = document.querySelector('a[href="/Dashboard"]');
+                        if (dLink) dLink.style.display = 'none';
+                        const bAlert = document.querySelector('a[href="/Announcement"]');
+                        if (bAlert) {
+                            bAlert.style.display = 'none';
+                            const setH = bAlert.previousElementSibling;
+                            if (setH && setH.textContent && setH.textContent.trim().toUpperCase() === 'SETTINGS') {
+                                setH.style.display = 'none';
+                            }
+                        }
+                    }
+
+                    ['.nav-section-sales', '.nav-section-inventory', '.nav-section-insights', '.nav-section-management'].forEach(function(sel) {
+                        const sec = document.querySelector(sel);
+                        if (sec) {
+                            const visibleLinks = Array.from(sec.querySelectorAll('a.nav-item')).filter(function(a) {
+                                return a.style.display !== 'none' && window.getComputedStyle(a).display !== 'none';
+                            });
+                            if (visibleLinks.length === 0) {
+                                sec.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.warn('Permission enforcement check:', err);
             }
         });
     </script>

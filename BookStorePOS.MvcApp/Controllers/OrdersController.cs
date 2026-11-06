@@ -26,8 +26,32 @@ namespace BookStorePOS.MvcApp.Controllers
         [ActionName("Index")]
         public async Task<IActionResult> OrdersAsync(OrderHistoryRequestModel requestModel)
         {
-        try
-        {
+            var hasToken = !string.IsNullOrEmpty(Request.Cookies["pos_token"]);
+            var hasRefresh = !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]);
+            if (!hasToken && !hasRefresh)
+            {
+                return RedirectToAction("Login", "Auth", new { returnUrl = "/Orders" });
+            }
+
+            var userRole = Request.Cookies["pos_role"] ?? "";
+            var userPerms = Request.Cookies["pos_permissions"] ?? "";
+            bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+            bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
+            if (isCashier)
+            {
+                return RedirectToAction("Index", "Checkout");
+            }
+            if (!isAdmin)
+            {
+                var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (!permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Index", "Checkout");
+                }
+            }
+
+            try
+            {
                 _logger.LogInformation("Orders Async => Fetching order history");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
@@ -71,6 +95,13 @@ namespace BookStorePOS.MvcApp.Controllers
         [ActionName("OrderDetail")]
         public async Task<IActionResult> OrderDetailAsync(int id)
         {
+            var hasToken = !string.IsNullOrEmpty(Request.Cookies["pos_token"]);
+            var hasRefresh = !string.IsNullOrEmpty(Request.Cookies["pos_refresh"]);
+            if (!hasToken && !hasRefresh)
+            {
+                return RedirectToAction("Login", "Auth", new { returnUrl = $"/Orders/OrderDetail/{id}" });
+            }
+
             try
             {
                 if (id <= 0 || !ModelState.IsValid)
@@ -82,6 +113,11 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 var httpResponse = await client.GetAsync($"api/order/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.Unauthorized || HttpContext.Items.ContainsKey("Auth_Expired"))
+                {
+                    return RedirectToAction("Login", "Auth", new { returnUrl = $"/Orders/OrderDetail/{id}" });
+                }
 
                 if (httpResponse.StatusCode == HttpStatusCode.NotFound)
                 {

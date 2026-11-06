@@ -165,7 +165,12 @@
                 if (event.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
                     $('#passwordInput').val('');
                     if (document.cookie.indexOf('pos_token=') !== -1 || localStorage.getItem('pos_user')) {
-                        window.location.replace(returnUrl || '/Dashboard');
+                        const role = (localStorage.getItem('pos_role') || '').toLowerCase();
+                        let dest = returnUrl;
+                        if (role === 'cashier') {
+                            dest = '/Checkout';
+                        }
+                        window.location.replace(dest || '/Dashboard');
                     } else {
                         window.location.reload();
                     }
@@ -274,8 +279,30 @@
                             // Clear password immediately so it's not held in memory
                             $('#passwordInput').val('');
 
+                            // Resolve target destination based on assigned permissions
+                            const perms = response.permissions || response.Permissions || [];
+                            const permsLower = perms.map(p => (p || '').toLowerCase());
+                            const role = (response.role || response.Role || '').toLowerCase();
+
+                            let dest = returnUrl;
+                            const isDashboardDest = !dest || dest === '/' || dest.toLowerCase().startsWith('/dashboard');
+
+                            if (role === 'cashier' || (role !== 'admin' && !permsLower.includes('dashboard.view'))) {
+                                if (isDashboardDest) {
+                                    if (role === 'cashier' || permsLower.includes('order.create')) {
+                                        dest = '/Checkout';
+                                    } else if (permsLower.includes('book.view')) {
+                                        dest = '/Book';
+                                    } else if (permsLower.includes('order.view')) {
+                                        dest = '/Orders';
+                                    } else {
+                                        dest = '/Checkout';
+                                    }
+                                }
+                            }
+
                             // Redirect using replace() so Back button doesn't revisit login
-                            window.location.replace(returnUrl);
+                            window.location.replace(dest || '/Checkout');
                         } else {
                             $('#loginAlertText').text(response.message || response.Message || "Invalid phone number or password.");
                             $('#loginAlert').removeClass('hidden');

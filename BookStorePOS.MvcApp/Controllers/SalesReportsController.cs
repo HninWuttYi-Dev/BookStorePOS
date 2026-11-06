@@ -35,6 +35,34 @@ namespace BookStorePOS.MvcApp.Controllers
                     return RedirectToLogin();
                 }
 
+                var userRole = Request.Cookies["pos_role"] ?? "";
+                var userPerms = Request.Cookies["pos_permissions"] ?? "";
+                bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+                bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
+
+                if (!isAdmin)
+                {
+                    _logger.LogWarning("SalesReports => Non-admin user '{User}' attempted to access SalesReports. Access denied.", Request.Cookies["pos_user"]);
+                    if (isCashier)
+                    {
+                        return RedirectToAction("Index", "Checkout");
+                    }
+                    var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    if (permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Checkout");
+                    }
+                    else if (permList.Contains("Book.View", StringComparer.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Book");
+                    }
+                    else if (permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase))
+                    {
+                        return RedirectToAction("Index", "Orders");
+                    }
+                    return RedirectToAction("Index", "Checkout");
+                }
+
                 _logger.LogInformation("SalesReports => Fetching sales report (Completed orders)");
 
                 var client = _httpClientFactory.CreateClient("WebAPI");

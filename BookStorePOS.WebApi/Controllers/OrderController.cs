@@ -108,10 +108,10 @@ public class OrderController : BaseController
 
     /// <summary>
     /// GET api/order/{id}
-    /// Can be accessed by staff or customers with Order.View permission
+    /// Can be accessed by staff, cashiers (for checkout voucher), or customers
     /// </summary>
     [HttpGet("{id}")]
-    [Permission("Order.View")]
+    [Permission("Order.View,Order.Create")]
     public async Task<IActionResult> GetOrderAsync(int id)
     {
         _logger.LogInformation("Get Order Async => Fetching order by Id: {OrderId}", id);
@@ -271,10 +271,10 @@ public class OrderController : BaseController
 
     /// <summary>
     /// 3) POST api/order/{id}/confirm
-    /// Admin confirms pending order: checks stock again, deducts stock, sets Completed/Verified.
+    /// Admin or authorized Staff confirms pending order: checks stock again, deducts stock, sets Completed/Verified.
     /// </summary>
     [HttpPost("{id}/confirm")]
-    [Permission("Order.Create")]
+    [Permission("Order.Create,Order.View")]
     public async Task<IActionResult> ConfirmOrderAsync(int id)
     {
         try
@@ -332,10 +332,10 @@ public class OrderController : BaseController
 
     /// <summary>
     /// 4) POST api/order/{id}/reject
-    /// Admin rejects pending order: requires RejectReason, sets Rejected/Rejected, no stock change.
+    /// Admin or authorized Staff rejects pending order: requires RejectReason, sets Rejected/Rejected, no stock change.
     /// </summary>
     [HttpPost("{id}/reject")]
-    [Permission("Order.Create")]
+    [Permission("Order.Create,Order.View")]
     public async Task<IActionResult> RejectOrderAsync(int id, [FromBody] OrderRejectRequestModel? requestModel)
     {
         try

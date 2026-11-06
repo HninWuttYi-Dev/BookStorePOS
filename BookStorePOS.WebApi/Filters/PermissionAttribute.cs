@@ -32,6 +32,7 @@ public class PermissionFilter : IAsyncAuthorizationFilter
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         bool hasPermission = false;
+        var requiredList = _permission.Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries);
 
         if (_checkFromDb)
         {
@@ -43,15 +44,15 @@ public class PermissionFilter : IAsyncAuthorizationFilter
                 {
                     hasPermission = await (from rp in _context.TblRolePermissions
                                            join p in _context.TblPermissions on rp.PermissionId equals p.PermissionId
-                                           where rp.RoleId == user.RoleId.Value && !p.IsDeleted && p.PermissionName == _permission
+                                           where rp.RoleId == user.RoleId.Value && !p.IsDeleted && requiredList.Contains(p.PermissionName)
                                            select p.PermissionId).AnyAsync();
                 }
             }
         }
         else
         {
-            hasPermission = context.HttpContext.User.HasClaim(c => 
-                c.Type == "permission" && c.Value == _permission);
+            hasPermission = context.HttpContext.User.Claims.Any(c => 
+                c.Type == "permission" && requiredList.Contains(c.Value, System.StringComparer.OrdinalIgnoreCase));
         }
 
         if (!hasPermission)

@@ -51,6 +51,11 @@ namespace BookStorePOS.MvcApp.Controllers
                         _logger.LogWarning("OnlineOrderListAsync => Access denied for user '{User}' without OnlineOrder.View", Request.Cookies["pos_user"]);
                         TempData["Message"] = "Access Denied: You do not have permission to view Online Orders.";
                         TempData["isSuccess"] = false;
+                        bool isCashier = string.Equals(userRole, "Cashier", StringComparison.OrdinalIgnoreCase);
+                        if (isCashier || permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
+                        {
+                            return RedirectToAction("Index", "Checkout");
+                        }
                         return RedirectToAction("Index", "Dashboard");
                     }
                 }
@@ -187,11 +192,15 @@ namespace BookStorePOS.MvcApp.Controllers
                 var userRole = Request.Cookies["pos_role"] ?? "";
                 var userPerms = Request.Cookies["pos_permissions"] ?? "";
                 bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
-                bool canUpdate = isAdmin || userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Contains("OnlineOrder.Update", StringComparer.OrdinalIgnoreCase);
+                var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                bool canUpdate = isAdmin || 
+                                 permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase) || 
+                                 permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase) || 
+                                 permList.Contains("OnlineOrder.Update", StringComparer.OrdinalIgnoreCase);
 
                 if (!canUpdate)
                 {
-                    _logger.LogWarning("OnlineOrderConfirmAsync => Access denied for user '{User}' without OnlineOrder.Update", Request.Cookies["pos_user"]);
+                    _logger.LogWarning("OnlineOrderConfirmAsync => Access denied for user '{User}' without Order.View/OnlineOrder.Update", Request.Cookies["pos_user"]);
                     return Json(new { isSuccess = false, message = "Access Denied: You do not have permission to verify or confirm online orders." });
                 }
 
@@ -233,11 +242,15 @@ namespace BookStorePOS.MvcApp.Controllers
                 var userRole = Request.Cookies["pos_role"] ?? "";
                 var userPerms = Request.Cookies["pos_permissions"] ?? "";
                 bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
-                bool canUpdate = isAdmin || userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Contains("OnlineOrder.Update", StringComparer.OrdinalIgnoreCase);
+                var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                bool canUpdate = isAdmin || 
+                                 permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase) || 
+                                 permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase) || 
+                                 permList.Contains("OnlineOrder.Update", StringComparer.OrdinalIgnoreCase);
 
                 if (!canUpdate)
                 {
-                    _logger.LogWarning("OnlineOrderRejectAsync => Access denied for user '{User}' without OnlineOrder.Update", Request.Cookies["pos_user"]);
+                    _logger.LogWarning("OnlineOrderRejectAsync => Access denied for user '{User}' without Order.View/OnlineOrder.Update", Request.Cookies["pos_user"]);
                     return Json(new { isSuccess = false, message = "Access Denied: You do not have permission to reject online orders." });
                 }
 

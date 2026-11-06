@@ -121,15 +121,12 @@ namespace BookStorePOS.MvcApp.Controllers
                         Expires = DateTimeOffset.UtcNow.AddDays(7)
                     });
 
-                    if (model.Permissions != null && model.Permissions.Count > 0)
+                    Response.Cookies.Append("pos_permissions", model.Permissions != null && model.Permissions.Count > 0 ? string.Join(",", model.Permissions) : "", new CookieOptions
                     {
-                        Response.Cookies.Append("pos_permissions", string.Join(",", model.Permissions), new CookieOptions
-                        {
-                            HttpOnly = false,
-                            SameSite = SameSiteMode.Lax,
-                            Expires = DateTimeOffset.UtcNow.AddDays(7)
-                        });
-                    }
+                        HttpOnly = false,
+                        SameSite = SameSiteMode.Lax,
+                        Expires = DateTimeOffset.UtcNow.AddDays(7)
+                    });
                 }
                 else
                 {
