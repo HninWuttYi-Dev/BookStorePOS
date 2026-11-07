@@ -1043,8 +1043,8 @@ public class BookService : IBookService
 
             var startDate = DateTime.Now.AddDays(-days);
 
-            // 1. Group completed order items in the last N days by BookId
-            var topSoldBooks = await _db.TblOrderItems
+            // 1. Group completed order items in the last N days by BookId and BookEditionId to find top selling editions
+            var topSoldEditions = await _db.TblOrderItems
                 .AsNoTracking()
                 .Where(oi => oi.BookEdition != null
                           && oi.BookEdition.Book != null
@@ -1052,15 +1052,25 @@ public class BookService : IBookService
                           && oi.Order != null
                           && oi.Order.OrderStatus == (byte)OrderStatus.Completed
                           && oi.Order.OrderDate >= startDate)
-                .GroupBy(oi => oi.BookEdition!.BookId)
+                .GroupBy(oi => new { oi.BookEdition!.BookId, oi.BookEditionId })
+                .Select(g => new
+                {
+                    BookId = g.Key.BookId,
+                    BookEditionId = g.Key.BookEditionId,
+                    TotalSold = g.Sum(oi => oi.Quantity)
+                })
+                .ToListAsync();
+
+            var topSoldBooks = topSoldEditions
+                .GroupBy(x => x.BookId)
                 .Select(g => new
                 {
                     BookId = g.Key,
-                    TotalSold = g.Sum(oi => oi.Quantity)
+                    TotalSold = g.Sum(x => x.TotalSold)
                 })
                 .OrderByDescending(x => x.TotalSold)
                 .Take(limit)
-                .ToListAsync();
+                .ToList();
 
             var topBookIds = topSoldBooks.Select(x => x.BookId).ToList();
 
@@ -1079,7 +1089,19 @@ public class BookService : IBookService
             {
                 if (booksDict.TryGetValue(id, out var tblBook))
                 {
-                    resultList.Add(MapToBookModel(tblBook));
+                    var bookModel = MapToBookModel(tblBook);
+                    var bookEditionSales = topSoldEditions
+                        .Where(e => e.BookId == id)
+                        .ToDictionary(e => e.BookEditionId, e => e.TotalSold);
+
+                    // Ensure the #1 bestseller edition is first in the list
+                    bookModel.Editions = bookModel.Editions
+                        .OrderByDescending(e => bookEditionSales.TryGetValue(e.BookEditionId, out var sold) ? sold : 0)
+                        .ThenByDescending(e => e.StockQuantity > 0 ? 1 : 0)
+                        .ThenByDescending(e => e.BookEditionId)
+                        .ToList();
+
+                    resultList.Add(bookModel);
                 }
             }
 
@@ -1135,16 +1157,26 @@ public class BookService : IBookService
                 query = query.Where(oi => oi.Order.OrderDate >= startDate);
             }
 
-            var topSoldBooks = await query
-                .GroupBy(oi => oi.BookEdition!.BookId)
+            var topSoldEditions = await query
+                .GroupBy(oi => new { oi.BookEdition!.BookId, oi.BookEditionId })
+                .Select(g => new
+                {
+                    BookId = g.Key.BookId,
+                    BookEditionId = g.Key.BookEditionId,
+                    TotalSold = g.Sum(oi => oi.Quantity)
+                })
+                .ToListAsync();
+
+            var topSoldBooks = topSoldEditions
+                .GroupBy(x => x.BookId)
                 .Select(g => new
                 {
                     BookId = g.Key,
-                    TotalSold = g.Sum(oi => oi.Quantity)
+                    TotalSold = g.Sum(x => x.TotalSold)
                 })
                 .OrderByDescending(x => x.TotalSold)
                 .Take(limit)
-                .ToListAsync();
+                .ToList();
 
             var topBookIds = topSoldBooks.Select(x => x.BookId).ToList();
 
@@ -1162,7 +1194,19 @@ public class BookService : IBookService
             {
                 if (booksDict.TryGetValue(id, out var tblBook))
                 {
-                    resultList.Add(MapToBookModel(tblBook));
+                    var bookModel = MapToBookModel(tblBook);
+                    var bookEditionSales = topSoldEditions
+                        .Where(e => e.BookId == id)
+                        .ToDictionary(e => e.BookEditionId, e => e.TotalSold);
+
+                    // Ensure the #1 bestseller edition is first in the list
+                    bookModel.Editions = bookModel.Editions
+                        .OrderByDescending(e => bookEditionSales.TryGetValue(e.BookEditionId, out var sold) ? sold : 0)
+                        .ThenByDescending(e => e.StockQuantity > 0 ? 1 : 0)
+                        .ThenByDescending(e => e.BookEditionId)
+                        .ToList();
+
+                    resultList.Add(bookModel);
                 }
             }
 

@@ -198,6 +198,11 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-5 sm:gap-x-6 gap-y-10 sm:gap-y-12">
             @foreach(var book in books)
             {
+                var activeEditions = book.Editions?.Where(e => !e.IsDeleted).ToList() ?? new List<BookEditionModel>();
+                var editionCount = activeEditions.Count;
+                var singleEdition = editionCount == 1 ? activeEditions[0] : null;
+                var coverImg = activeEditions.FirstOrDefault(e => !string.IsNullOrEmpty(e.CoverImageUrl))?.CoverImageUrl;
+
                 <div class="flex flex-col items-center group">
                     <!-- 3D Standing Book (Clean Transparent Stage) -->
                     <a href="/Books/Detail/@book.BookId" class="book-stage-wrapper cursor-pointer block" aria-label="Book: @book.Title by @book.Author">
@@ -216,9 +221,9 @@
                                     <!-- Spine Crease Fold -->
                                     <div class="book-3d-spine-fold"></div>
 
-                                    @if(!string.IsNullOrEmpty(book.Editions?.FirstOrDefault()?.CoverImageUrl))
+                                    @if(!string.IsNullOrEmpty(coverImg))
                                     {
-                                        <img src="@(book.Editions?.FirstOrDefault()?.CoverImageUrl)" alt="@book.Title" 
+                                        <img src="@coverImg" alt="@book.Title" 
                                              onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');"
                                              class="w-full h-full object-cover">
                                         <div class="hidden w-full h-full bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] flex flex-col justify-between p-3 rounded-r-xs border-l-2 border-[#8C6F45]/50 shadow-inner">
@@ -252,10 +257,40 @@
                                     
                                     <!-- Hover Quick Action Button -->
                                     <div class="absolute inset-0 bg-brand-ink/85 opacity-0 group-hover:opacity-100 transition-opacity z-30 flex flex-col items-center justify-center p-2 text-center backdrop-blur-[1px]">
-                                        <span class="text-brand-surface font-bold mb-2.5 font-heading text-xs sm:text-sm">@book.StartingPrice.ToString("N0") MMK</span>
-                                        <button type="button" onclick="window.handleAddToCart('@book.BookId', event)" class="bg-brand-accent text-white px-3.5 py-1.5 rounded-full text-[11px] font-semibold font-body hover:bg-brand-surface hover:text-brand-ink transition-colors shadow-md transform hover:scale-105 duration-200">
-                                            Add to Cart
-                                        </button>
+                                        @if (editionCount == 1 && singleEdition != null)
+                                        {
+                                            <span class="text-brand-surface font-bold mb-2.5 font-heading text-xs sm:text-sm">@singleEdition.Price.ToString("N0") MMK</span>
+                                            @if (singleEdition.StockQuantity > 0)
+                                            {
+                                                <button type="button" 
+                                                        onclick="window.addToCartDirect({ bookId: @book.BookId, bookEditionId: @singleEdition.BookEditionId, title: '@Html.Raw(book.Title.Replace("'", "\\'"))', editionName: '@Html.Raw(singleEdition.EditionName.Replace("'", "\\'"))', publisher: '@Html.Raw((singleEdition.Publisher ?? "").Replace("'", "\\'"))', price: @singleEdition.Price, coverImageUrl: '@singleEdition.CoverImageUrl', stockQuantity: @singleEdition.StockQuantity }, event)" 
+                                                        class="bg-brand-accent text-white px-3.5 py-1.5 rounded-full text-[11px] font-semibold font-body hover:bg-brand-surface hover:text-brand-ink transition-colors shadow-md transform hover:scale-105 duration-200">
+                                                    Add to Cart
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="bg-red-500/90 text-white px-3 py-1 rounded-full text-[10px] font-semibold font-body shadow-sm">
+                                                    Out of Stock
+                                                </span>
+                                            }
+                                        }
+                                        else if (editionCount > 1)
+                                        {
+                                            <span class="text-brand-surface font-bold mb-0.5 font-heading text-xs sm:text-sm">From @book.StartingPrice.ToString("N0") MMK</span>
+                                            <span class="text-[10px] text-brand-surface/75 font-body mb-2">@editionCount Editions Available</span>
+                                            <span class="bg-brand-surface text-brand-ink px-3.5 py-1.5 rounded-full text-[11px] font-semibold font-body hover:bg-brand-accent hover:text-white transition-colors shadow-md transform hover:scale-105 duration-200 inline-flex items-center gap-1">
+                                                <span>Choose Edition</span>
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-brand-surface font-bold mb-2 font-heading text-xs sm:text-sm">@book.StartingPrice.ToString("N0") MMK</span>
+                                            <span class="bg-brand-surface/90 text-brand-ink px-3.5 py-1 rounded-full text-[10px] font-semibold font-body">
+                                                View Details
+                                            </span>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -263,7 +298,7 @@
 
                     </a>
                     
-                    <!-- Title / Author / Price (Preserved exactly as requested) -->
+                    <!-- Title / Author / Price -->
                     <div class="text-center mt-3.5 w-full px-2">
                         <div class="text-amber-500 text-xs tracking-wider mb-1 font-body">★★★★★</div>
                         <a href="/Books/Detail/@book.BookId" class="block max-w-full">
@@ -274,9 +309,38 @@
                         <p class="text-xs text-brand-inkLight font-heading italic mt-0.5 truncate max-w-full" title="@book.Author">
                             @book.Author
                         </p>
-                        <p class="text-xs sm:text-sm font-bold text-brand-accent font-body mt-1.5">
-                            @book.StartingPrice.ToString("N0") MMK
-                        </p>
+                        
+                        @if (editionCount == 1 && singleEdition != null)
+                        {
+                            <div class="flex items-center justify-center gap-1.5 mt-1.5">
+                                <span class="text-xs sm:text-sm font-bold text-brand-accent font-body">
+                                    @singleEdition.Price.ToString("N0") MMK
+                                </span>
+                                @if (singleEdition.StockQuantity <= 0)
+                                {
+                                    <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-red-50 text-red-600 border border-red-200">
+                                        Out of stock
+                                    </span>
+                                }
+                            </div>
+                        }
+                        else if (editionCount > 1)
+                        {
+                            <div class="flex items-center justify-center gap-1.5 mt-1.5 flex-wrap">
+                                <span class="text-xs sm:text-sm font-bold text-brand-accent font-body">
+                                    From @book.StartingPrice.ToString("N0") MMK
+                                </span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-surface text-brand-inkLight border border-brand-border/80 shadow-2xs">
+                                    @editionCount Editions
+                                </span>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-xs sm:text-sm font-bold text-brand-accent font-body mt-1.5">
+                                @book.StartingPrice.ToString("N0") MMK
+                            </p>
+                        }
                     </div>
                 </div>
             }

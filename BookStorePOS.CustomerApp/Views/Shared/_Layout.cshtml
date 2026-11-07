@@ -655,6 +655,75 @@
             return true;
         };
 
+        window.addToCartDirect = function(item, e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (!window.isCustomerLoggedIn()) {
+                window.openLoginRequiredModal(window.location.pathname + window.location.search);
+                return false;
+            }
+            if (!item || !item.bookEditionId) {
+                if (item && item.bookId) {
+                    window.location.href = '/Books/Detail/' + item.bookId;
+                }
+                return false;
+            }
+
+            const stock = parseInt(item.stockQuantity, 10) || 0;
+            if (stock <= 0) {
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Sorry, this edition is currently out of stock.', false);
+                }
+                return false;
+            }
+
+            const cart = typeof window.getCustomerCart === 'function'
+                ? window.getCustomerCart()
+                : (localStorage.getItem('customer_cart') ? JSON.parse(localStorage.getItem('customer_cart')) : []);
+
+            const editionId = parseInt(item.bookEditionId, 10);
+            const existing = cart.find(i => i.bookEditionId === editionId);
+            if (existing) {
+                if (existing.quantity < stock) {
+                    existing.quantity += 1;
+                } else {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(`Only ${stock} copies available in stock.`, false);
+                    }
+                    return false;
+                }
+            } else {
+                cart.push({
+                    bookEditionId: editionId,
+                    bookId: parseInt(item.bookId, 10),
+                    title: item.title || '',
+                    editionName: item.editionName || 'Standard Edition',
+                    publisher: item.publisher || '',
+                    price: parseFloat(item.price) || 0,
+                    coverImageUrl: item.coverImageUrl || '',
+                    quantity: 1,
+                    stockQuantity: stock
+                });
+            }
+
+            if (typeof window.saveCustomerCart === 'function') {
+                window.saveCustomerCart(cart);
+            } else {
+                localStorage.setItem('customer_cart', JSON.stringify(cart));
+                if (typeof window.updateCartBadge === 'function') {
+                    window.updateCartBadge();
+                }
+            }
+
+            if (typeof window.showToast === 'function') {
+                const editionLabel = item.editionName ? ` (${item.editionName})` : '';
+                window.showToast(`"${item.title}"${editionLabel} added to cart!`, true);
+            }
+            return true;
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             // Mobile Menu Toggle
             const mobileBtn = document.getElementById('mobileMenuBtn');
