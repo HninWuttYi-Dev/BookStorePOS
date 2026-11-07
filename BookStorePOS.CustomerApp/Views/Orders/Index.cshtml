@@ -209,31 +209,65 @@
             }
         </div>
 
-        <!-- Pagination (Exact style as Browse Books) -->
+        <!-- Pagination (Consistent with Browse Books & Admin side) -->
         @if (totalPages > 1)
         {
-            <div class="flex justify-center items-center gap-2 pt-6 mb-12 font-body">
-                @if (currentPage > 1)
-                {
-                    <a href="/Orders?status=@activeStatus&page=@(currentPage - 1)" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-accent hover:text-white transition-colors shadow-sm text-sm">Previous</a>
-                }
-                
-                @for (int i = 1; i <= totalPages; i++)
-                {
-                    if (i == currentPage)
+            <div class="flex items-center justify-center pt-6 mb-12 font-body">
+                <div class="inline-flex items-center gap-1 bg-white rounded-full p-1.5 shadow-[0_4px_20px_-4px_rgba(44,38,33,0.08)] border border-brand-border/80">
+                    <!-- Previous Button -->
+                    @if (currentPage > 1)
                     {
-                        <span class="px-4 py-2 bg-brand-accent text-white rounded-lg shadow-sm font-semibold text-sm">@i</span>
+                        <a href="/Orders?status=@activeStatus&page=@(currentPage - 1)" 
+                           class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-brand-surface text-brand-ink hover:bg-brand-accent hover:text-white transition-all mr-0.5 shadow-2xs" 
+                           title="Previous Page" aria-label="Previous Page">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </a>
                     }
                     else
                     {
-                        <a href="/Orders?status=@activeStatus&page=@i" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-surface transition-colors text-sm">@i</a>
+                        <span class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-brand-surface/40 text-brand-inkLight/40 mr-0.5 cursor-not-allowed select-none" aria-disabled="true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </span>
                     }
-                }
-                
-                @if (currentPage < totalPages)
-                {
-                    <a href="/Orders?status=@activeStatus&page=@(currentPage + 1)" class="px-4 py-2 border border-brand-border rounded-lg text-brand-ink hover:bg-brand-accent hover:text-white transition-colors shadow-sm text-sm">Next</a>
-                }
+                    
+                    <!-- Page Numbers with Ellipsis -->
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        if (i == currentPage)
+                        {
+                            <span class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-brand-accent text-white text-xs sm:text-sm font-semibold shadow-xs select-none">
+                                @i
+                            </span>
+                        }
+                        else if (i == 1 || i == totalPages || Math.Abs(i - currentPage) <= 1)
+                        {
+                            <a href="/Orders?status=@activeStatus&page=@i" 
+                               class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-brand-ink text-xs sm:text-sm hover:bg-brand-surface font-medium transition-colors">
+                                @i
+                            </a>
+                        }
+                        else if (Math.Abs(i - currentPage) == 2)
+                        {
+                            <span class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-brand-inkLight/50 tracking-widest text-xs select-none">...</span>
+                        }
+                    }
+
+                    <!-- Next Button -->
+                    @if (currentPage < totalPages)
+                    {
+                        <a href="/Orders?status=@activeStatus&page=@(currentPage + 1)" 
+                           class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-brand-accent text-white hover:bg-brand-ink transition-all ml-0.5 shadow-2xs" 
+                           title="Next Page" aria-label="Next Page">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full bg-brand-accent/40 text-white/60 ml-0.5 cursor-not-allowed shadow-2xs select-none" aria-disabled="true">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </span>
+                    }
+                </div>
             </div>
         }
     }
