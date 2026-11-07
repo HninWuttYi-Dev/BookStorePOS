@@ -25,9 +25,13 @@
     bool canDeleteEdition = Context.HasPermission("Edition.Delete");
     bool canActionBook = canEditBook || canDeleteBook || canCreateEdition;
     bool canActionEditionSub = canEditEdition || canDeleteEdition;
+    bool isLowStockFilter = (ViewData["OnlyLowStock"] as bool? == true) || string.Equals(ViewData["Filter"]?.ToString(), "low-stock", StringComparison.OrdinalIgnoreCase);
+    string lowStockParam = isLowStockFilter ? "&filter=low-stock" : "";
+    int lowStockCount = ViewData["LowStockCount"] != null ? Convert.ToInt32(ViewData["LowStockCount"]) : 0;
+    int allBooksCount = ViewData["AllBooksCount"] != null ? Convert.ToInt32(ViewData["AllBooksCount"]) : (books?.Count ?? 0);
 }
 
-<div class="mb-8 flex justify-between items-center">
+<div class="mb-6 flex justify-between items-center">
     <div>
         <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Book List</h1>
         <p class="text-slate-500 mt-2 text-sm font-medium">Manage and view all books in the store</p>
@@ -41,7 +45,42 @@
     }
 </div>
 
+<!-- Quick Filter Tabs (Option C: Segmented Control - No emojis, aligned with POS UI) -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+    <div class="inline-flex p-1 bg-slate-100/80 rounded-2xl border border-slate-200/70 overflow-x-auto max-w-full">
+        <!-- All Books Tab -->
+        <a href="/Book" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 @(!isLowStockFilter ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900")">
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span>All Books</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold @(!isLowStockFilter ? "bg-slate-100 text-slate-700" : "bg-slate-200/80 text-slate-600")">@allBooksCount</span>
+        </a>
+
+        <!-- Low Stock Tab -->
+        <a href="/Book?filter=low-stock" class="px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 @(isLowStockFilter ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900")">
+            <svg class="w-4 h-4 @(lowStockCount > 0 ? "text-amber-500" : "text-slate-400")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span>Low Stock</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold @(lowStockCount > 0 ? "bg-amber-100 text-amber-800" : "bg-slate-200/80 text-slate-600")">@lowStockCount</span>
+        </a>
+    </div>
+
+    @if (isLowStockFilter)
+    {
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200/70 text-xs font-semibold">
+            <svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Showing items with stock at or below reorder level</span>
+        </div>
+    }
+</div>
+
 <form method="get" action="/Book" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]">
+    @if (isLowStockFilter)
+    {
+        <input type="hidden" name="filter" value="low-stock" />
+    }
     <div class="flex flex-col flex-1 w-full">
         <label for="isbn" class="text-xs font-semibold text-slate-500 mb-1.5 ml-1">ISBN</label>
         <input type="text" id="isbn" name="Isbn" value="@isbnFilter" placeholder="Search by ISBN" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all w-full" />
@@ -59,7 +98,7 @@
         <input type="text" id="genre" name="Genre" value="@genreFilter" placeholder="Search by genre" class="px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all w-full" />
     </div>
     <div class="flex gap-3 w-full md:w-auto mt-4 md:mt-0">
-        <a href="/Book" class="flex-1 md:flex-none px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-sm text-center">
+        <a href="@(isLowStockFilter ? "/Book?filter=low-stock" : "/Book")" class="flex-1 md:flex-none px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-sm text-center">
             Clear
         </a>
     </div>
@@ -225,7 +264,7 @@
             <div class="inline-flex items-center gap-1 bg-white rounded-full p-1.5 shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6]">
                 @if (currentPage > 1)
                 {
-                    <a href="/Book?page=@(currentPage - 1)&Isbn=@isbnFilter&Title=@titleFilter&Author=@authorFilter&Genre=@genreFilter" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors mr-1">
+                    <a href="/Book?page=@(currentPage - 1)&Isbn=@isbnFilter&Title=@titleFilter&Author=@authorFilter&Genre=@genreFilter@lowStockParam" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors mr-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </a>
                 }
@@ -244,7 +283,7 @@
                     }
                     else if (i == 1 || i == totalPages || Math.Abs(i - currentPage) <= 1)
                     {
-                        <a href="/Book?page=@i&Isbn=@isbnFilter&Title=@titleFilter&Author=@authorFilter&Genre=@genreFilter" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 text-sm hover:bg-slate-100 font-medium transition-colors">@i</a>
+                        <a href="/Book?page=@i&Isbn=@isbnFilter&Title=@titleFilter&Author=@authorFilter&Genre=@genreFilter@lowStockParam" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-600 text-sm hover:bg-slate-100 font-medium transition-colors">@i</a>
                     }
                     else if (Math.Abs(i - currentPage) == 2)
                     {
@@ -254,7 +293,7 @@
 
                 @if (currentPage < totalPages)
                 {
-                    <a href="/Book?page=@(currentPage + 1)&Isbn=@isbnFilter&Title=@titleFilter&Author=@authorFilter&Genre=@genreFilter" class="w-8 h-8 flex items-center justify-center rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors ml-1 shadow-sm">
+                    <a href="/Book?page=@(currentPage + 1)&Isbn=@isbnFilter&Title=@titleFilter&Author=@authorFilter&Genre=@genreFilter@lowStockParam" class="w-8 h-8 flex items-center justify-center rounded-full bg-teal-600 text-white hover:bg-teal-700 transition-colors ml-1 shadow-sm">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </a>
                 }

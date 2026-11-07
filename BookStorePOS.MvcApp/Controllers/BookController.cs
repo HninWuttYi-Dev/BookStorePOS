@@ -15,17 +15,51 @@ namespace BookStorePOS.MvcApp.Controllers
         }
 
         [ActionName("Index")]
-        public async Task<IActionResult> BookListAsync(BookListRequestModel requestModel)
+        public async Task<IActionResult> BookListAsync(BookListRequestModel requestModel, [FromQuery] string? filter = null)
         {
-        try
-        {
-                _logger.LogInformation("Book List Async => Fetching books");
+            try
+            {
+                bool isLowStock = string.Equals(filter, "low-stock", StringComparison.OrdinalIgnoreCase);
+                if (isLowStock)
+                {
+                    requestModel.OnlyLowStock = true;
+                }
+
+                _logger.LogInformation("Book List Async => Fetching books (OnlyLowStock: {OnlyLowStock})", requestModel.OnlyLowStock);
 
                 var client = _httpClientFactory.CreateClient("WebAPI");
-                var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&SearchQuery={Uri.EscapeDataString(requestModel.SearchQuery ?? "")}&Isbn={Uri.EscapeDataString(requestModel.Isbn ?? "")}&Title={Uri.EscapeDataString(requestModel.Title ?? "")}&Author={Uri.EscapeDataString(requestModel.Author ?? "")}&Genre={Uri.EscapeDataString(requestModel.Genre ?? "")}";
+                var lowStockParam = requestModel.OnlyLowStock == true ? "&OnlyLowStock=true" : "";
+                var qs = $"?Page={requestModel.Page}&Limit={requestModel.Limit}&SearchQuery={Uri.EscapeDataString(requestModel.SearchQuery ?? "")}&Isbn={Uri.EscapeDataString(requestModel.Isbn ?? "")}&Title={Uri.EscapeDataString(requestModel.Title ?? "")}&Author={Uri.EscapeDataString(requestModel.Author ?? "")}&Genre={Uri.EscapeDataString(requestModel.Genre ?? "")}{lowStockParam}";
                 var httpResponse = await client.GetAsync($"api/book{qs}");
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<BookListResponseModel>(jsonString);
+
+                // Fetch real-time low-stock count for tab badge
+                int lowStockCount = 0;
+                var lowStockHttp = await client.GetAsync("api/book/low-stock");
+                if (lowStockHttp.IsSuccessStatusCode)
+                {
+                    var lsJson = await lowStockHttp.Content.ReadAsStringAsync();
+                    var lsResp = JsonConvert.DeserializeObject<BookListResponseModel>(lsJson);
+                    lowStockCount = lsResp?.Data?.Count ?? 0;
+                }
+
+                // Determine counts for tabs
+                int allBooksCount = 0;
+                if (!isLowStock)
+                {
+                    allBooksCount = response?.Count ?? 0;
+                }
+                else
+                {
+                    var allHttp = await client.GetAsync("api/book?Page=1&Limit=1");
+                    if (allHttp.IsSuccessStatusCode)
+                    {
+                        var allJson = await allHttp.Content.ReadAsStringAsync();
+                        var allResp = JsonConvert.DeserializeObject<BookListResponseModel>(allJson);
+                        allBooksCount = allResp?.Count ?? 0;
+                    }
+                }
 
                 if (response != null && response.IsSuccess && response.Data != null)
                 {
@@ -37,10 +71,16 @@ namespace BookStorePOS.MvcApp.Controllers
                     ViewData["TitleFilter"] = requestModel.Title;
                     ViewData["AuthorFilter"] = requestModel.Author;
                     ViewData["GenreFilter"] = requestModel.Genre;
+                    ViewData["OnlyLowStock"] = requestModel.OnlyLowStock == true;
+                    ViewData["Filter"] = filter;
+                    ViewData["LowStockCount"] = lowStockCount;
+                    ViewData["AllBooksCount"] = allBooksCount;
                     _logger.LogInformation("Book List Async => Books fetched successfully");
                 }
                 else
                 {
+                    ViewData["LowStockCount"] = lowStockCount;
+                    ViewData["AllBooksCount"] = allBooksCount;
                     _logger.LogWarning($"Book List Async => Failed to fetch books: {response?.Message}");
                     TempData["Message"] = response?.Message;
                     TempData["isSuccess"] = false;
@@ -48,14 +88,13 @@ namespace BookStorePOS.MvcApp.Controllers
                 }
 
                 return View("BookList");
-        
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BookListAsync => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "BookListAsync => Exception occurred");
-            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
-        }
-    }
 
         [ActionName("Detail")]
         public async Task<IActionResult> BookDetailAsync(int id, int? editionId = null)

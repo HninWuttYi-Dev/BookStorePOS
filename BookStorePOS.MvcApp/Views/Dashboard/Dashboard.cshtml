@@ -181,8 +181,8 @@ else
         </div>
 
         <!-- Card 3: Low Stock Items -->
-        <div class="bg-white rounded-3xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex items-center gap-4">
-            <div class="w-13 h-13 rounded-2xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0">
+        <a href="/Book?filter=low-stock" class="bg-white rounded-3xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex items-center gap-4 cursor-pointer group">
+            <div class="w-13 h-13 rounded-2xl bg-[#F6DFFB] text-[#9F54A6] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
@@ -191,7 +191,7 @@ else
                 <p class="text-xs font-bold text-[#71717A]">Low Stock Items</p>
                 <h3 id="metricLowStockCount" class="text-3xl font-extrabold text-[#18181B] tracking-tight mt-1 transition-colors duration-500">@lowStockItemsCount</h3>
             </div>
-        </div>
+        </a>
 
         <!-- Card 4: Pending Online Orders -->
         <div class="bg-white rounded-3xl p-5 border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] hover:shadow-[0_8px_30px_-4px_rgba(184,117,194,0.12)] transition-all flex items-center gap-4">

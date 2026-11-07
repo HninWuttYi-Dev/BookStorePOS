@@ -115,7 +115,7 @@ namespace BookStorePOS.MvcApp.Controllers
                     ? lowStockResponse.Data
                     : new List<BookModel>();
 
-                ViewData["LowStockItemsCount"] = lowStockBooks.Count > 0 ? lowStockBooks.Count : 14;
+                ViewData["LowStockItemsCount"] = lowStockBooks.Count;
                 ViewData["LowStockBooks"] = lowStockBooks.Take(5).ToList();
 
                 // 4) Recent orders

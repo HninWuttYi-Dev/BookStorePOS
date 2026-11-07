@@ -63,6 +63,10 @@ public class BookService : IBookService
             {
                 baseQuery = baseQuery.Where(b => b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.Contains(requestModel.Isbn)));
             }
+            if (requestModel.OnlyLowStock == true)
+            {
+                baseQuery = baseQuery.Where(b => b.TblBookEditions.Any(e => !e.IsDeleted && e.StockQuantity <= e.ReorderLevel));
+            }
 
             var totalCount = await baseQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)requestModel.Limit);
@@ -176,6 +180,10 @@ public class BookService : IBookService
             if (!string.IsNullOrWhiteSpace(requestModel.Isbn))
             {
                 baseQuery = baseQuery.Where(b => b.TblBookEditions.Any(e => e.Isbn != null && e.Isbn.Contains(requestModel.Isbn)));
+            }
+            if (requestModel.OnlyLowStock == true)
+            {
+                baseQuery = baseQuery.Where(b => b.TblBookEditions.Any(e => !e.IsDeleted && e.StockQuantity <= e.ReorderLevel));
             }
 
             var totalCount = await baseQuery.CountAsync();

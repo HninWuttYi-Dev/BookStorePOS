@@ -36,6 +36,7 @@ public class BookCursorRequestModel
     public string? Genre { get; set; }
     public int? GenreId { get; set; }
     public string? Isbn { get; set; }
+    public bool? OnlyLowStock { get; set; }
 }
 
 public class BookCursorResponseModel : Result<List<BookModel>>
