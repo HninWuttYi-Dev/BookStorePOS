@@ -356,6 +356,11 @@ public class UserService : IUserService
                                : (!string.IsNullOrWhiteSpace(request.PasswordHash) ? request.PasswordHash.Trim() : "");
             if (!string.IsNullOrEmpty(newPassword))
             {
+                if (user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Result<UserModel>.ValidationError("System Administrator password cannot be modified from the staff management console.");
+                }
+
                 if (newPassword.Length < 3)
                 {
                     return Result<UserModel>.ValidationError("New password must be at least 3 characters.");
@@ -424,6 +429,11 @@ public class UserService : IUserService
             {
                 _logger.LogWarning("ResetPasswordAsync => User not found: {UserId}", userId);
                 return Result<bool>.NotFound("Staff account not found.");
+            }
+
+            if (user.Username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                return Result<bool>.ValidationError("System Administrator password cannot be reset.");
             }
 
             user.PasswordHash = _passwordHasher.HashPassword(user, newPassword.Trim());

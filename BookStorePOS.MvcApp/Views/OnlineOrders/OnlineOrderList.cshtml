@@ -573,7 +573,6 @@
                         <div><span class="text-slate-400 font-medium">Name:</span> <strong id="detailCustomerName" class="text-slate-900"></strong></div>
                         <div><span class="text-slate-400 font-medium">Phone:</span> <strong id="detailCustomerPhone" class="text-slate-900"></strong></div>
                         <div><span class="text-slate-400 font-medium">Shipping Address:</span> <span id="detailShippingAddress" class="text-slate-800 font-medium"></span></div>
-                        <div id="detailNotesRow" class="hidden"><span class="text-slate-400 font-medium">Customer Notes:</span> <span id="detailNotes" class="italic text-slate-600"></span></div>
                     </div>
                 </div>
 
@@ -593,6 +592,15 @@
                         <span class="text-xs text-slate-500 font-medium">Uploaded Slip:</span>
                         <div id="detailSlipAction"></div>
                     </div>
+                </div>
+
+                <!-- Customer Note & Instructions Card (Dedicated card) -->
+                <div id="detailNotesCard" class="hidden col-span-1 md:col-span-2 rounded-2xl border border-amber-200/80 p-4 bg-amber-50/60 shadow-2xs">
+                    <div class="flex items-center gap-2 mb-1 text-xs font-bold uppercase tracking-wider text-amber-800">
+                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+                        Customer Note & Special Instructions
+                    </div>
+                    <p id="detailNotes" class="text-xs sm:text-sm text-amber-950 font-medium leading-relaxed"></p>
                 </div>
             </div>
 
@@ -889,12 +897,12 @@
             document.getElementById('detailCustomerPhone').textContent = o.customerPhone || 'Not provided';
             document.getElementById('detailShippingAddress').textContent = o.shippingAddress || 'Not provided';
 
-            const notesRow = document.getElementById('detailNotesRow');
-            if (o.notes) {
+            const notesCard = document.getElementById('detailNotesCard');
+            if (o.notes && o.notes.trim()) {
                 document.getElementById('detailNotes').textContent = o.notes;
-                notesRow.classList.remove('hidden');
+                notesCard.classList.remove('hidden');
             } else {
-                notesRow.classList.add('hidden');
+                notesCard.classList.add('hidden');
             }
 
             // Payment
@@ -970,6 +978,13 @@
                     `;
                 }
                 footerActions.innerHTML = btnsHtml;
+            } else if (o.orderStatus === 2 || o.orderStatus === 'Completed') {
+                footerActions.innerHTML = `
+                    <button type="button" onclick="printOrderReceipt(${o.orderId})" class="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Receipt</span>
+                    </button>
+                `;
             } else {
                 footerActions.innerHTML = '';
             }
@@ -1113,6 +1128,33 @@
             btn.disabled = false;
             btnText.textContent = 'Confirm Rejection';
         }
+    }
+
+    function printOrderReceipt(orderId) {
+        let iframe = document.getElementById('receiptPrintIframe');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'receiptPrintIframe';
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.style.visibility = 'hidden';
+            document.body.appendChild(iframe);
+        }
+        iframe.src = `/Orders/OrderDetail/${orderId}`;
+        iframe.onload = function() {
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {
+                    console.error('Print iframe error:', e);
+                }
+            }, 400);
+        };
     }
 
     // Expose openDetailModal globally so notification click can trigger it directly

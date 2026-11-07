@@ -12,6 +12,11 @@
 
     int count = (currentPage - 1) * 20;
     string nameFilter = ViewData["EditionNameFilter"]?.ToString();
+
+    bool canCreateEdition = Context.HasPermission("Edition.Create");
+    bool canEditEdition = Context.HasPermission("Edition.Update");
+    bool canDeleteEdition = Context.HasPermission("Edition.Delete");
+    bool canActionEdition = canEditEdition || canDeleteEdition;
 }
 
 <div class="mb-8 flex justify-between items-center">
@@ -19,10 +24,13 @@
         <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Edition List</h1>
         <p class="text-slate-500 mt-2 text-sm font-medium">Manage and view all editions</p>
     </div>
-    <a href="/Edition/Create" id="btnNewEdition" class="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        New Edition
-    </a>
+    @if (canCreateEdition)
+    {
+        <a href="/Edition/Create" id="btnNewEdition" data-permission="Edition.Create" class="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            New Edition
+        </a>
+    }
 </div>
 
 <form method="get" action="/Edition" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]">
@@ -44,14 +52,17 @@
                 <tr>
                     <th class="px-4 py-3 font-semibold w-12 text-center">No.</th>
                     <th class="px-4 py-3 font-semibold">Edition Name</th>
-                    <th class="px-4 py-3 font-semibold w-24 text-center rounded-r-lg">Actions</th>
+                    @if (canActionEdition)
+                    {
+                        <th class="px-4 py-3 font-semibold w-24 text-center rounded-r-lg">Actions</th>
+                    }
                 </tr>
             </thead>
             <tbody class="text-slate-700">
                 @if (editions == null || editions.Count == 0)
                 {
                     <tr>
-                        <td colspan="3" class="px-4 py-12 text-center text-slate-500 font-medium">
+                        <td colspan="@(canActionEdition ? 3 : 2)" class="px-4 py-12 text-center text-slate-500 font-medium">
                             No editions found.
                         </td>
                     </tr>
@@ -63,16 +74,25 @@
                         <tr class="hover:bg-slate-50/80 transition-colors group border-b border-slate-50 last:border-0">
                             <td class="px-4 py-4 font-medium text-slate-500 text-center rounded-l-xl">@(++count)</td>
                             <td class="px-4 py-4 font-semibold text-slate-900 truncate">@edition.EditionName</td>
-                            <td class="px-4 py-4 rounded-r-xl">
-                                <div class="flex items-center justify-center gap-2">
-                                    <a href="/Edition/Edit/@edition.EditionId" class="btnEdit p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                    </a>
-                                    <button type="button" data-id="@edition.EditionId" class="btnDelete p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </div>
-                            </td>
+                            @if (canActionEdition)
+                            {
+                                <td class="px-4 py-4 rounded-r-xl">
+                                    <div class="flex items-center justify-center gap-2">
+                                        @if (canEditEdition)
+                                        {
+                                            <a href="/Edition/Edit/@edition.EditionId" data-permission="Edition.Update" class="btnEdit p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </a>
+                                        }
+                                        @if (canDeleteEdition)
+                                        {
+                                            <button type="button" data-id="@edition.EditionId" data-permission="Edition.Delete" class="btnDelete p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            }
                         </tr>
                     }
                 }

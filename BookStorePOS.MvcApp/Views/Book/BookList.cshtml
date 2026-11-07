@@ -16,6 +16,15 @@
     string authorFilter = ViewData["AuthorFilter"]?.ToString();
     string genreFilter = ViewData["GenreFilter"]?.ToString();
     string isbnFilter = ViewData["IsbnFilter"]?.ToString();
+
+    bool canCreateBook = Context.HasPermission("Book.Create");
+    bool canEditBook = Context.HasPermission("Book.Update");
+    bool canDeleteBook = Context.HasPermission("Book.Delete");
+    bool canCreateEdition = Context.HasPermission("Edition.Create");
+    bool canEditEdition = Context.HasPermission("Edition.Update");
+    bool canDeleteEdition = Context.HasPermission("Edition.Delete");
+    bool canActionBook = canEditBook || canDeleteBook || canCreateEdition;
+    bool canActionEditionSub = canEditEdition || canDeleteEdition;
 }
 
 <div class="mb-8 flex justify-between items-center">
@@ -23,10 +32,13 @@
         <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Book List</h1>
         <p class="text-slate-500 mt-2 text-sm font-medium">Manage and view all books in the store</p>
     </div>
-    <a href="/Book/Create" class="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-        New Book
-    </a>
+    @if (canCreateBook)
+    {
+        <a href="/Book/Create" data-permission="Book.Create" class="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            New Book
+        </a>
+    }
 </div>
 
 <form method="get" action="/Book" class="mb-6 w-full flex flex-col md:flex-row items-end gap-4 bg-white p-5 rounded-2xl border border-[#F3E2F6] shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)]">
@@ -64,14 +76,17 @@
                     <th class="px-4 py-3 font-semibold">Genre</th>
                     <th class="px-4 py-3 font-semibold text-center">Editions</th>
                     <th class="px-4 py-3 font-semibold text-center">Stock</th>
-                    <th class="px-4 py-3 font-semibold rounded-r-lg">Actions</th>
+                    @if (canActionBook)
+                    {
+                        <th class="px-4 py-3 font-semibold rounded-r-lg">Actions</th>
+                    }
                 </tr>
             </thead>
             <tbody class="text-slate-700">
                 @if (books == null || books.Count == 0)
                 {
                     <tr>
-                        <td colspan="8" class="px-4 py-12 text-center text-slate-500 font-medium">
+                        <td colspan="@(canActionBook ? 7 : 6)" class="px-4 py-12 text-center text-slate-500 font-medium">
                             No books found.
                         </td>
                     </tr>
@@ -108,20 +123,32 @@
                                     @book.TotalStockQuantity
                                 </span>
                             </td>
-                            <td class="px-4 py-4 rounded-r-xl">
-                                <div class="flex items-center gap-2">
-                                    <a href="/Book/Edit/@book.BookId" onclick="event.stopPropagation();" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                    </a>
-                                    <!-- Add Edition Button -->
-                                    <a href="/Book/CreateEdition/@book.BookId" class="p-1.5 text-slate-400 hover:text-indigo-600 border border-slate-200 rounded hover:border-indigo-200 hover:bg-indigo-50 transition-colors" title="Add Edition" onclick="event.stopPropagation();">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                    </a>
-                                    <button type="button" data-id="@book.BookId" onclick="event.stopPropagation();" class="btnDelete p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </div>
-                            </td>
+                            @if (canActionBook)
+                            {
+                                <td class="px-4 py-4 rounded-r-xl">
+                                    <div class="flex items-center gap-2">
+                                        @if (canEditBook)
+                                        {
+                                            <a href="/Book/Edit/@book.BookId" data-permission="Book.Update" onclick="event.stopPropagation();" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                            </a>
+                                        }
+                                        @if (canCreateEdition)
+                                        {
+                                            <!-- Add Edition Button -->
+                                            <a href="/Book/CreateEdition/@book.BookId" data-permission="Edition.Create" class="p-1.5 text-slate-400 hover:text-indigo-600 border border-slate-200 rounded hover:border-indigo-200 hover:bg-indigo-50 transition-colors" title="Add Edition" onclick="event.stopPropagation();">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                            </a>
+                                        }
+                                        @if (canDeleteBook)
+                                        {
+                                            <button type="button" data-id="@book.BookId" data-permission="Book.Delete" onclick="event.stopPropagation();" class="btnDelete p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            }
                         </tr>
                         @if (book.Editions != null && book.Editions.Count > 0)
                         {
@@ -137,7 +164,10 @@
                                                     <th class="px-4 py-3">ISBN</th>
                                                     <th class="px-4 py-3">Price (MMK)</th>
                                                     <th class="px-4 py-3 text-center">Stock</th>
-                                                    <th class="px-4 py-3">Actions</th>
+                                                    @if (canActionEditionSub)
+                                                    {
+                                                        <th class="px-4 py-3">Actions</th>
+                                                    }
                                                 </tr>
                                             </thead>
                                             <tbody class="divide-y divide-slate-100">
@@ -155,16 +185,25 @@
                                                                 @edition.StockQuantity
                                                             </span>
                                                         </td>
-                                                        <td class="px-4 py-3">
-                                                            <div class="flex items-center gap-2">
-                                                                <a href="/Book/EditEdition/@book.BookId?editionId=@edition.BookEditionId" onclick="event.stopPropagation();" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit Edition">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                                                </a>
-                                                                <button type="button" data-id="@edition.BookEditionId" data-book-id="@book.BookId" onclick="event.stopPropagation();" class="btnDeleteEdition p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete Edition">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                                </button>
-                                                            </div>
-                                                        </td>
+                                                        @if (canActionEditionSub)
+                                                        {
+                                                            <td class="px-4 py-3">
+                                                                <div class="flex items-center gap-2">
+                                                                    @if (canEditEdition)
+                                                                    {
+                                                                        <a href="/Book/EditEdition/@book.BookId?editionId=@edition.BookEditionId" data-permission="Edition.Update" onclick="event.stopPropagation();" class="p-1.5 text-slate-400 hover:text-teal-600 border border-slate-200 rounded hover:border-teal-200 hover:bg-teal-50 transition-colors" title="Edit Edition">
+                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                                        </a>
+                                                                    }
+                                                                    @if (canDeleteEdition)
+                                                                    {
+                                                                        <button type="button" data-id="@edition.BookEditionId" data-book-id="@book.BookId" data-permission="Edition.Delete" onclick="event.stopPropagation();" class="btnDeleteEdition p-1.5 text-slate-400 hover:text-red-600 border border-slate-200 rounded hover:border-red-200 hover:bg-red-50 transition-colors" title="Delete Edition">
+                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                                        </button>
+                                                                    }
+                                                                </div>
+                                                            </td>
+                                                        }
                                                     </tr>
                                                 }
                                             </tbody>

@@ -894,7 +894,7 @@
                     }
                     const permsLower = perms.map(p => (p || '').toLowerCase());
 
-                    document.querySelectorAll('a[data-permission]').forEach(function(el) {
+                    document.querySelectorAll('[data-permission]').forEach(function(el) {
                         const req = (el.getAttribute('data-permission') || '').toLowerCase();
                         if (req && !permsLower.includes(req)) {
                             el.style.display = 'none';

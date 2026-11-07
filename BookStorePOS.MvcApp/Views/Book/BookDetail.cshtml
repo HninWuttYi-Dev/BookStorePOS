@@ -6,6 +6,8 @@
     if (book == null) return;
     
     var stockBg = (selectedEdition?.StockQuantity ?? 0) == 0 ? "bg-red-100 text-red-800 border-red-200" : ((selectedEdition?.StockQuantity ?? 0) <= (selectedEdition?.ReorderLevel ?? 0) ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-emerald-100 text-emerald-800 border-emerald-200");
+    bool canEditEdition = Context.HasPermission("Edition.Update");
+    bool canDeleteEdition = Context.HasPermission("Edition.Delete");
 }
 
 <div class="max-w-4xl mx-auto">
@@ -20,14 +22,20 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="/Book/EditEdition/@book.BookId?editionId=@(selectedEdition?.BookEditionId)" class="px-5 py-2.5 bg-white border border-slate-200 text-teal-600 font-semibold rounded-xl hover:bg-teal-50 hover:border-teal-200 transition-colors shadow-sm flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                Edit
-            </a>
-            <button type="button" data-id="@(selectedEdition?.BookEditionId)" data-book-id="@book.BookId" class="btnDeleteEdition px-5 py-2.5 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors shadow-sm flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                Delete
-            </button>
+            @if (canEditEdition)
+            {
+                <a href="/Book/EditEdition/@book.BookId?editionId=@(selectedEdition?.BookEditionId)" data-permission="Edition.Update" class="px-5 py-2.5 bg-white border border-slate-200 text-teal-600 font-semibold rounded-xl hover:bg-teal-50 hover:border-teal-200 transition-colors shadow-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Edit
+                </a>
+            }
+            @if (canDeleteEdition)
+            {
+                <button type="button" data-id="@(selectedEdition?.BookEditionId)" data-book-id="@book.BookId" data-permission="Edition.Delete" class="btnDeleteEdition px-5 py-2.5 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition-colors shadow-sm flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Delete
+                </button>
+            }
         </div>
     </div>
 

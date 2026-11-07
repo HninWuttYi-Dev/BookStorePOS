@@ -36,9 +36,9 @@ namespace BookStorePOS.MvcApp.Controllers
             var userRole = Request.Cookies["pos_role"] ?? "";
             var userPerms = Request.Cookies["pos_permissions"] ?? "";
             bool isAdmin = string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase);
+            var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (!isAdmin)
             {
-                var permList = userPerms.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 if (!permList.Contains("Order.View", StringComparer.OrdinalIgnoreCase))
                 {
                     if (permList.Contains("Order.Create", StringComparer.OrdinalIgnoreCase))
@@ -52,6 +52,11 @@ namespace BookStorePOS.MvcApp.Controllers
                     return RedirectToAction("Index", "Checkout");
                 }
             }
+
+            bool canConfirm = isAdmin || permList.Contains("Order.Confirm", StringComparer.OrdinalIgnoreCase);
+            bool canReject = isAdmin || permList.Contains("Order.Reject", StringComparer.OrdinalIgnoreCase);
+            ViewData["CanConfirmOrders"] = canConfirm;
+            ViewData["CanRejectOrders"] = canReject;
 
             try
             {
@@ -150,12 +155,50 @@ namespace BookStorePOS.MvcApp.Controllers
                     return NotFound();
                 }
             }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "OrderDetailAsync => Exception occurred");
-            return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OrderDetailAsync => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
         }
-    }
+
+        [HttpGet]
+        [ActionName("Detail")]
+        public async Task<IActionResult> OrderJsonDetailAsync(int id)
+        {
+            try
+            {
+                if (id <= 0)
+                {
+                    return Json(new { isSuccess = false, message = "Invalid order ID." });
+                }
+
+                _logger.LogInformation($"Order Json Detail Async => Fetching order details for OrderId: {id}");
+
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.GetAsync($"api/order/{id}");
+
+                if (httpResponse.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return Json(new { isSuccess = false, message = "Order not found." });
+                }
+
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var response = JsonConvert.DeserializeObject<OrderGetByIdResponseModel>(jsonString);
+
+                if (response != null && response.IsSuccess && response.Data != null)
+                {
+                    return Json(new { isSuccess = true, data = response.Data });
+                }
+
+                return Json(new { isSuccess = false, message = response?.Message ?? "Order not found." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OrderJsonDetailAsync => Exception occurred");
+                return StatusCode(500, new { isSuccess = false, message = "Internal Server Error: " + ex.Message });
+            }
+        }
 
         [HttpPost]
         [ActionName("Create")]
