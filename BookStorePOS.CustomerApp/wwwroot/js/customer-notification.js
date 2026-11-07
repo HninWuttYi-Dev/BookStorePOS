@@ -3,12 +3,16 @@
  */
 
 (function () {
-    const STORAGE_KEY = 'customer_notifications';
     const HUB_URL = 'http://localhost:5201/notificationHub';
 
     function getCookie(name) {
         const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-        return v ? v[2] : null;
+        return v ? decodeURIComponent(v[2]) : null;
+    }
+
+    function getStorageKey() {
+        const userId = getCookie('customer_user_id');
+        return userId ? `customer_notifications_${userId}` : 'customer_notifications_guest';
     }
 
     function playChime() {
@@ -37,22 +41,23 @@
 
     function getStoredNotifications() {
         try {
-            const data = localStorage.getItem(STORAGE_KEY);
+            const key = getStorageKey();
+            const data = localStorage.getItem(key);
             let list = data ? JSON.parse(data) : [];
             if (!Array.isArray(list)) list = [];
 
-            // Auto-deduplicate on load
+            // Auto-deduplicate by id on load
             const seen = new Set();
             const deduplicated = [];
             for (const item of list) {
-                const key = (item.title || '').trim().toLowerCase() + '::' + (item.message || '').trim().toLowerCase();
-                if (!seen.has(key)) {
-                    seen.add(key);
+                const uniqueKey = item.id || ((item.title || '') + '::' + (item.message || '') + '::' + (item.createdAt || ''));
+                if (!seen.has(uniqueKey)) {
+                    seen.add(uniqueKey);
                     deduplicated.push(item);
                 }
             }
             if (deduplicated.length !== list.length) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(deduplicated));
+                localStorage.setItem(key, JSON.stringify(deduplicated));
             }
             return deduplicated;
         } catch (e) {
@@ -62,17 +67,27 @@
 
     function saveStoredNotifications(list) {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, 30)));
+            localStorage.setItem(getStorageKey(), JSON.stringify(list.slice(0, 30)));
         } catch (e) { }
     }
 
     function addNotification(item) {
         const list = getStoredNotifications();
         if (list.some(n => n.id === item.id)) return;
-        if (list.some(n => (n.title || '').trim().toLowerCase() === (item.title || '').trim().toLowerCase() && 
-                          (n.message || '').trim().toLowerCase() === (item.message || '').trim().toLowerCase())) {
-            return;
+
+        // Suppress fast duplicate packets (same title & message arriving within 10 seconds)
+        const recentDuplicate = list.find(n =>
+            (n.title || '').trim().toLowerCase() === (item.title || '').trim().toLowerCase() &&
+            (n.message || '').trim().toLowerCase() === (item.message || '').trim().toLowerCase()
+        );
+        if (recentDuplicate) {
+            const itemTime = new Date(item.createdAt || Date.now()).getTime();
+            const existingTime = new Date(recentDuplicate.createdAt || Date.now()).getTime();
+            if (Math.abs(itemTime - existingTime) < 10000) {
+                return;
+            }
         }
+
         list.unshift(item);
         saveStoredNotifications(list);
         updateUI();
@@ -259,7 +274,7 @@
     };
 
     window.confirmClearCustomerNotifs = function () {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(getStorageKey());
         updateUI();
         if (typeof window.closeCustomerClearNotifModal === 'function') {
             window.closeCustomerClearNotifModal();
@@ -267,6 +282,15 @@
         if (typeof window.showToast === 'function') {
             window.showToast('Notification history cleared.', true);
         }
+    };
+
+    window.clearCurrentCustomerSessionNotifs = function () {
+        try {
+            const key = getStorageKey();
+            localStorage.removeItem(key);
+            localStorage.removeItem('customer_notifications');
+        } catch (e) { }
+        updateUI();
     };
 
     function initSignalR() {
@@ -286,6 +310,12 @@
 
         // Handle full NotificationModel (authoritative handler)
         connection.on("ReceiveNotification", function (data) {
+            // Guard: private order notifications require a logged-in user session
+            const currentUserId = getCookie('customer_user_id');
+            if (data.type && data.type.startsWith('Order') && !currentUserId) {
+                return;
+            }
+
             playChime();
             const orderCode = data.orderCode || (data.targetUrl && data.targetUrl.match(/orderNo=([^&]+)/)?.[1]) || (data.message && data.message.match(/#([A-Z0-9]+)/)?.[1]) || null;
             const orderId = data.orderId || (data.targetUrl && data.targetUrl.match(/\/Detail\/(\d+)/)?.[1]) || null;
@@ -307,21 +337,29 @@
             }
         });
 
-        function joinUserGroup() {
+        function joinGroups() {
+            // 1. All connected storefront clients join Customers group to receive store announcements
+            connection.invoke("JoinCustomerGroup").catch(function (err) {
+                console.warn("[CustomerNotification] JoinCustomerGroup error:", err);
+            });
+
+            // 2. Authenticated customer clients join private user group for order status
             const userId = getCookie('customer_user_id');
             if (userId) {
-                connection.invoke("JoinUserGroup", userId).catch(console.error);
+                connection.invoke("JoinUserGroup", userId).catch(function (err) {
+                    console.warn("[CustomerNotification] JoinUserGroup error:", err);
+                });
             }
         }
 
         connection.start()
             .then(function () {
-                joinUserGroup();
+                joinGroups();
             })
             .catch(console.warn);
 
         connection.onreconnected(function () {
-            joinUserGroup();
+            joinGroups();
         });
     }
 

@@ -113,12 +113,22 @@
 
     function addNotification(item) {
         const list = getStoredNotifications();
-        // Prevent duplicate IDs or duplicate messages
+        // Prevent duplicate IDs
         if (list.some(n => n.id === item.id)) return;
-        if (list.some(n => (n.title || '').trim().toLowerCase() === (item.title || '').trim().toLowerCase() &&
-            (n.message || '').trim().toLowerCase() === (item.message || '').trim().toLowerCase())) {
-            return;
+
+        // Suppress fast duplicate packets (same title & message arriving within 10 seconds)
+        const recentDuplicate = list.find(n =>
+            (n.title || '').trim().toLowerCase() === (item.title || '').trim().toLowerCase() &&
+            (n.message || '').trim().toLowerCase() === (item.message || '').trim().toLowerCase()
+        );
+        if (recentDuplicate) {
+            const itemTime = new Date(item.createdAt || Date.now()).getTime();
+            const existingTime = new Date(recentDuplicate.createdAt || Date.now()).getTime();
+            if (Math.abs(itemTime - existingTime) < 10000) {
+                return;
+            }
         }
+
         list.unshift(item);
         saveStoredNotifications(list);
         updateUI();

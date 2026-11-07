@@ -347,6 +347,7 @@ namespace BookStorePOS.CustomerApp.Controllers
             Response.Cookies.Delete("customer_token", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("customer_refresh", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("customer_user", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("customer_user_id", new CookieOptions { Path = "/" });
             return RedirectToAction("Index", "Home");
         }
 

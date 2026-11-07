@@ -24,6 +24,22 @@ public class NotificationHub : Hub
     }
 
     /// <summary>
+    /// Customer clients join the Customers group to receive store-wide customer announcements
+    /// </summary>
+    public async Task JoinCustomerGroup()
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "Customers");
+    }
+
+    /// <summary>
+    /// Customer clients can leave the Customers group
+    /// </summary>
+    public async Task LeaveCustomerGroup()
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "Customers");
+    }
+
+    /// <summary>
     /// Customer clients join their personal user group to receive personal order status updates
     /// </summary>
     public async Task JoinUserGroup(string userId)

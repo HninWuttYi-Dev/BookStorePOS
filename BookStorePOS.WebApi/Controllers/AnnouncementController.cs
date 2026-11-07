@@ -37,7 +37,7 @@ public class AnnouncementController : BaseController
                 return ExecuteResult(Result<string>.ValidationError("Title and Content are required."));
             }
 
-            _logger.LogInformation("Broadcasting announcement: {Title}", requestModel.Title);
+            _logger.LogInformation("Broadcasting announcement: '{Title}' to Audience: '{Audience}'", requestModel.Title, requestModel.TargetAudience);
 
             var notification = new NotificationModel
             {
@@ -51,6 +51,10 @@ public class AnnouncementController : BaseController
             if (string.Equals(requestModel.TargetAudience, "Staff", StringComparison.OrdinalIgnoreCase))
             {
                 await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notification);
+            }
+            else if (string.Equals(requestModel.TargetAudience, "Customers", StringComparison.OrdinalIgnoreCase))
+            {
+                await _hubContext.Clients.Group("Customers").SendAsync("ReceiveNotification", notification);
             }
             else
             {

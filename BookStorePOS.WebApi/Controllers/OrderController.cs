@@ -243,7 +243,9 @@ public class OrderController : BaseController
                 {
                     var order = response.Data;
                     var orderCode = $"C{(order.OrderDate ?? DateTime.Now):yyMMdd}{order.OrderId:0000}";
-                    var notif = new NotificationModel
+
+                    // 1. Alert Staff of incoming new online order
+                    var notifStaff = new NotificationModel
                     {
                         Id = Guid.NewGuid().ToString("N"),
                         Title = "New Online Order",
@@ -254,7 +256,24 @@ public class OrderController : BaseController
                         TargetUrl = $"/OnlineOrders?orderId={order.OrderId}&orderNo={orderCode}",
                         CreatedAt = DateTime.UtcNow
                     };
-                    await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notif);
+                    await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notifStaff);
+
+                    // 2. Alert the specific Customer that their order was submitted successfully
+                    if (order.CustomerId.HasValue && order.CustomerId.Value > 0)
+                    {
+                        var notifCust = new NotificationModel
+                        {
+                            Id = Guid.NewGuid().ToString("N"),
+                            Title = "Order Placed",
+                            Message = $"Your order #{orderCode} has been submitted successfully and is pending confirmation.",
+                            Type = "OrderPlaced",
+                            OrderId = order.OrderId,
+                            OrderCode = orderCode,
+                            TargetUrl = $"/Orders/Detail/{order.OrderId}",
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _hubContext.Clients.Group($"User_{order.CustomerId.Value}").SendAsync("ReceiveNotification", notifCust);
+                    }
                 }
 
                 await BroadcastDashboardUpdateAsync(response.Data.OrderId);
@@ -287,21 +306,7 @@ public class OrderController : BaseController
                 var order = response.Data;
                 var orderCode = $"C{(order.OrderDate ?? DateTime.Now):yyMMdd}{order.OrderId:0000}";
                 
-                // Notify Staff
-                var notifStaff = new NotificationModel
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    Title = "Order Confirmed",
-                    Message = $"Order #{orderCode} verified and completed.",
-                    Type = "OrderConfirmed",
-                    OrderId = order.OrderId,
-                    OrderCode = orderCode,
-                    TargetUrl = $"/OnlineOrders?orderId={order.OrderId}&orderNo={orderCode}",
-                    CreatedAt = DateTime.UtcNow
-                };
-                await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notifStaff);
-
-                // Notify Customer
+                // Notify Customer ONLY (isolated by CustomerId to the user who placed this order)
                 if (order.CustomerId.HasValue && order.CustomerId.Value > 0)
                 {
                     var notifCust = new NotificationModel
@@ -350,21 +355,7 @@ public class OrderController : BaseController
                 var order = response.Data;
                 var orderCode = $"C{(order.OrderDate ?? DateTime.Now):yyMMdd}{order.OrderId:0000}";
                 
-                // Notify Staff
-                var notifStaff = new NotificationModel
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    Title = "Order Rejected",
-                    Message = $"Order #{orderCode} was rejected.",
-                    Type = "OrderRejected",
-                    OrderId = order.OrderId,
-                    OrderCode = orderCode,
-                    TargetUrl = $"/OnlineOrders?orderId={order.OrderId}&orderNo={orderCode}",
-                    CreatedAt = DateTime.UtcNow
-                };
-                await _hubContext.Clients.Group("Staff").SendAsync("ReceiveNotification", notifStaff);
-
-                // Notify Customer
+                // Notify Customer ONLY (isolated by CustomerId to the user who placed this order)
                 if (order.CustomerId.HasValue && order.CustomerId.Value > 0)
                 {
                     var notifCust = new NotificationModel
@@ -400,8 +391,8 @@ public class OrderController : BaseController
             var summaryResp = await _orderService.GetDashboardRealtimeSummaryAsync(latestOrderId);
             if (summaryResp.IsSuccess && summaryResp.Data != null)
             {
-                await _hubContext.Clients.All.SendAsync("ReceiveDashboardUpdateEvent", summaryResp.Data);
-                _logger.LogInformation("BroadcastDashboardUpdateAsync => Real-time dashboard update dispatched to all clients");
+                await _hubContext.Clients.Group("Staff").SendAsync("ReceiveDashboardUpdateEvent", summaryResp.Data);
+                _logger.LogInformation("BroadcastDashboardUpdateAsync => Real-time dashboard update dispatched to Staff group");
             }
         }
         catch (Exception ex)
