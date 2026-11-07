@@ -6,12 +6,18 @@
     var groupedPermissions = allPermissions.GroupBy(p => p.Category).OrderBy(g => g.Key).ToList();
     int totalPerms = allPermissions.Count;
     bool isAdmin = Model.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+
+    var returnUrl = Context.Request.Query["returnUrl"].ToString();
+    if (string.IsNullOrWhiteSpace(returnUrl) || !returnUrl.StartsWith("/") || returnUrl.StartsWith("//") || returnUrl.StartsWith("/\\"))
+    {
+        returnUrl = "/Role";
+    }
 }
 
 <div class="max-w-5xl mx-auto pb-16">
     <!-- Breadcrumb & Title -->
     <div class="mb-8">
-        <a href="/Role" class="group inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition-colors mb-2">
+        <a href="@returnUrl" class="group inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-600 transition-colors mb-2">
             <svg class="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m12 19-7-7 7-7"/>
                 <path d="M19 12H5"/>
@@ -239,12 +245,13 @@
         </div>
 
         <!-- Sticky Bottom Bar -->
+        <input type="hidden" id="returnUrl" value="@returnUrl" />
         <div class="sticky bottom-4 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 shadow-xl flex items-center justify-between z-20">
             <div class="text-sm text-slate-600">
                 Total Selected: <span id="selectedCountFooter" class="font-bold text-teal-700 text-base">@assignedIds.Count</span> permissions
             </div>
             <div class="flex items-center gap-3">
-                <a href="/Role" class="px-5 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-colors">
+                <a href="@returnUrl" class="px-5 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 text-sm transition-colors">
                     Back
                 </a>
                 @if (!isAdmin)
@@ -329,7 +336,8 @@
                     }),
                     success: function(response) {
                         if (response.isSuccess) {
-                            window.location.href = '/Role';
+                            const redirectUrl = $('#returnUrl').val() || '/Role';
+                            window.location.href = redirectUrl;
                         } else {
                             $('#roleAlertText').text(response.message || response.Message || "Failed to update role.");
                             $('#roleAlert').removeClass('hidden');

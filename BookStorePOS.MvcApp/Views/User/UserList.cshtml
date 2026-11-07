@@ -20,6 +20,7 @@
     bool canEditUser = Context.HasPermission("User.Update");
     bool canDeleteUser = Context.HasPermission("User.Delete");
     bool canActionUser = canEditUser || canDeleteUser;
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <!-- Page Header -->
@@ -40,7 +41,7 @@
     </div>
     @if (canCreateUser)
     {
-        <a href="/User/Create" id="btnNewStaff" data-permission="User.Create" class="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0 group">
+        <a href="/User/Create?returnUrl=@Uri.EscapeDataString(currentUrl)" id="btnNewStaff" data-permission="User.Create" class="px-5 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center gap-2 text-sm shrink-0 group">
             <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -207,7 +208,7 @@
                                     <div class="flex items-center gap-2">
                                         @if (canEditUser)
                                         {
-                                            <a href="/User/Edit/@u.UserId" data-permission="User.Update" class="p-2 text-slate-500 hover:text-teal-600 border border-slate-200 rounded-lg hover:border-teal-200 hover:bg-teal-50 transition-all hover:scale-105" title="Edit Staff Details">
+                                            <a href="/User/Edit/@u.UserId?returnUrl=@Uri.EscapeDataString(currentUrl)" data-permission="User.Update" class="p-2 text-slate-500 hover:text-teal-600 border border-slate-200 rounded-lg hover:border-teal-200 hover:bg-teal-50 transition-all hover:scale-105" title="Edit Staff Details">
                                                 <svg class="w-4 h-4 transition-transform duration-200 hover:rotate-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
                                                     <path d="m15 5 4 4"/>

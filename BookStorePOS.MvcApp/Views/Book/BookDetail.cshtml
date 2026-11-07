@@ -8,12 +8,18 @@
     var stockBg = (selectedEdition?.StockQuantity ?? 0) == 0 ? "bg-red-100 text-red-800 border-red-200" : ((selectedEdition?.StockQuantity ?? 0) <= (selectedEdition?.ReorderLevel ?? 0) ? "bg-amber-100 text-amber-800 border-amber-200" : "bg-emerald-100 text-emerald-800 border-emerald-200");
     bool canEditEdition = Context.HasPermission("Edition.Update");
     bool canDeleteEdition = Context.HasPermission("Edition.Delete");
+
+    var returnUrl = Context.Request.Query["returnUrl"].ToString();
+    if (string.IsNullOrWhiteSpace(returnUrl) || !returnUrl.StartsWith("/") || returnUrl.StartsWith("//") || returnUrl.StartsWith("/\\"))
+    {
+        returnUrl = "/Book";
+    }
 }
 
 <div class="max-w-4xl mx-auto">
     <div class="mb-8 flex items-center justify-between">
         <div class="flex items-center gap-4">
-            <a href="/Book" class="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-xl transition-colors focus:outline-none" title="Back to Book List">
+            <a href="@returnUrl" class="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-xl transition-colors focus:outline-none" title="Back to Book List">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </a>
             <div>
@@ -24,7 +30,7 @@
         <div class="flex items-center gap-3">
             @if (canEditEdition)
             {
-                <a href="/Book/EditEdition/@book.BookId?editionId=@(selectedEdition?.BookEditionId)" data-permission="Edition.Update" class="px-5 py-2.5 bg-white border border-slate-200 text-teal-600 font-semibold rounded-xl hover:bg-teal-50 hover:border-teal-200 transition-colors shadow-sm flex items-center gap-2">
+                <a href="/Book/EditEdition/@book.BookId?editionId=@(selectedEdition?.BookEditionId)&returnUrl=@Uri.EscapeDataString(returnUrl)" data-permission="Edition.Update" class="px-5 py-2.5 bg-white border border-slate-200 text-teal-600 font-semibold rounded-xl hover:bg-teal-50 hover:border-teal-200 transition-colors shadow-sm flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     Edit
                 </a>
@@ -176,6 +182,8 @@
     </div>
 </div>
 
+<input type="hidden" id="returnUrl" value="@returnUrl" />
+
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -223,7 +231,8 @@
                         const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
                         if (isSuccess) {
                             $btn.text('Deleted!');
-                            window.location.href = '/Book';
+                            const redirectUrl = $('#returnUrl').val() || '/Book';
+                            window.location.href = redirectUrl;
                         } else {
                             showToast(response.message || response.Message || "Failed to delete edition.");
                             isDeleting = false;

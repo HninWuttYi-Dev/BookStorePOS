@@ -1,10 +1,15 @@
 @{
     ViewData["Title"] = "Create Book";
+    var returnUrl = Context.Request.Query["returnUrl"].ToString();
+    if (string.IsNullOrWhiteSpace(returnUrl) || !returnUrl.StartsWith("/") || returnUrl.StartsWith("//") || returnUrl.StartsWith("/\\"))
+    {
+        returnUrl = "/Book";
+    }
 }
 
 <div class="max-w-3xl mx-auto">
     <div class="mb-8 flex items-center gap-4">
-        <a href="/Book" class="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-xl transition-colors focus:outline-none" title="Back to Book List">
+        <a href="@returnUrl" class="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-xl transition-colors focus:outline-none" title="Back to Book List">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </a>
         <div>
@@ -116,8 +121,9 @@
         <textarea id="editionNote" rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all" placeholder="e.g. Includes 15 full-color illustrations..."></textarea>
     </div>
 
+    <input type="hidden" id="returnUrl" value="@returnUrl" />
     <div class="flex gap-4 justify-end">
-        <a href="/Book" class="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors text-center">
+        <a href="@returnUrl" class="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-200 transition-colors text-center">
             Back
         </a>
         <button type="button" id="btnSave" class="px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition-colors shadow-sm">
@@ -442,7 +448,8 @@
                     const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
                     if (isSuccess) {
                         $btn.text('Saved!');
-                        window.location.href = '/Book';
+                        const redirectUrl = $('#returnUrl').val() || '/Book';
+                        window.location.href = redirectUrl;
                     } else {
                         showToast(response.message || response.Message || "Failed to create book.");
                         isSubmitting = false;

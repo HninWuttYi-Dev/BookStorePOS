@@ -10,16 +10,22 @@
     {
         genreName = Convert.ToString(ViewData["GenreName"]);
     }
+
+    var returnUrl = Context.Request.Query["returnUrl"].ToString();
+    if (string.IsNullOrWhiteSpace(returnUrl) || !returnUrl.StartsWith("/") || returnUrl.StartsWith("//") || returnUrl.StartsWith("/\\"))
+    {
+        returnUrl = "/Genre";
+    }
 }
 
 <div class="max-w-2xl mx-auto w-full">
     <div class="mb-8 flex items-center">
-        <a href="/Genre" class="mr-4 p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors flex-shrink-0" title="Back to Genres">
+        <a href="@returnUrl" class="mr-4 p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors flex-shrink-0" title="Back to Genres">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         </a>
         <div>
             <div class="flex items-center gap-2 text-sm text-slate-500 mb-1">
-                <a href="/Genre" class="hover:text-teal-600 transition-colors">Genres</a>
+                <a href="@returnUrl" class="hover:text-teal-600 transition-colors">Genres</a>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 <span class="text-slate-900 font-medium">Edit</span>
             </div>
@@ -29,6 +35,7 @@
 
     <div class="bg-white rounded-2xl shadow-[0_4px_24px_-4px_rgba(184,117,194,0.06)] border border-[#F3E2F6] overflow-hidden">
         <div class="p-6 md:p-8">
+            <input type="hidden" id="returnUrl" value="@returnUrl" />
             <input type="hidden" id="OriginalGenreName" value="@genreName" />
             <div class="mb-6">
                 <label for="GenreName" class="text-sm font-semibold text-slate-700 mb-1.5 block">Genre Name <span class="text-red-500">*</span></label>
@@ -39,7 +46,7 @@
             </div>
 
             <div class="flex gap-4 pt-4 border-t border-slate-100 justify-end">
-                <a href="/Genre" class="px-6 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center min-w-[120px]">
+                <a href="@returnUrl" class="px-6 py-2.5 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center justify-center min-w-[120px]">
                     Cancel
                 </a>
                 <button type="button" id="btnSave" class="px-6 py-2.5 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors shadow-sm flex items-center justify-center min-w-[120px]">
@@ -97,7 +104,8 @@
                         const isSuccess = response && (response.isSuccess === true || response.IsSuccess === true || response.isSuccess === 'true' || response.IsSuccess === 'true');
                         if (isSuccess) {
                             $btn.text('Updated!');
-                            window.location.href = '/Genre';
+                            const redirectUrl = $('#returnUrl').val() || '/Genre';
+                            window.location.href = redirectUrl;
                         } else {
                             showToast(response.message || response.Message || "Failed to update genre.");
                             isSubmitting = false;
