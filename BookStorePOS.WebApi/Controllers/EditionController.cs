@@ -22,7 +22,8 @@ public class EditionController : BaseController
     }
 
     [HttpGet]
-    [Permission("Edition.View")]
+    [AllowAnonymous]
+
     public async Task<IActionResult> GetEditionsAsync([FromQuery] EditionListRequestModel requestModel)
     {
         try
@@ -39,7 +40,7 @@ public class EditionController : BaseController
     }
 
     [HttpGet("{id}")]
-    [Permission("Edition.View")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetEditionByIdAsync(int id)
     {
         try

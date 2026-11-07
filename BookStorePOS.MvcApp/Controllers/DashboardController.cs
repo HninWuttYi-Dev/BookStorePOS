@@ -59,10 +59,6 @@ namespace BookStorePOS.MvcApp.Controllers
                         {
                             return RedirectToAction("Index", "Orders");
                         }
-                        else if (permList.Contains("OnlineOrder.View", StringComparer.OrdinalIgnoreCase))
-                        {
-                            return RedirectToAction("Index", "OnlineOrders");
-                        }
                         else
                         {
                             return RedirectToAction("Index", "Checkout");

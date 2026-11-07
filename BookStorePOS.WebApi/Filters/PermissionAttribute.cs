@@ -31,10 +31,36 @@ public class PermissionFilter : IAsyncAuthorizationFilter
 
     public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
+        // 1. Admin (System Owner) always has full access to all endpoints
+        if (context.HttpContext.User.IsInRole("Admin") || 
+            context.HttpContext.User.HasClaim(ClaimTypes.Role, "Admin") ||
+            context.HttpContext.User.HasClaim("role", "Admin"))
+        {
+            return;
+        }
+
         bool hasPermission = false;
         var requiredList = _permission.Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries);
 
-        if (_checkFromDb)
+        // 2. Customer role: Customers viewing their own orders (Order.View / Order.Create endpoints)
+        if (context.HttpContext.User.IsInRole("Customer") || 
+            context.HttpContext.User.HasClaim(ClaimTypes.Role, "Customer") ||
+            context.HttpContext.User.HasClaim("role", "Customer"))
+        {
+            if (requiredList.Contains("Order.View", System.StringComparer.OrdinalIgnoreCase) || 
+                requiredList.Contains("Order.Create", System.StringComparer.OrdinalIgnoreCase) ||
+                requiredList.Contains("Book.View", System.StringComparer.OrdinalIgnoreCase))
+            {
+                return;
+            }
+        }
+
+        // 3. Fast check: from JWT claims
+        hasPermission = context.HttpContext.User.Claims.Any(c => 
+            c.Type == "permission" && requiredList.Contains(c.Value, System.StringComparer.OrdinalIgnoreCase));
+
+        // 4. Dynamic RBAC Database Fallback: if token claim didn't match (e.g. role updated in DB), check live database permissions
+        if (!hasPermission)
         {
             var userIdString = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (int.TryParse(userIdString, out int userId))
@@ -48,11 +74,6 @@ public class PermissionFilter : IAsyncAuthorizationFilter
                                            select p.PermissionId).AnyAsync();
                 }
             }
-        }
-        else
-        {
-            hasPermission = context.HttpContext.User.Claims.Any(c => 
-                c.Type == "permission" && requiredList.Contains(c.Value, System.StringComparer.OrdinalIgnoreCase));
         }
 
         if (!hasPermission)

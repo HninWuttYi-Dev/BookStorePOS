@@ -54,6 +54,8 @@ public class PermissionModel
 
         ("Order", "View") => "View Orders & Online Orders",
         ("Order", "Create") => "POS Counter Checkout",
+        ("Order", "Confirm") => "Verify & Confirm Online Orders",
+        ("Order", "Reject") => "Reject Online Orders",
 
         ("Dashboard", "View") => "View Dashboard & Sales Analytics",
 
@@ -94,6 +96,8 @@ public class PermissionModel
 
         ("Order", "View") => "Browse in-store transaction history, sales receipts, and view/process online customer orders",
         ("Order", "Create") => "Operate the in-store POS cash register counter, scan books, and complete customer checkouts",
+        ("Order", "Confirm") => "Verify customer payment slips, approve orders, and deduct inventory stock",
+        ("Order", "Reject") => "Reject invalid or unverified customer orders with formal rejection notes",
 
         ("Dashboard", "View") => "Access revenue charts, daily sales totals, and bestsellers",
 
@@ -116,6 +120,8 @@ public class PermissionModel
         "view" => "bg-sky-50 text-sky-700 border border-sky-200",
         "update" => "bg-amber-50 text-amber-700 border border-amber-200",
         "delete" => "bg-rose-50 text-rose-700 border border-rose-200",
+        "confirm" => "bg-emerald-50 text-emerald-700 border border-emerald-200",
+        "reject" => "bg-rose-50 text-rose-700 border border-rose-200",
         _ => "bg-slate-100 text-slate-700 border border-slate-200"
     };
 }

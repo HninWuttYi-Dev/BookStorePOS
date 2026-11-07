@@ -122,6 +122,14 @@ namespace BookStorePOS.MvcApp.Controllers
                     return RedirectToAction("Login", "Auth", new { returnUrl = $"/Orders/OrderDetail/{id}" });
                 }
 
+                if (httpResponse.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    _logger.LogWarning($"Order Detail Async => Access denied for OrderId: {id}");
+                    TempData["Message"] = "You do not have permission to view this order.";
+                    TempData["isSuccess"] = false;
+                    return RedirectToAction("Index", "Checkout");
+                }
+
                 if (httpResponse.StatusCode == HttpStatusCode.NotFound)
                 {
                     return NotFound();

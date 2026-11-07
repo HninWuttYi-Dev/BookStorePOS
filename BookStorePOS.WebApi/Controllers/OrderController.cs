@@ -274,7 +274,7 @@ public class OrderController : BaseController
     /// Admin or authorized Staff confirms pending order: checks stock again, deducts stock, sets Completed/Verified.
     /// </summary>
     [HttpPost("{id}/confirm")]
-    [Permission("Order.Create,Order.View")]
+    [Permission("Order.Confirm")]
     public async Task<IActionResult> ConfirmOrderAsync(int id)
     {
         try
@@ -335,7 +335,7 @@ public class OrderController : BaseController
     /// Admin or authorized Staff rejects pending order: requires RejectReason, sets Rejected/Rejected, no stock change.
     /// </summary>
     [HttpPost("{id}/reject")]
-    [Permission("Order.Create,Order.View")]
+    [Permission("Order.Reject")]
     public async Task<IActionResult> RejectOrderAsync(int id, [FromBody] OrderRejectRequestModel? requestModel)
     {
         try

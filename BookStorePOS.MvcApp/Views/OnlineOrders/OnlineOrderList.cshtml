@@ -10,6 +10,8 @@
     int totalCount = pendingCount + completedCount + rejectedCount;
     int currentPage = ViewData["CurrentPage"] != null ? Convert.ToInt32(ViewData["CurrentPage"]) : 1;
     int totalPages = ViewData["TotalPages"] != null ? Convert.ToInt32(ViewData["TotalPages"]) : 1;
+    bool canConfirmOrders = ViewData["CanConfirmOrders"] is bool cc ? cc : true;
+    bool canRejectOrders = ViewData["CanRejectOrders"] is bool cr ? cr : true;
 
     string FormatOrderDateOnly(DateTime? date)
     {
@@ -382,17 +384,23 @@
                                     <div class="flex items-center gap-1.5">
                                         @if (order.OrderStatus == OrderStatus.Pending)
                                         {
-                                            <!-- Verify & Confirm Button -->
-                                            <button type="button" onclick="openConfirmDialog(@order.OrderId, '@orderNo', '@order.TotalPrice.ToString("#,##0") MMK')" class="px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:shadow-xs flex items-center gap-1" title="Verify Payment & Deduct Inventory Stock">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                                <span>Verify</span>
-                                            </button>
+                                            @if (canConfirmOrders)
+                                            {
+                                                <!-- Verify & Confirm Button -->
+                                                <button type="button" onclick="openConfirmDialog(@order.OrderId, '@orderNo', '@order.TotalPrice.ToString("#,##0") MMK')" class="px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs hover:shadow-xs flex items-center gap-1" title="Verify Payment & Deduct Inventory Stock">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                    <span>Verify</span>
+                                                </button>
+                                            }
 
-                                            <!-- Reject Button -->
-                                            <button type="button" onclick="openRejectDialog(@order.OrderId, '@orderNo')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1" title="Reject Order with reason">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                                <span>Reject</span>
-                                            </button>
+                                            @if (canRejectOrders)
+                                            {
+                                                <!-- Reject Button -->
+                                                <button type="button" onclick="openRejectDialog(@order.OrderId, '@orderNo')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1" title="Reject Order with reason">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                                    <span>Reject</span>
+                                                </button>
+                                            }
                                         }
 
                                         <!-- Inspect / View Details Button -->
@@ -738,6 +746,9 @@
 
 @section Scripts {
 <script>
+    const canConfirmOrders = @(canConfirmOrders ? "true" : "false");
+    const canRejectOrders = @(canRejectOrders ? "true" : "false");
+
     // State
     let currentActiveOrderId = 0;
     let currentActiveOrderNo = '';
@@ -785,14 +796,22 @@
 
         // Footer buttons if pending
         if (isPending && orderId) {
-            actionsContainer.innerHTML = `
-                <button type="button" onclick="closeSlipModal(); openRejectDialog(${orderId}, '${orderNo}')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all">
-                    Reject Slip
-                </button>
-                <button type="button" onclick="closeSlipModal(); openConfirmDialog(${orderId}, '${orderNo}', '')" class="px-3.5 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
-                    Verify & Confirm
-                </button>
-            `;
+            let btnsHtml = '';
+            if (canRejectOrders) {
+                btnsHtml += `
+                    <button type="button" onclick="closeSlipModal(); openRejectDialog(${orderId}, '${orderNo}')" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all">
+                        Reject Slip
+                    </button>
+                `;
+            }
+            if (canConfirmOrders) {
+                btnsHtml += `
+                    <button type="button" onclick="closeSlipModal(); openConfirmDialog(${orderId}, '${orderNo}', '')" class="px-3.5 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
+                        Verify & Confirm
+                    </button>
+                `;
+            }
+            actionsContainer.innerHTML = btnsHtml;
         } else {
             actionsContainer.innerHTML = '';
         }
@@ -935,14 +954,22 @@
             // Footer Actions
             const footerActions = document.getElementById('detailModalFooterActions');
             if (o.orderStatus === 1 || o.orderStatus === 'Pending') {
-                footerActions.innerHTML = `
-                    <button type="button" onclick="closeDetailModal(); openRejectDialog(${o.orderId}, '${orderNo}')" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all">
-                        Reject Order
-                    </button>
-                    <button type="button" onclick="closeDetailModal(); openConfirmDialog(${o.orderId}, '${orderNo}', '${Number(o.totalPrice).toLocaleString()} MMK')" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
-                        Verify & Confirm
-                    </button>
-                `;
+                let btnsHtml = '';
+                if (canRejectOrders) {
+                    btnsHtml += `
+                        <button type="button" onclick="closeDetailModal(); openRejectDialog(${o.orderId}, '${orderNo}')" class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all">
+                            Reject Order
+                        </button>
+                    `;
+                }
+                if (canConfirmOrders) {
+                    btnsHtml += `
+                        <button type="button" onclick="closeDetailModal(); openConfirmDialog(${o.orderId}, '${orderNo}', '${Number(o.totalPrice).toLocaleString()} MMK')" class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-xs font-bold transition-all shadow-2xs">
+                            Verify & Confirm
+                        </button>
+                    `;
+                }
+                footerActions.innerHTML = btnsHtml;
             } else {
                 footerActions.innerHTML = '';
             }

@@ -55,10 +55,6 @@ public class AnnouncementController : Controller
             {
                 return RedirectToAction("Index", "Orders");
             }
-            if (permList.Contains("OnlineOrder.View", StringComparer.OrdinalIgnoreCase))
-            {
-                return RedirectToAction("Index", "OnlineOrders");
-            }
 
             return RedirectToAction("Login", "Auth");
         }

@@ -9,6 +9,7 @@ using BookStorePOS.Domain.Features.User;
 using BookStorePOS.Domain.Features.Auth;
 using BookStorePOS.Domain.Features.RolePermission;
 using BookStorePOS.Domain.Features.PaymentMethod;
+using BookStorePOS.WebApi.Data;
 using BookStorePOS.WebApi.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -116,6 +117,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/notificationHub");
+
+await AuthDataSeeder.EnsureSeedDataAsync(app.Services);
 
 app.Run();
 

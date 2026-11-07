@@ -45,7 +45,7 @@ public static class AuthDataSeeder
             var allPermissions = new[]
             {
                 "Book.View", "Book.Create", "Book.Update", "Book.Delete",
-                "Order.View", "Order.Create",
+                "Order.View", "Order.Create", "Order.Confirm", "Order.Reject",
                 "Dashboard.View",
                 "User.View", "User.Create", "User.Update", "User.Delete",
                 "Genre.View", "Genre.Create", "Genre.Update", "Genre.Delete",
@@ -90,7 +90,7 @@ public static class AuthDataSeeder
             var staffPerms = new[]
             {
                 "Book.View", "Book.Create", "Book.Update",
-                "Order.View", "Order.Create",
+                "Order.View", "Order.Create", "Order.Confirm", "Order.Reject",
                 "Dashboard.View",
                 "Genre.View", "Author.View", "Edition.View"
             };

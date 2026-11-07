@@ -22,7 +22,8 @@ public class GenreController : BaseController
     }
 
     [HttpGet]
-    [Permission("Genre.View")]
+    [AllowAnonymous]
+
     public async Task<IActionResult> GetGenresAsync([FromQuery] GenreListRequestModel requestModel)
     {
         try
@@ -39,7 +40,8 @@ public class GenreController : BaseController
     }
 
     [HttpGet("cursor")]
-    [Permission("Genre.View")]
+    [AllowAnonymous]
+
     public async Task<IActionResult> GetGenresCursorAsync([FromQuery] GenreCursorRequestModel requestModel)
     {
         try
@@ -56,7 +58,7 @@ public class GenreController : BaseController
     }
 
     [HttpGet("{id}")]
-    [Permission("Genre.View")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetGenreByIdAsync(int id)
     {
         try

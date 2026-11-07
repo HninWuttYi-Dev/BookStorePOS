@@ -227,8 +227,8 @@
                 bool canViewDashboard = HasPermission("Dashboard.View");
                 bool canCreateOrder = HasPermission("Order.Create");
                 bool canViewOrders = HasPermission("Order.View");
-                bool canViewOnlineOrders = HasPermission("Order.View") || HasPermission("OnlineOrder.View");
-                bool showSalesSection = canCreateOrder || canViewOrders || canViewOnlineOrders;
+                bool canViewOnlineOrders = HasPermission("Order.View");
+                bool showSalesSection = canCreateOrder || canViewOrders;
 
                 bool canViewBooks = HasPermission("Book.View");
                 bool canViewAuthors = HasPermission("Author.View");

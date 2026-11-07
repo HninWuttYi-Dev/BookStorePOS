@@ -26,7 +26,7 @@ public class BookController : BaseController
     }
 
     [HttpGet]
-    [Permission("Book.View")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetBooksAsync([FromQuery] BookListRequestModel requestModel)
     {
         try
@@ -43,7 +43,7 @@ public class BookController : BaseController
     }
 
     [HttpGet("cursor")]
-    [Permission("Book.View")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetBooksCursorAsync([FromQuery] BookCursorRequestModel requestModel)
     {
         try
@@ -60,7 +60,7 @@ public class BookController : BaseController
     }
 
     [HttpGet("trending")]
-    [Permission("Book.View")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetTrendingBooksAsync([FromQuery] int days = 7, [FromQuery] int limit = 6)
     {
         try
@@ -77,7 +77,7 @@ public class BookController : BaseController
     }
 
     [HttpGet("bestsellers")]
-    [Permission("Book.View")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetBestsellerBooksAsync([FromQuery] int days = 30, [FromQuery] int limit = 8)
     {
         try
