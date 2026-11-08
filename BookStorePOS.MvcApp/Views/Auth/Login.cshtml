@@ -47,25 +47,29 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
 </head>
-<body class="bg-[#FAF0FA] text-[#18181B] min-h-screen flex items-center justify-center p-4 antialiased">
+<body class="bg-[#FAF0FA] text-[#18181B] min-h-screen flex items-center justify-center p-4 sm:p-6 antialiased relative overflow-x-hidden">
 
-    <div class="max-w-md w-full my-8">
+    <!-- Ambient Pastel Lighting in Background -->
+    <div class="pointer-events-none absolute -top-40 -left-40 w-96 h-96 bg-[#F6DFFB]/70 rounded-full blur-3xl"></div>
+    <div class="pointer-events-none absolute -bottom-40 -right-40 w-96 h-96 bg-[#F6DFFB]/60 rounded-full blur-3xl"></div>
+
+    <div class="max-w-[460px] w-full my-8 relative z-10">
         <!-- Logo & Header -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center gap-3 mb-3">
-                <div class="w-12 h-12 rounded-2xl bg-[#F6DFFB] border border-[#F3E2F6] flex items-center justify-center text-[#9F54A6] shadow-2xs">
+                <div class="w-12 h-12 rounded-2xl bg-white border border-[#F3E2F6] flex items-center justify-center text-[#9F54A6] shadow-[0_4px_16px_rgba(184,117,194,0.15)]">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                     </svg>
                 </div>
                 <span class="text-2xl font-bold tracking-tight text-[#18181B]">POS <span class="text-[#9F54A6]">System</span></span>
             </div>
-            <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Staff & Admin Portal</h1>
+            <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Staff &amp; Admin Portal</h1>
             <p class="text-[#9C8EA4] text-sm mt-1">Sign in to manage inventory, sales, and bookstore operations</p>
         </div>
 
         <!-- Login Card -->
-        <div class="bg-white rounded-3xl p-8 shadow-[0_12px_40px_-8px_rgba(184,117,194,0.08)] border border-[#F3E2F6]">
+        <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-[0_16px_50px_-12px_rgba(184,117,194,0.12)] border border-[#F3E2F6]">
             <!-- Alert Banner -->
             <div id="loginAlert" class="hidden mb-6 p-4 rounded-2xl text-sm border flex items-start gap-3 bg-[#FBE8E8] border-[#F7D2D2] text-[#B84646]" role="alert">
                 <svg class="w-5 h-5 text-[#B84646] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,10 +78,10 @@
                 <span id="loginAlertText"></span>
             </div>
 
-            <form id="staffLoginForm" autocomplete="off" novalidate class="space-y-5">
+            <form id="staffLoginForm" autocomplete="off" novalidate class="space-y-6">
                 <!-- Phone Number -->
                 <div>
-                    <label for="phoneInput" class="block text-xs font-semibold uppercase tracking-wider text-[#71717A] mb-1.5 ml-1">
+                    <label for="phoneInput" class="block text-xs font-semibold uppercase tracking-wider text-[#71717A] mb-2 ml-0.5">
                         Phone Number <span class="text-[#B875C2]">*</span>
                     </label>
                     <div class="relative">
@@ -88,14 +92,14 @@
                         </div>
                         <input type="tel" id="phoneInput" name="Phone" autocomplete="tel" required
                                placeholder="09789456123"
-                               class="w-full pl-11 pr-4 py-2.5 bg-[#FAF0FA]/50 border border-[#F3E2F6] rounded-xl text-[#18181B] text-sm placeholder-[#A1A1AA] focus:outline-none focus:border-[#B875C2] focus:bg-white focus:ring-2 focus:ring-[#B875C2]/20 transition-all" />
+                               class="w-full pl-11 pr-4 py-3 bg-[#FAF0FA]/50 border border-[#F3E2F6] hover:border-[#DFADE4] rounded-xl text-[#18181B] text-sm placeholder-[#A1A1AA] focus:outline-none focus:border-[#B875C2] focus:bg-white focus:ring-2 focus:ring-[#B875C2]/20 transition-all shadow-2xs" />
                     </div>
                     <span id="phoneError" class="hidden text-xs text-[#B84646] mt-1 ml-1 block">Phone number is required.</span>
                 </div>
 
                 <!-- Password -->
                 <div>
-                    <div class="flex items-center justify-between mb-1.5 ml-1">
+                    <div class="flex items-center justify-between mb-2 ml-0.5">
                         <label for="passwordInput" class="block text-xs font-semibold uppercase tracking-wider text-[#71717A]">
                             Password <span class="text-[#B875C2]">*</span>
                         </label>
@@ -108,8 +112,8 @@
                         </div>
                         <input type="password" id="passwordInput" name="Password" autocomplete="current-password" required
                                placeholder="••••••••"
-                               class="w-full pl-11 pr-11 py-2.5 bg-[#FAF0FA]/50 border border-[#F3E2F6] rounded-xl text-[#18181B] text-sm placeholder-[#A1A1AA] focus:outline-none focus:border-[#B875C2] focus:bg-white focus:ring-2 focus:ring-[#B875C2]/20 transition-all" />
-                        <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#A1A1AA] hover:text-[#9F54A6] transition-colors" aria-label="Toggle password visibility">
+                               class="w-full pl-11 pr-11 py-3 bg-[#FAF0FA]/50 border border-[#F3E2F6] hover:border-[#DFADE4] rounded-xl text-[#18181B] text-sm placeholder-[#A1A1AA] focus:outline-none focus:border-[#B875C2] focus:bg-white focus:ring-2 focus:ring-[#B875C2]/20 transition-all shadow-2xs" />
+                        <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#A1A1AA] hover:text-[#9F54A6] transition-colors cursor-pointer" aria-label="Toggle password visibility">
                             <svg id="eyeIconOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -124,28 +128,13 @@
 
                 <!-- Submit Button -->
                 <button type="submit" id="btnLoginSubmit"
-                        class="w-full bg-[#B875C2] hover:bg-[#A662B0] text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-[0_4px_16px_rgba(184,117,194,0.25)] flex items-center justify-center gap-2 text-sm mt-3 cursor-pointer">
+                        class="w-full bg-[#B875C2] hover:bg-[#A662B0] text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-[0_4px_16px_rgba(184,117,194,0.25)] flex items-center justify-center gap-2 text-sm mt-4 cursor-pointer">
                     <span>Sign In to POS</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
                 </button>
             </form>
-
-            <!-- Quick Demo Accounts -->
-            <div class="mt-8 pt-6 border-t border-[#F3E2F6]">
-                <p class="text-xs font-semibold uppercase tracking-wider text-[#9C8EA4] mb-3 text-center">Quick Fill Demo Accounts</p>
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" id="quickAdminBtn" class="flex flex-col items-center p-2.5 rounded-xl border border-[#F3E2F6] bg-[#FAF0FA]/50 hover:bg-[#F6DFFB] hover:border-[#DFADE4] transition-colors text-left group cursor-pointer">
-                        <span class="text-xs font-bold text-[#18181B] group-hover:text-[#9F54A6]">Admin</span>
-                        <span class="text-[11px] text-[#71717A]">09789456123 / 123</span>
-                    </button>
-                    <button type="button" id="quickStaffBtn" class="flex flex-col items-center p-2.5 rounded-xl border border-[#F3E2F6] bg-[#FAF0FA]/50 hover:bg-[#F6DFFB] hover:border-[#DFADE4] transition-colors text-left group cursor-pointer">
-                        <span class="text-xs font-bold text-[#18181B] group-hover:text-[#9F54A6]">Staff</span>
-                        <span class="text-[11px] text-[#71717A]">09789456124 / 123</span>
-                    </button>
-                </div>
-            </div>
         </div>
 
         <!-- Footer -->
@@ -192,16 +181,6 @@
                 return /^09\d{7,9}$/.test(norm);
             }
 
-            // Quick Fill Buttons
-            $('#quickAdminBtn').on('click', function() {
-                $('#phoneInput').val('09789456123').trigger('input');
-                $('#passwordInput').val('123').trigger('input');
-            });
-
-            $('#quickStaffBtn').on('click', function() {
-                $('#phoneInput').val('09789456124').trigger('input');
-                $('#passwordInput').val('123').trigger('input');
-            });
 
             // Toggle password visibility
             $('#togglePasswordBtn').on('click', function() {
