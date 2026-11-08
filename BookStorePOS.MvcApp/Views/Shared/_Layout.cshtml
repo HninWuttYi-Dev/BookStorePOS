@@ -203,37 +203,46 @@
             line-height: 28px !important;
         }
         .flatpickr-days {
-            width: 100% !important;
-            max-width: 308px !important;
+            width: 308px !important;
+            margin: 0 auto !important;
             display: flex !important;
             justify-content: center !important;
         }
         .dayContainer {
-            width: 100% !important;
-            min-width: 100% !important;
+            width: 308px !important;
+            min-width: 308px !important;
             max-width: 308px !important;
             padding: 0 !important;
             margin: 0 auto !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-wrap: wrap !important;
-            justify-content: space-between !important;
+            justify-content: flex-start !important;
         }
         .flatpickr-day {
             border-radius: 8px !important;
             color: #334155 !important;
             font-weight: 500 !important;
             border: 1px solid transparent !important;
-            width: 38px !important;
+            width: 14.2857143% !important;
+            flex-basis: 14.2857143% !important;
+            max-width: 44px !important;
             height: 38px !important;
             line-height: 38px !important;
-            max-width: 38px !important;
-            flex-basis: auto !important;
-            margin: 2px 0 !important;
-            display: flex !important;
+            margin: 1px 0 !important;
+            display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
             transition: all 0.15s ease !important;
+        }
+        /* Hide previous and next month dates so each month is displayed strictly on its own */
+        .flatpickr-day.prevMonthDay,
+        .flatpickr-day.nextMonthDay {
+            visibility: hidden !important;
+            pointer-events: none !important;
+            cursor: default !important;
         }
         .flatpickr-day:hover {
             background: #FAF0FA !important;
