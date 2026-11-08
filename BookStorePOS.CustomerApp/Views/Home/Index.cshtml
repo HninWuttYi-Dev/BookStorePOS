@@ -40,19 +40,40 @@
                     </a>
                 </div>
 
-                <!-- Literary Stats -->
-                <div class="grid grid-cols-3 gap-4 pt-6 border-t border-brand-border/60 max-w-lg mx-auto lg:mx-0">
-                    <div>
-                        <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">10,000+</span>
-                        <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Curated Titles</span>
+                <!-- Boutique Trust Pillars -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 pt-6 border-t border-brand-border/60 max-w-xl mx-auto lg:mx-0">
+                    <div class="flex items-center gap-3 text-left bg-brand-surface/70 px-3.5 py-2.5 rounded-2xl border border-brand-border/60">
+                        <div class="w-8 h-8 rounded-xl bg-brand-surface border border-brand-accent/30 flex items-center justify-center shrink-0 text-brand-accent shadow-2xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold font-heading text-brand-ink truncate">Curated Selection</h4>
+                            <p class="text-[10px] text-brand-inkLight font-body leading-tight truncate">Handpicked literature</p>
+                        </div>
                     </div>
-                    <div>
-                        <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">500+</span>
-                        <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Acclaimed Authors</span>
+                    <div class="flex items-center gap-3 text-left bg-brand-surface/70 px-3.5 py-2.5 rounded-2xl border border-brand-border/60">
+                        <div class="w-8 h-8 rounded-xl bg-brand-surface border border-brand-accent/30 flex items-center justify-center shrink-0 text-brand-accent shadow-2xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold font-heading text-brand-ink truncate">100% Authentic</h4>
+                            <p class="text-[10px] text-brand-inkLight font-body leading-tight truncate">Genuine press editions</p>
+                        </div>
                     </div>
-                    <div>
-                        <span class="block text-2xl sm:text-3xl font-heading font-bold text-brand-ink">100%</span>
-                        <span class="text-[11px] text-brand-inkLight font-body uppercase tracking-wider">Authentic Editions</span>
+                    <div class="flex items-center gap-3 text-left bg-brand-surface/70 px-3.5 py-2.5 rounded-2xl border border-brand-border/60">
+                        <div class="w-8 h-8 rounded-xl bg-brand-surface border border-brand-accent/30 flex items-center justify-center shrink-0 text-brand-accent shadow-2xs">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-xs font-bold font-heading text-brand-ink truncate">Nationwide Care</h4>
+                            <p class="text-[10px] text-brand-inkLight font-body leading-tight truncate">Boxed across Myanmar</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -435,7 +456,7 @@
 
                 <!-- View All Trending Books Action -->
                 <div class="flex items-center justify-center lg:justify-start">
-                    <a href="/Books" class="inline-flex items-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold font-body transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5">
+                    <a href="/Books?filter=trending" class="inline-flex items-center gap-2 bg-brand-ink hover:bg-brand-accent text-brand-bg px-7 py-3.5 rounded-full text-xs sm:text-sm font-semibold font-body transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5">
                         <span>View All Trending Books</span>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
@@ -490,6 +511,20 @@
                                         <div class="fan-book-front">
                                             <!-- Spine Crease Fold -->
                                             <div class="fan-book-spine-fold"></div>
+
+                                            @if (i == 0)
+                                            {
+                                                <!-- Best Seller Rosette Badge on #1 Title -->
+                                                <div class="absolute top-2 right-2 z-20 pointer-events-none select-none drop-shadow-[0_4px_8px_rgba(45,33,24,0.40)]" title="Best Seller">
+                                                    <svg class="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 100 100" fill="none">
+                                                        <path d="M 50.00 9.00 Q 58.34 2.73 64.02 11.47 Q 74.00 8.43 76.35 18.59 Q 86.77 19.15 85.51 29.50 Q 95.11 33.58 90.38 42.88 Q 98.00 50.00 90.38 57.12 Q 95.11 66.42 85.51 70.50 Q 86.77 80.85 76.35 81.41 Q 74.00 91.57 64.02 88.53 Q 58.34 97.27 50.00 91.00 Q 41.66 97.27 35.98 88.53 Q 26.00 91.57 23.65 81.41 Q 13.23 80.85 14.49 70.50 Q 4.89 66.42 9.62 57.12 Q 2.00 50.00 9.62 42.88 Q 4.89 33.58 14.49 29.50 Q 13.23 19.15 23.65 18.59 Q 26.00 8.43 35.98 11.47 Q 41.66 2.73 50.00 9.00 Z" 
+                                                              fill="#B85D36" stroke="#8F401F" stroke-width="2" />
+                                                        <circle cx="50" cy="50" r="33" fill="none" stroke="#FDFBF7" stroke-width="1.2" stroke-dasharray="2.5 2" opacity="0.75" />
+                                                        <text x="50" y="44" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="900" font-size="12.5" letter-spacing="0.5">BEST</text>
+                                                        <text x="50" y="60" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="900" font-size="11.5" letter-spacing="0.5">SELLER</text>
+                                                    </svg>
+                                                </div>
+                                            }
 
                                             @if (!string.IsNullOrEmpty(coverImg))
                                             {
@@ -848,6 +883,17 @@
                             <!-- Spine Highlight -->
                             <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-r from-white/35 to-transparent pointer-events-none z-20"></div>
                             <div class="absolute left-1 top-0 bottom-0 w-[0.5px] bg-black/25 pointer-events-none z-20"></div>
+                            
+                            <!-- Bestseller Rosette Badge -->
+                            <div class="absolute top-1 right-1 z-25 pointer-events-none select-none drop-shadow-[0_2px_5px_rgba(45,33,24,0.40)]" title="Best Seller">
+                                <svg class="w-7 h-7 sm:w-7.5 sm:h-7.5" viewBox="0 0 100 100" fill="none">
+                                    <path d="M 50.00 9.00 Q 58.34 2.73 64.02 11.47 Q 74.00 8.43 76.35 18.59 Q 86.77 19.15 85.51 29.50 Q 95.11 33.58 90.38 42.88 Q 98.00 50.00 90.38 57.12 Q 95.11 66.42 85.51 70.50 Q 86.77 80.85 76.35 81.41 Q 74.00 91.57 64.02 88.53 Q 58.34 97.27 50.00 91.00 Q 41.66 97.27 35.98 88.53 Q 26.00 91.57 23.65 81.41 Q 13.23 80.85 14.49 70.50 Q 4.89 66.42 9.62 57.12 Q 2.00 50.00 9.62 42.88 Q 4.89 33.58 14.49 29.50 Q 13.23 19.15 23.65 18.59 Q 26.00 8.43 35.98 11.47 Q 41.66 2.73 50.00 9.00 Z" 
+                                          fill="#B85D36" stroke="#8F401F" stroke-width="2" />
+                                    <circle cx="50" cy="50" r="33" fill="none" stroke="#FDFBF7" stroke-width="1.2" stroke-dasharray="2.5 2" opacity="0.75" />
+                                    <text x="50" y="44" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="900" font-size="12.5" letter-spacing="0.5">BEST</text>
+                                    <text x="50" y="60" text-anchor="middle" fill="#FFFFFF" font-family="'Plus Jakarta Sans', system-ui, sans-serif" font-weight="900" font-size="11.5" letter-spacing="0.5">SELLER</text>
+                                </svg>
+                            </div>
                             
                             @if (!string.IsNullOrEmpty(coverImg))
                             {
