@@ -223,6 +223,13 @@ public class OrderService : IOrderService
             }
 
             // 4. Create order header
+            var initialNotes = requestModel.Notes;
+            if (!string.IsNullOrWhiteSpace(requestModel.CashierName))
+            {
+                var cashierStamp = $"[Cashier: {requestModel.CashierName.Trim()}]";
+                initialNotes = string.IsNullOrWhiteSpace(initialNotes) ? cashierStamp : $"{initialNotes} | {cashierStamp}";
+            }
+
             var order = new TblOrder
             {
                 OrderDate = DateTime.Now,
@@ -235,7 +242,7 @@ public class OrderService : IOrderService
                 CustomerId = requestModel.CustomerId,
                 CustomerName = requestModel.CustomerName,
                 CustomerPhone = requestModel.CustomerPhone,
-                Notes = requestModel.Notes,
+                Notes = initialNotes,
                 CreatedAt = DateTime.Now
             };
 
@@ -583,6 +590,12 @@ public class OrderService : IOrderService
             order.PaymentStatus = (byte)PaymentStatus.Verified;
             order.UpdatedAt = DateTime.Now;
 
+            if (!string.IsNullOrWhiteSpace(requestModel.ConfirmedBy))
+            {
+                var audit = $"[Confirmed by: {requestModel.ConfirmedBy.Trim()} on {DateTime.Now:dd/MM/yyyy hh:mm tt}]";
+                order.Notes = string.IsNullOrWhiteSpace(order.Notes) ? audit : $"{order.Notes} | {audit}";
+            }
+
             await _db.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -636,8 +649,18 @@ public class OrderService : IOrderService
 
             order.OrderStatus = (byte)OrderStatus.Rejected;
             order.PaymentStatus = (byte)PaymentStatus.Rejected;
-            order.RejectReason = requestModel.RejectReason.Trim();
             order.UpdatedAt = DateTime.Now;
+
+            var reason = requestModel.RejectReason.Trim();
+            if (!string.IsNullOrWhiteSpace(requestModel.RejectedBy))
+            {
+                var audit = $"[Rejected by: {requestModel.RejectedBy.Trim()} on {DateTime.Now:dd/MM/yyyy hh:mm tt}]";
+                order.RejectReason = $"{audit} Reason: {reason}";
+            }
+            else
+            {
+                order.RejectReason = reason;
+            }
 
             // Note: No stock change because stock was not deducted on order creation
             await _db.SaveChangesAsync();

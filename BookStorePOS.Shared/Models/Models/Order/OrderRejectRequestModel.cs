@@ -4,4 +4,5 @@ public class OrderRejectRequestModel
 {
     public int OrderId { get; set; }
     public string? RejectReason { get; set; }
+    public string? RejectedBy { get; set; }
 }

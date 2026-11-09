@@ -21,9 +21,10 @@ public class RolePermissionService : IRolePermissionService
         _logger = logger;
     }
 
+    private IQueryable<TblRole> AllRoles => _db.TblRoles;
     private IQueryable<TblRole> ActiveRoles => _db.TblRoles.Where(r => !r.IsDeleted);
 
-    private IQueryable<TblRole> RolesWithPermissions => ActiveRoles
+    private IQueryable<TblRole> RolesWithPermissions => AllRoles
         .Include(r => r.TblRolePermissions)
         .ThenInclude(rp => rp.Permission);
 
@@ -208,12 +209,12 @@ public class RolePermissionService : IRolePermissionService
         }
     }
 
-    public async Task<Result<RoleModel>> DeleteRoleAsync(int id)
+    public async Task<Result<RoleModel>> ToggleRoleStatusAsync(int id, bool isActive)
     {
-        _logger.LogInformation("DeleteRoleAsync => Deleting role id: {RoleId}", id);
+        _logger.LogInformation("ToggleRoleStatusAsync => Toggling role {RoleId} to isActive: {IsActive}", id, isActive);
         try
         {
-            var role = await ActiveRoles.FirstOrDefaultAsync(r => r.RoleId == id);
+            var role = await _db.TblRoles.Include(r => r.TblRolePermissions).ThenInclude(rp => rp.Permission).FirstOrDefaultAsync(r => r.RoleId == id);
             if (role == null)
             {
                 return Result<RoleModel>.NotFound("Role not found.");
@@ -221,26 +222,27 @@ public class RolePermissionService : IRolePermissionService
 
             if (IsAdmin(role) || IsCustomer(role))
             {
-                return Result<RoleModel>.ValidationError($"The system {role.RoleName} role cannot be deleted.");
+                return Result<RoleModel>.ValidationError($"The system {role.RoleName} role status cannot be modified.");
             }
 
-            if (await _db.TblUsers.AnyAsync(u => u.RoleId == id && !u.IsDeleted))
-            {
-                return Result<RoleModel>.Conflict("Role is assigned to active users.");
-            }
-
-            role.IsDeleted = true;
+            role.IsDeleted = !isActive;
             role.UpdatedAt = DateTime.Now;
 
             await _db.SaveChangesAsync();
 
-            return Result<RoleModel>.Success(null, "Role deleted successfully.");
+            var message = isActive ? $"Role '{role.RoleName}' activated successfully." : $"Role '{role.RoleName}' deactivated successfully.";
+            return Result<RoleModel>.Success(Map(role), message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "DeleteRoleAsync => Error deleting role {RoleId}", id);
-            return Result<RoleModel>.SystemError($"Failed to delete role: {ex.Message}");
+            _logger.LogError(ex, "ToggleRoleStatusAsync => Error toggling role status for {RoleId}", id);
+            return Result<RoleModel>.SystemError($"Failed to update role status: {ex.Message}");
         }
+    }
+
+    public async Task<Result<RoleModel>> DeleteRoleAsync(int id)
+    {
+        return await ToggleRoleStatusAsync(id, false);
     }
 
     public async Task<PermissionListResponseModel> GetPermissionsAsync(PermissionListRequestModel? request = null)
@@ -443,6 +445,7 @@ public class RolePermissionService : IRolePermissionService
     {
         RoleId = role.RoleId,
         RoleName = role.RoleName,
+        IsActive = !role.IsDeleted,
         Permissions = role.TblRolePermissions
             .Where(rp => rp.Permission != null && !rp.Permission.IsDeleted)
             .Select(rp => new PermissionModel

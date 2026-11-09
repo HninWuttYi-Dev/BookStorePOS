@@ -224,7 +224,7 @@
                             <!-- Left Navigation Arrow (Vertically centered in middle of books) -->
                             <button type="button" 
                                     onclick="scrollShelfTrack('@trackId', -340)" 
-                                    class="shelf-arrow hidden absolute -left-3 sm:-left-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" 
+                                    class="shelf-arrow shelf-arrow-left hidden absolute -left-3 sm:-left-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-25 disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none cursor-pointer" 
                                     aria-label="Scroll left">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
                             </button>
@@ -314,7 +314,7 @@
                             <!-- Right Navigation Arrow (Vertically centered in middle of books) -->
                             <button type="button" 
                                     onclick="scrollShelfTrack('@trackId', 340)" 
-                                    class="shelf-arrow hidden absolute -right-3 sm:-right-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" 
+                                    class="shelf-arrow shelf-arrow-right hidden absolute -right-3 sm:-right-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-25 disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none cursor-pointer" 
                                     aria-label="Scroll right">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
                             </button>
@@ -362,6 +362,9 @@
         const track = document.getElementById(trackId);
         if (track) {
             track.scrollBy({ left: offset, behavior: 'smooth' });
+            setTimeout(() => updateTrackArrows(track), 100);
+            setTimeout(() => updateTrackArrows(track), 350);
+            setTimeout(() => updateTrackArrows(track), 600);
         }
     }
 
@@ -548,9 +551,9 @@
                     </a>
                 </div>
                 <div class="relative flex items-center group/shelf">
-                    ${genre.bookCount > 1 ? `<button type="button" onclick="scrollShelfTrack('${trackId}', -340)" class="shelf-arrow hidden absolute -left-3 sm:-left-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" aria-label="Scroll left"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg></button>` : ''}
+                    ${genre.bookCount > 1 ? `<button type="button" onclick="scrollShelfTrack('${trackId}', -340)" class="shelf-arrow shelf-arrow-left hidden absolute -left-3 sm:-left-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-25 disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none cursor-pointer" aria-label="Scroll left"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg></button>` : ''}
                     <div class="shelf-carousel-track flex-1 px-1 sm:px-2" id="${trackId}">${booksHtml}</div>
-                    ${genre.bookCount > 1 ? `<button type="button" onclick="scrollShelfTrack('${trackId}', 340)" class="shelf-arrow hidden absolute -right-3 sm:-right-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105" aria-label="Scroll right"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></button>` : ''}
+                    ${genre.bookCount > 1 ? `<button type="button" onclick="scrollShelfTrack('${trackId}', 340)" class="shelf-arrow shelf-arrow-right hidden absolute -right-3 sm:-right-4 z-30 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 hover:bg-brand-ink hover:text-white border border-brand-border text-brand-ink flex items-center justify-center text-xs transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-25 disabled:pointer-events-none disabled:cursor-not-allowed disabled:shadow-none cursor-pointer" aria-label="Scroll right"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg></button>` : ''}
                 </div>
             </div>
         `;
@@ -569,15 +572,58 @@
         });
     }
 
-    // ── Responsive arrow visibility: show only when carousel overflows ──
+    // ── Responsive arrow visibility & disabled state management ──
+    function updateTrackArrows(track) {
+        if (!track) return;
+        const wrapper = track.parentElement;
+        if (!wrapper) return;
+
+        const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+        const overflows = maxScroll > 4;
+        const leftBtn = wrapper.querySelector('.shelf-arrow-left');
+        const rightBtn = wrapper.querySelector('.shelf-arrow-right');
+
+        if (!overflows) {
+            if (leftBtn) leftBtn.classList.add('hidden');
+            if (rightBtn) rightBtn.classList.add('hidden');
+            return;
+        }
+
+        const atStart = track.scrollLeft <= 4;
+        const atEnd = Math.ceil(track.scrollLeft) >= (maxScroll - 4);
+
+        if (leftBtn) {
+            leftBtn.classList.remove('hidden');
+            leftBtn.disabled = atStart;
+            leftBtn.classList.toggle('opacity-25', atStart);
+            leftBtn.classList.toggle('pointer-events-none', atStart);
+            leftBtn.classList.toggle('cursor-not-allowed', atStart);
+            leftBtn.classList.toggle('shadow-none', atStart);
+        }
+
+        if (rightBtn) {
+            rightBtn.classList.remove('hidden');
+            rightBtn.disabled = atEnd;
+            rightBtn.classList.toggle('opacity-25', atEnd);
+            rightBtn.classList.toggle('pointer-events-none', atEnd);
+            rightBtn.classList.toggle('cursor-not-allowed', atEnd);
+            rightBtn.classList.toggle('shadow-none', atEnd);
+        }
+    }
+
+    function initTrackArrows(track) {
+        if (!track || track.dataset.arrowsBound === 'true') return;
+        track.dataset.arrowsBound = 'true';
+        track.addEventListener('scroll', function() {
+            updateTrackArrows(track);
+        }, { passive: true });
+        updateTrackArrows(track);
+    }
+
     function updateShelfArrows() {
         document.querySelectorAll('.shelf-carousel-track').forEach(function(track) {
-            var wrapper = track.parentElement;
-            if (!wrapper) return;
-            var overflows = track.scrollWidth > track.clientWidth + 2;
-            wrapper.querySelectorAll('.shelf-arrow').forEach(function(btn) {
-                btn.classList.toggle('hidden', !overflows);
-            });
+            initTrackArrows(track);
+            updateTrackArrows(track);
         });
     }
 

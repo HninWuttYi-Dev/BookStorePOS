@@ -343,6 +343,15 @@ public class AuthorService : IAuthorService
                 return Result<AuthorModel>.Conflict("Author is already deleted.");
             }
 
+            var hasActiveBooks = await _db.TblBooks
+                .AnyAsync(b => b.AuthorId == requestModel.AuthorId && !b.IsDeleted);
+
+            if (hasActiveBooks)
+            {
+                _logger.LogWarning("Delete Author Async => Cannot delete author with active books (AuthorId: {AuthorId})", requestModel.AuthorId);
+                return Result<AuthorModel>.Conflict("Cannot delete author because there are active books associated with this author. Please reassign or delete the associated books first.");
+            }
+
             item.IsDeleted = true;
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;

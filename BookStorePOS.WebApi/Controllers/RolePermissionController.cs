@@ -71,6 +71,15 @@ public class RolePermissionController : BaseController
         return ExecuteResult(response);
     }
 
+    [HttpPatch("roles/{id:int}/status")]
+    [Permission("Role.Update")]
+    public async Task<IActionResult> ToggleRoleStatus(int id, [FromQuery] bool isActive)
+    {
+        _logger.LogInformation("ToggleRoleStatus => Toggling role {RoleId} to isActive: {IsActive}", id, isActive);
+        var response = await _rolePermissionService.ToggleRoleStatusAsync(id, isActive);
+        return ExecuteResult(response);
+    }
+
     [HttpGet("permissions")]
     [Permission("Role.View")]
     public async Task<IActionResult> GetPermissions([FromQuery] PermissionListRequestModel request)

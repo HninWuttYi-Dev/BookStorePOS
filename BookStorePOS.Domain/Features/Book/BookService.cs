@@ -661,6 +661,28 @@ public class BookService : IBookService
             if (item.IsDeleted)
                 return Result<BookModel>.Conflict("Book is already deleted.");
 
+            // 1. Check if there are pending orders containing this book
+            var hasPendingOrders = await _db.TblOrderItems
+                .AnyAsync(oi => oi.BookEdition != null &&
+                                oi.BookEdition.BookId == requestModel.BookId &&
+                                oi.Order.OrderStatus == (byte)OrderStatus.Pending);
+
+            if (hasPendingOrders)
+            {
+                _logger.LogWarning("Delete Book Async => Cannot delete book with pending orders (BookId: {BookId})", requestModel.BookId);
+                return Result<BookModel>.Conflict("Cannot delete book because there are pending customer orders containing this book. Please fulfill, complete, or cancel the pending orders first.");
+            }
+
+            // 2. Check if there is active stock remaining
+            var hasActiveStock = await _db.TblBookEditions
+                .AnyAsync(e => e.BookId == requestModel.BookId && !e.IsDeleted && e.StockQuantity > 0);
+
+            if (hasActiveStock)
+            {
+                _logger.LogWarning("Delete Book Async => Cannot delete book with remaining stock (BookId: {BookId})", requestModel.BookId);
+                return Result<BookModel>.Conflict("Cannot delete book because there is still available stock in inventory. Please adjust or write off remaining stock before deleting.");
+            }
+
             item.IsDeleted = true;
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;
@@ -1016,6 +1038,24 @@ public class BookService : IBookService
             if (bookEdition.IsDeleted)
             {
                 return Result<BookEditionModel>.Conflict("Book edition is already deleted.");
+            }
+
+            // 1. Check if there are pending orders containing this book edition
+            var hasPendingOrders = await _db.TblOrderItems
+                .AnyAsync(oi => oi.BookEditionId == requestModel.BookEditionId &&
+                                oi.Order.OrderStatus == (byte)OrderStatus.Pending);
+
+            if (hasPendingOrders)
+            {
+                _logger.LogWarning("Delete Book Edition Async => Cannot delete edition with pending orders (BookEditionId: {BookEditionId})", requestModel.BookEditionId);
+                return Result<BookEditionModel>.Conflict("Cannot delete edition because there are pending customer orders containing this edition. Please fulfill or cancel the pending orders first.");
+            }
+
+            // 2. Check if there is active stock remaining
+            if (bookEdition.StockQuantity > 0)
+            {
+                _logger.LogWarning("Delete Book Edition Async => Cannot delete edition with available stock (BookEditionId: {BookEditionId}, Stock: {StockQuantity})", requestModel.BookEditionId, bookEdition.StockQuantity);
+                return Result<BookEditionModel>.Conflict($"Cannot delete edition because there is still available stock ({bookEdition.StockQuantity} items) in inventory. Please adjust stock to 0 before deleting.");
             }
 
             bookEdition.IsDeleted = true;

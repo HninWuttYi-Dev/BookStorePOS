@@ -343,6 +343,15 @@ public class GenreService : IGenreService
                 return Result<GenreModel>.Conflict("Genre is already deleted.");
             }
 
+            var hasActiveBooks = await _db.TblBooks
+                .AnyAsync(b => b.GenreId == requestModel.GenreId && !b.IsDeleted);
+
+            if (hasActiveBooks)
+            {
+                _logger.LogWarning("Delete Genre Async => Cannot delete genre with active books (GenreId: {GenreId})", requestModel.GenreId);
+                return Result<GenreModel>.Conflict("Cannot delete genre because there are active books associated with this genre. Please reassign or delete the associated books first.");
+            }
+
             item.IsDeleted = true;
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;

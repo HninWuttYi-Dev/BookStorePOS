@@ -12,6 +12,7 @@ public interface IRolePermissionService
     Task<Result<RoleModel>> CreateRoleAsync(RoleCreateRequestModel request);
     Task<Result<RoleModel>> UpdateRoleAsync(RoleUpdateRequestModel request);
     Task<Result<RoleModel>> DeleteRoleAsync(int id);
+    Task<Result<RoleModel>> ToggleRoleStatusAsync(int id, bool isActive);
     Task<PermissionListResponseModel> GetPermissionsAsync(PermissionListRequestModel? request = null);
     Task<Result<object?>> AssignPermissionsAsync(AssignRolePermissionsRequestModel request);
     Task<List<string>> GetUserPermissionsAsync(int userId);

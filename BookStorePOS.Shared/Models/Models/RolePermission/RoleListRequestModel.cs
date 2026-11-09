@@ -7,6 +7,7 @@ public class RoleModel
 {
     public int RoleId { get; set; }
     public string RoleName { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
     public List<PermissionModel> Permissions { get; set; } = new();
 }
 

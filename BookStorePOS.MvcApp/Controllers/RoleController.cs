@@ -258,5 +258,39 @@ namespace BookStorePOS.MvcApp.Controllers
                 return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
             }
         }
+
+        [HttpPost]
+        [ActionName("ToggleStatus")]
+        public async Task<IActionResult> RoleToggleStatusAsync(int id, bool isActive)
+        {
+            try
+            {
+                _logger.LogInformation($"Role Toggle Status Async => Toggling role {id} to isActive: {isActive}");
+
+                var client = _httpClientFactory.CreateClient("WebAPI");
+                var httpResponse = await client.PatchAsync($"api/RolePermission/roles/{id}/status?isActive={isActive}", null);
+                var jsonString = await httpResponse.Content.ReadAsStringAsync();
+                var model = JsonConvert.DeserializeObject<RoleByIdResponseModel>(jsonString)
+                    ?? new RoleByIdResponseModel { IsSuccess = false, Message = "Unknown error" };
+
+                if (model != null && model.IsSuccess)
+                {
+                    _logger.LogInformation("Role Toggle Status Async => Role status updated successfully");
+                    TempData["Message"] = model.Message ?? "Role status updated successfully.";
+                    TempData["isSuccess"] = true;
+                }
+                else
+                {
+                    _logger.LogWarning($"Role Toggle Status Async => Failed to update role status: {model?.Message}");
+                }
+
+                return Json(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RoleToggleStatusAsync => Exception occurred");
+                return StatusCode(500, new { IsSuccess = false, Message = "Internal Server Error: " + ex.Message });
+            }
+        }
     }
 }

@@ -214,6 +214,12 @@ namespace BookStorePOS.MvcApp.Controllers
                     return Json(new OrderCreateResponseModel { IsSuccess = false, Message = "Please provide at least one item." });
                 }
 
+                var staffUser = Request.Cookies["pos_user"];
+                if (!string.IsNullOrWhiteSpace(staffUser) && string.IsNullOrWhiteSpace(requestModel.CashierName))
+                {
+                    requestModel.CashierName = Uri.UnescapeDataString(staffUser);
+                }
+
                 var client = _httpClientFactory.CreateClient("WebAPI");
                 string json = JsonConvert.SerializeObject(requestModel);
                 StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);

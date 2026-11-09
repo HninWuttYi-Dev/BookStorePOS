@@ -220,6 +220,15 @@ public class EditionService : IEditionService
                 return Result<EditionModel>.Conflict("Edition already deleted.");
             }
 
+            var hasActiveBookEditions = await _db.TblBookEditions
+                .AnyAsync(e => e.EditionId == requestModel.EditionId && !e.IsDeleted && !e.Book.IsDeleted);
+
+            if (hasActiveBookEditions)
+            {
+                _logger.LogWarning("Delete Edition Async => Cannot delete edition format in use by active books (EditionId: {EditionId})", requestModel.EditionId);
+                return Result<EditionModel>.Conflict("Cannot delete edition format because active books are currently using this edition format.");
+            }
+
             item.IsDeleted = true;
             item.UpdatedAt = DateTime.Now;
             _db.Entry(item).State = EntityState.Modified;

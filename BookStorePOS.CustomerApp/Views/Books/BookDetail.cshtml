@@ -111,7 +111,7 @@ else
                         <img id="display-cover" src="@initialCover" alt="@book.Title" class="w-full h-full object-cover rounded-r-2xl rounded-l-md z-10 relative">
                         <div id="display-fallback-cover" class="hidden absolute inset-0 bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] rounded-r-2xl rounded-l-md flex flex-col items-center justify-center text-center p-8 z-10 shadow-inner">
                             <div class="border-y border-brand-accent/40 py-6 w-full">
-                                <h2 class="font-heading text-brand-surface font-bold text-2xl sm:text-3xl mb-3 leading-snug px-2">@book.Title</h2>
+                                <h2 class="font-heading text-brand-surface font-bold text-2xl sm:text-3xl mb-3 leading-normal px-2">@book.Title</h2>
                                 <p class="text-brand-accent font-medium font-body uppercase tracking-widest text-xs">@book.Author</p>
                             </div>
                         </div>
@@ -121,7 +121,7 @@ else
                         <img id="display-cover" src="" alt="@book.Title" class="hidden w-full h-full object-cover rounded-r-2xl rounded-l-md z-10 relative">
                         <div id="display-fallback-cover" class="absolute inset-0 bg-gradient-to-br from-[#2D241E] via-[#3E322A] to-[#1E1712] rounded-r-2xl rounded-l-md flex flex-col items-center justify-center text-center p-8 z-10 shadow-inner">
                             <div class="border-y border-brand-accent/40 py-6 w-full">
-                                <h2 class="font-heading text-brand-surface font-bold text-2xl sm:text-3xl mb-3 leading-snug px-2">@book.Title</h2>
+                                <h2 class="font-heading text-brand-surface font-bold text-2xl sm:text-3xl mb-3 leading-normal px-2">@book.Title</h2>
                                 <p class="text-brand-accent font-medium font-body uppercase tracking-widest text-xs">@book.Author</p>
                             </div>
                         </div>
@@ -154,8 +154,8 @@ else
                         }
                     </div>
 
-                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-heading font-bold text-brand-ink mb-3 leading-tight">@book.Title</h1>
-                    <p class="text-xl md:text-2xl text-brand-inkLight font-heading italic">By @book.Author</p>
+                    <h1 class="text-3xl sm:text-4xl lg:text-[2.75rem] font-heading font-bold text-brand-ink mb-4 sm:mb-5 leading-normal sm:leading-relaxed">@book.Title</h1>
+                    <p class="text-lg sm:text-xl md:text-2xl text-brand-inkLight font-heading italic mb-6">By @book.Author</p>
                 </div>
 
                 <div class="w-20 h-1 bg-brand-accent/70 mb-8 rounded-full"></div>

@@ -11,6 +11,7 @@ public class OrderCreateRequestModel
     public string? CustomerName { get; set; }
     public string? CustomerPhone { get; set; }
     public string? Notes { get; set; }
+    public string? CashierName { get; set; }
     public string OrderSource { get; set; } = "POS";
 }
 

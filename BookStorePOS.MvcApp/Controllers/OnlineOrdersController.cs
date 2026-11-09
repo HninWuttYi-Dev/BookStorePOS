@@ -205,8 +205,13 @@ namespace BookStorePOS.MvcApp.Controllers
 
                 _logger.LogInformation($"Online Order Confirm Async => Confirming order {id}");
 
+                var staffUser = Request.Cookies["pos_user"];
+                var staffName = !string.IsNullOrWhiteSpace(staffUser) ? Uri.UnescapeDataString(staffUser) : "Staff";
+                var confirmRequest = new OrderConfirmRequestModel { OrderId = id, ConfirmedBy = staffName };
+
                 var client = _httpClientFactory.CreateClient("WebAPI");
-                StringContent stringContent = new StringContent("{}", Encoding.UTF8, Application.Json);
+                string json = JsonConvert.SerializeObject(confirmRequest);
+                StringContent stringContent = new StringContent(json, Encoding.UTF8, Application.Json);
                 var httpResponse = await client.PostAsync($"api/order/{id}/confirm", stringContent);
                 var jsonString = await httpResponse.Content.ReadAsStringAsync();
                 var response = JsonConvert.DeserializeObject<Result<OrderModel>>(jsonString);
@@ -257,6 +262,10 @@ namespace BookStorePOS.MvcApp.Controllers
                 }
 
                 _logger.LogInformation($"Online Order Reject Async => Rejecting order {id} with reason: {requestModel.RejectReason}");
+
+                var staffUser = Request.Cookies["pos_user"];
+                var staffName = !string.IsNullOrWhiteSpace(staffUser) ? Uri.UnescapeDataString(staffUser) : "Staff";
+                requestModel.RejectedBy = staffName;
 
                 requestModel.OrderId = id;
                 var client = _httpClientFactory.CreateClient("WebAPI");
